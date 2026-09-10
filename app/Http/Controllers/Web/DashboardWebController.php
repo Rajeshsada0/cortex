@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Http\Controllers\Web;
+
+use App\Domain\Analytics\PerformanceQuadrantService;
+use App\Domain\Analytics\ReadinessScoreCalculator;
+use App\Domain\Scoring\ExamPathway;
+use App\Http\Controllers\Controller;
+use App\Models\Question;
+use App\Models\QuestionAttempt;
+use App\Models\SpacedRepetitionQueue;
+use App\Models\Subject;
+use App\Models\TestSession;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class DashboardWebController extends Controller
+{
+    public function __construct(
+        private readonly ReadinessScoreCalculator $readinessCalculator,
+        private readonly PerformanceQuadrantService $quadrantService,
+    ) {}
+
+    public function __invoke(Request $request): Response
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+
+        // 1. Readiness score calculation
+        $readiness = $this->readinessCalculator->calculate($user);
+
+        // 2. Performance Quadrants
+        $quadrants = $this->quadrantService->getQuadrantBreakdown($user);
+
+        // 3. Subject progress overview
+        $subjects = Subject::withCount(['questions', 'topics'])
+            ->orderBy('order_index')
+            ->get()
+            ->map(function ($s) use ($user) {
+                $attempted = QuestionAttempt::where('user_id', $user->id)
+                    ->whereHas('question', fn ($q) => $q->where('subject_id', $s->id))
+                    ->distinct('question_id')
+                    ->count('question_id');
+
+                $correct = QuestionAttempt::where('user_id', $user->id)
+                    ->whereHas('question', fn ($q) => $q->where('subject_id', $s->id))
+                    ->where('is_correct', true)
+                    ->count();
+
+                $total = $s->questions_count;
+                $coverage = $total > 0 ? round(($attempted / $total) * 100) : 0;
+                $mastery = $attempted > 0 ? round(($correct / $attempted) * 100) : 0;
+
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'slug' => $s->slug,
+                    'icon_key' => $s->icon_key,
+                    'order_index' => $s->order_index,
+                    'questions_count' => $total,
+                    'attempted_count' => $attempted,
+                    'coverage_percentage' => $coverage,
+                    'mastery_percentage' => $mastery,
+                ];
+            });
+
+        // 4. Spaced repetition queue summary
+        $dueCardsCount = SpacedRepetitionQueue::where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('next_review_due')->orWhere('next_review_due', '<=', now());
+            })
+            ->count();
+
+        // 5. Recent test sessions
+        $recentSessions = TestSession::where('user_id', $user->id)
+            ->latest('created_at')
+            ->limit(4)
+            ->get();
+
+        $pathwayEnum = ExamPathway::tryFrom($user->active_pathway ?? 'INI_CET') ?? ExamPathway::INI_CET;
+
+        return Inertia::render('dashboard', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'active_pathway' => $user->active_pathway ?? 'INI_CET',
+                'pathway_label' => $pathwayEnum->label(),
+                'target_exam_date' => $user->target_exam_date?->toDateString(),
+                'daily_study_hours' => $user->daily_study_hours,
+                'daily_mcq_target' => $user->daily_mcq_target,
+            ],
+            'readiness' => $readiness,
+            'quadrants' => $quadrants,
+            'subjects' => $subjects,
+            'dueCardsCount' => $dueCardsCount,
+            'recentSessions' => $recentSessions,
+            'totalQuestions' => Question::count(),
+            'totalAttempts' => QuestionAttempt::where('user_id', $user->id)->count(),
+        ]);
+    }
+}
