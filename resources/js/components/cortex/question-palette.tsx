@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bookmark, CheckCircle2, HelpCircle } from 'lucide-react';
 
 export interface QuestionStatusItem {
@@ -26,9 +26,21 @@ export function QuestionPalette({
     visitedQuestions,
     onSelectQuestion,
 }: QuestionPaletteProps) {
+    const [filter, setFilter] = useState<'all' | 'answered' | 'unanswered' | 'marked'>('all');
+
     const answeredCount = Object.keys(answers).length;
     const markedCount = markedQuestions.size;
     const totalCount = questions.length;
+    const unansweredCount = Math.max(0, totalCount - answeredCount);
+
+    const filteredQuestions = questions
+        .map((q, idx) => ({ q, idx }))
+        .filter(({ q }) => {
+            if (filter === 'answered') return Boolean(answers[q.id]);
+            if (filter === 'unanswered') return !answers[q.id];
+            if (filter === 'marked') return markedQuestions.has(q.id);
+            return true;
+        });
 
     return (
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -39,6 +51,54 @@ export function QuestionPalette({
                 <span className="text-[11px] font-medium text-muted-foreground">
                     {answeredCount}/{totalCount} Answered
                 </span>
+            </div>
+
+            {/* Filter Selector Tabs */}
+            <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-0.5 text-[10px]">
+                <button
+                    type="button"
+                    onClick={() => setFilter('all')}
+                    className={`flex-1 rounded py-1 font-semibold transition-all ${
+                        filter === 'all'
+                            ? 'bg-card text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    All ({totalCount})
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setFilter('answered')}
+                    className={`flex-1 rounded py-1 font-semibold transition-all ${
+                        filter === 'answered'
+                            ? 'bg-card text-[#2FB36F] shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Ans ({answeredCount})
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setFilter('unanswered')}
+                    className={`flex-1 rounded py-1 font-semibold transition-all ${
+                        filter === 'unanswered'
+                            ? 'bg-card text-amber-500 shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Unans ({unansweredCount})
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setFilter('marked')}
+                    className={`flex-1 rounded py-1 font-semibold transition-all ${
+                        filter === 'marked'
+                            ? 'bg-card text-indigo-500 shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Mark ({markedCount})
+                </button>
             </div>
 
             {/* Status Legend */}
@@ -53,7 +113,7 @@ export function QuestionPalette({
                 </div>
                 <div className="flex items-center gap-1.5">
                     <span className="size-2.5 rounded-sm bg-amber-500" />
-                    <span>Unanswered</span>
+                    <span>Unanswered ({unansweredCount})</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <span className="size-2.5 rounded-sm bg-muted border border-border" />
@@ -63,7 +123,7 @@ export function QuestionPalette({
 
             {/* Questions Grid Matrix */}
             <div className="grid grid-cols-5 gap-1.5 max-h-56 overflow-y-auto pr-1">
-                {questions.map((q, idx) => {
+                {filteredQuestions.map(({ q, idx }) => {
                     const isCurrent = idx === currentIndex;
                     const isAnswered = Boolean(answers[q.id]);
                     const isMarked = markedQuestions.has(q.id);

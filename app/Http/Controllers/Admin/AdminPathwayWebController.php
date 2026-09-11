@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Domain\Scoring\ExamPathway;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\QuestionExamRelevance;

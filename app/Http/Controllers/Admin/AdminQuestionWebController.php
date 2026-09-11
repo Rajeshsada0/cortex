@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\QuestionBank\QuestionImportService;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\QuestionExamRelevance;
 use App\Models\QuestionOption;
 use App\Models\Subject;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminQuestionWebController extends Controller
 {
@@ -104,6 +108,22 @@ class AdminQuestionWebController extends Controller
         ]);
     }
 
+    public function uploadImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp,svg|max:10240',
+        ]);
+
+        $path = $request->file('image')->store('questions', 'public');
+        $url = Storage::url($path);
+
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+            'path' => $path,
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -115,6 +135,7 @@ class AdminQuestionWebController extends Controller
             'question_type' => 'nullable|string|max:30',
             'stem' => 'required|string',
             'image_url' => 'nullable|string',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:10240',
             'image_caption' => 'nullable|string|max:255',
             'correct_option' => 'required|in:A,B,C,D',
             'learning_objective' => 'required|string',
@@ -135,7 +156,13 @@ class AdminQuestionWebController extends Controller
             ? $validated['code']
             : 'Q-'.strtoupper(Str::random(8));
 
-        DB::transaction(function () use ($validated, $code) {
+        $imageUrl = $validated['image_url'] ?? null;
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('questions', 'public');
+            $imageUrl = Storage::url($path);
+        }
+
+        DB::transaction(function () use ($validated, $code, $imageUrl) {
             $question = Question::create([
                 'code' => $code,
                 'subject_id' => $validated['subject_id'],
@@ -144,7 +171,7 @@ class AdminQuestionWebController extends Controller
                 'difficulty' => $validated['difficulty'],
                 'question_type' => $validated['question_type'] ?? 'SINGLE_BEST_ANSWER',
                 'stem' => $validated['stem'],
-                'image_url' => $validated['image_url'] ?? null,
+                'image_url' => $imageUrl,
                 'image_caption' => $validated['image_caption'] ?? null,
                 'correct_option' => $validated['correct_option'],
                 'learning_objective' => $validated['learning_objective'],
@@ -176,6 +203,63 @@ class AdminQuestionWebController extends Controller
         return redirect()->route('admin.questions.index')->with('success', 'Clinical Vignette MCQ created successfully.');
     }
 
+    public function importView(): Response
+    {
+        $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+
+        return Inertia::render('admin/questions/import', [
+            'subjects' => $subjects,
+            'importResults' => session('import_results'),
+        ]);
+    }
+
+    public function importProcess(Request $request, QuestionImportService $importService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|max:10240',
+            'status' => 'nullable|in:active,draft',
+            'subject_id' => 'nullable|exists:subjects,id',
+        ]);
+
+        $publishAsActive = ($validated['status'] ?? 'active') === 'active';
+        $defaultSubjectId = ! empty($validated['subject_id']) ? (int) $validated['subject_id'] : null;
+
+        $results = $importService->import(
+            file: $request->file('file'),
+            publishAsActive: $publishAsActive,
+            defaultSubjectId: $defaultSubjectId
+        );
+
+        $msg = "Bulk import completed: {$results['imported']} questions imported successfully.";
+        if ($results['failed'] > 0) {
+            $msg .= " ({$results['failed']} failed).";
+        }
+
+        return redirect()->route('admin.questions.import')
+            ->with('success', $msg)
+            ->with('import_results', $results);
+    }
+
+    public function downloadTemplate(string $format, QuestionImportService $importService): StreamedResponse
+    {
+        $format = strtolower($format);
+        if ($format === 'json') {
+            $content = $importService->getSampleJson();
+            $filename = 'cortex_mcqs_template.json';
+            $contentType = 'application/json';
+        } else {
+            $content = $importService->getSampleCsv();
+            $filename = 'cortex_mcqs_template.csv';
+            $contentType = 'text/csv';
+        }
+
+        return response()->streamDownload(function () use ($content) {
+            echo $content;
+        }, $filename, [
+            'Content-Type' => $contentType,
+        ]);
+    }
+
     public function edit(Question $question): Response
     {
         $question->load(['options', 'relevantExams']);
@@ -204,6 +288,7 @@ class AdminQuestionWebController extends Controller
             'question_type' => 'nullable|string|max:30',
             'stem' => 'required|string',
             'image_url' => 'nullable|string',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:10240',
             'image_caption' => 'nullable|string|max:255',
             'correct_option' => 'required|in:A,B,C,D',
             'learning_objective' => 'required|string',
@@ -220,7 +305,13 @@ class AdminQuestionWebController extends Controller
             'relevant_exams.*' => 'in:MECEE_PG,INI_CET,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
         ]);
 
-        DB::transaction(function () use ($question, $validated) {
+        $imageUrl = $validated['image_url'] ?? $question->image_url;
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('questions', 'public');
+            $imageUrl = Storage::url($path);
+        }
+
+        DB::transaction(function () use ($question, $validated, $imageUrl) {
             $question->update([
                 'code' => $validated['code'],
                 'subject_id' => $validated['subject_id'],
@@ -229,7 +320,7 @@ class AdminQuestionWebController extends Controller
                 'difficulty' => $validated['difficulty'],
                 'question_type' => $validated['question_type'] ?? 'SINGLE_BEST_ANSWER',
                 'stem' => $validated['stem'],
-                'image_url' => $validated['image_url'] ?? null,
+                'image_url' => $imageUrl,
                 'image_caption' => $validated['image_caption'] ?? null,
                 'correct_option' => $validated['correct_option'],
                 'learning_objective' => $validated['learning_objective'],

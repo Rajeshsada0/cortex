@@ -13,6 +13,10 @@ import {
     Layers,
     BookOpen,
     Check,
+    Upload,
+    X,
+    Loader2,
+    FileImage,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +28,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { ClinicalImageViewer } from '@/components/cortex/clinical-image-viewer';
+import { toast } from 'sonner';
 
 interface Subtopic {
     id: number;
@@ -167,6 +173,37 @@ export default function QuestionForm({
         setRelevantExams((prev) =>
             prev.includes(exam) ? prev.filter((e) => e !== exam) : [...prev, exam]
         );
+    };
+
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    const handleImageFileUpload = async (file: File) => {
+        if (!file) return;
+        setUploadingImage(true);
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const res = await fetch('/admin/questions/upload-image', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                },
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (data.url) {
+                setImageUrl(data.url);
+                toast.success('Clinical diagnostic image uploaded successfully');
+            } else {
+                toast.error(data.message || 'Image upload failed');
+            }
+        } catch (err) {
+            toast.error('Could not upload image');
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -452,41 +489,103 @@ export default function QuestionForm({
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="q-image-url" className="text-xs font-bold">
-                                Diagnostic Image URL / SVG Data URI (Optional)
+                    <div className="space-y-4 rounded-xl border border-border/80 bg-muted/10 p-4">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                <FileImage className="size-4 text-[#0066FF]" />
+                                <span>Diagnostic Clinical Imaging (ECG, X-Ray, Histology, CT/MRI)</span>
                             </Label>
-                            <Input
-                                id="q-image-url"
-                                value={imageUrl}
-                                onChange={(e) => setImageUrl(e.target.value)}
-                                placeholder="https://... or data:image/svg+xml;utf8,..."
-                                className="text-xs font-mono"
-                            />
+                            {imageUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setImageUrl('');
+                                        setImageCaption('');
+                                    }}
+                                    className="text-xs text-destructive hover:underline flex items-center gap-1"
+                                >
+                                    <X className="size-3" />
+                                    Remove Image
+                                </button>
+                            )}
                         </div>
 
-                        <div className="space-y-1.5">
-                            <Label htmlFor="q-image-caption" className="text-xs font-bold">
-                                Diagnostic Image Caption
-                            </Label>
-                            <Input
-                                id="q-image-caption"
-                                value={imageCaption}
-                                onChange={(e) => setImageCaption(e.target.value)}
-                                placeholder="e.g., 12-lead ECG demonstrating marked ST elevations..."
-                                className="text-xs"
-                            />
-                        </div>
+                        {!imageUrl ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Option A: File Upload */}
+                                <div
+                                    className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/80 bg-card p-5 text-center hover:border-[#0066FF]/60 hover:bg-blue-50/20 cursor-pointer transition-all"
+                                    onClick={() => document.getElementById('image-file-input')?.click()}
+                                >
+                                    <input
+                                        id="image-file-input"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/jpg,image/webp,image/svg+xml"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                handleImageFileUpload(e.target.files[0]);
+                                            }
+                                        }}
+                                    />
+                                    {uploadingImage ? (
+                                        <div className="flex flex-col items-center gap-2 py-2">
+                                            <Loader2 className="size-6 text-[#0066FF] animate-spin" />
+                                            <span className="text-xs font-semibold text-foreground">Uploading image...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-1.5 py-1">
+                                            <div className="flex size-9 items-center justify-center rounded-xl bg-[#0066FF]/10 text-[#0066FF]">
+                                                <Upload className="size-4" />
+                                            </div>
+                                            <span className="text-xs font-bold text-foreground">Upload Image File</span>
+                                            <span className="text-[10px] text-muted-foreground">PNG, JPG, WebP, SVG up to 10MB</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Option B: Image URL */}
+                                <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 space-y-2">
+                                    <div>
+                                        <Label htmlFor="q-image-url" className="text-[11px] font-bold text-muted-foreground">
+                                            Or Paste Image URL / Data URI
+                                        </Label>
+                                        <Input
+                                            id="q-image-url"
+                                            value={imageUrl}
+                                            onChange={(e) => setImageUrl(e.target.value)}
+                                            placeholder="https://... or /storage/questions/..."
+                                            className="text-xs font-mono mt-1"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Useful for external medical image repositories or DICOM web exports.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {/* Interactive DICOM / High-Res Clinical Image Viewer */}
+                                <ClinicalImageViewer
+                                    imageUrl={imageUrl}
+                                    caption={imageCaption}
+                                />
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="q-image-caption" className="text-xs font-bold">
+                                        Diagnostic Image Caption &amp; Clinical Lead / View Notes
+                                    </Label>
+                                    <Input
+                                        id="q-image-caption"
+                                        value={imageCaption}
+                                        onChange={(e) => setImageCaption(e.target.value)}
+                                        placeholder="e.g., 12-lead ECG demonstrating ST elevations in V1-V4 with reciprocal depressions..."
+                                        className="text-xs"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
-
-                    {imageUrl && (
-                        <div className="rounded-xl border border-border bg-muted/20 p-3 flex flex-col items-center">
-                            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Image Preview</div>
-                            <img src={imageUrl} alt={imageCaption || 'Diagnostic image'} className="max-h-48 max-w-full object-contain rounded-lg border border-border" />
-                            {imageCaption && <span className="text-xs text-muted-foreground mt-2 italic">{imageCaption}</span>}
-                        </div>
-                    )}
                 </div>
 
                 {/* Section 3: 4 Multiple Choice Options & Option-by-Option Rationale */}
@@ -715,9 +814,8 @@ export default function QuestionForm({
                         </div>
 
                         {imageUrl && (
-                            <div className="flex flex-col items-center">
-                                <img src={imageUrl} alt={imageCaption || 'Diagnostic'} className="max-h-48 rounded-lg border" />
-                                {imageCaption && <span className="text-xs text-muted-foreground mt-1 italic">{imageCaption}</span>}
+                            <div className="py-1">
+                                <ClinicalImageViewer imageUrl={imageUrl} caption={imageCaption} />
                             </div>
                         )}
 

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Domain\Scoring\ConfidenceLevel;
-use App\Domain\Scoring\ExamPathway;
 use App\Domain\SpacedRepetition\SpacedRepetitionService;
 use App\Models\Question;
 use App\Models\QuestionAttempt;
@@ -54,7 +53,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'cardiology-acs',
                 'difficulty' => 'HARD',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 58-year-old male with long-standing type 2 diabetes mellitus and a 30 pack-year smoking history presents to the emergency department with 2 hours of crushing retrosternal chest pain radiating to his jaw and epigastrium, accompanied by profuse diaphoresis and nausea. Blood pressure is 88/56 mmHg, heart rate is 52 bpm, and oxygen saturation is 96% on room air. Physical examination reveals cool, clammy extremities and elevated jugular venous pressure without pulmonary rales. A 12-lead ECG is obtained immediately (shown below). Which of the following is the most appropriate next step in pharmacologic management?",
+                'stem' => 'A 58-year-old male with long-standing type 2 diabetes mellitus and a 30 pack-year smoking history presents to the emergency department with 2 hours of crushing retrosternal chest pain radiating to his jaw and epigastrium, accompanied by profuse diaphoresis and nausea. Blood pressure is 88/56 mmHg, heart rate is 52 bpm, and oxygen saturation is 96% on room air. Physical examination reveals cool, clammy extremities and elevated jugular venous pressure without pulmonary rales. A 12-lead ECG is obtained immediately (shown below). Which of the following is the most appropriate next step in pharmacologic management?',
                 'image_url' => $ecgSvg,
                 'image_caption' => '12-lead ECG demonstrating marked ST-segment elevation in leads II, III, and aVF with reciprocal depressions in leads I and aVL.',
                 'correct_option' => 'C',
@@ -77,7 +76,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'cardiovascular-drugs',
                 'difficulty' => 'MEDIUM',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 64-year-old female with persistent atrial fibrillation and symptomatic heart failure with reduced ejection fraction (HFrEF, LVEF 30%) is admitted with fatigue, anorexia, visual halos with yellow-tinted vision (xanthopsia), and palpitations. Her current medications include carvedilol, sacubitril/valsartan, spironolactone, and digoxin. Her serum potassium is 2.8 mEq/L, serum creatinine is 1.8 mg/dL, and digoxin level is 3.6 ng/mL (therapeutic: 0.5-0.9 ng/mL). ECG shows atrial fibrillation with frequent ventricular premature complexes and a ventricular rate of 48 bpm. Which of the following is the definitive antidote?",
+                'stem' => 'A 64-year-old female with persistent atrial fibrillation and symptomatic heart failure with reduced ejection fraction (HFrEF, LVEF 30%) is admitted with fatigue, anorexia, visual halos with yellow-tinted vision (xanthopsia), and palpitations. Her current medications include carvedilol, sacubitril/valsartan, spironolactone, and digoxin. Her serum potassium is 2.8 mEq/L, serum creatinine is 1.8 mg/dL, and digoxin level is 3.6 ng/mL (therapeutic: 0.5-0.9 ng/mL). ECG shows atrial fibrillation with frequent ventricular premature complexes and a ventricular rate of 48 bpm. Which of the following is the definitive antidote?',
                 'image_url' => null,
                 'image_caption' => null,
                 'correct_option' => 'B',
@@ -100,7 +99,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'hematopathology',
                 'difficulty' => 'MEDIUM',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 24-year-old medical student notes painless, rubbery left supraclavicular lymphadenopathy that noticeably aches whenever he consumes beer or wine. Over the past 6 weeks, he has experienced intermittent high fevers lasting 4-5 days followed by afebrile intervals of equal length (Pel-Ebstein fever), along with drenching night sweats and an unintentional 7-kg weight loss. An excisional lymph node biopsy is performed (histology shown). Immunophenotyping of the diagnostic giant cells will most consistently demonstrate which marker profile?",
+                'stem' => 'A 24-year-old medical student notes painless, rubbery left supraclavicular lymphadenopathy that noticeably aches whenever he consumes beer or wine. Over the past 6 weeks, he has experienced intermittent high fevers lasting 4-5 days followed by afebrile intervals of equal length (Pel-Ebstein fever), along with drenching night sweats and an unintentional 7-kg weight loss. An excisional lymph node biopsy is performed (histology shown). Immunophenotyping of the diagnostic giant cells will most consistently demonstrate which marker profile?',
                 'image_url' => $histoSvg,
                 'image_caption' => 'Excisional lymph node section displaying a characteristic binucleated giant cell with prominent eosinophilic inclusion-like nucleoli surrounded by a clear halo.',
                 'correct_option' => 'A',
@@ -123,7 +122,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'emergency-chest-imaging',
                 'difficulty' => 'HARD',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 36-year-old woman who underwent an elective laparoscopic cholecystectomy 5 days ago presents to the emergency room with sudden-onset sharp right-sided pleuritic chest pain, dyspnea, and hemoptysis. Heart rate is 118 bpm, respiratory rate is 26/min, BP is 124/82 mmHg, and pulse oximetry is 91% on room air. D-dimer is 3,450 ng/mL. Contrast-enhanced CT Pulmonary Angiography (CTPA) is obtained (shown below). Which classic radiological sign is demonstrated on the peripheral lung window?",
+                'stem' => 'A 36-year-old woman who underwent an elective laparoscopic cholecystectomy 5 days ago presents to the emergency room with sudden-onset sharp right-sided pleuritic chest pain, dyspnea, and hemoptysis. Heart rate is 118 bpm, respiratory rate is 26/min, BP is 124/82 mmHg, and pulse oximetry is 91% on room air. D-dimer is 3,450 ng/mL. Contrast-enhanced CT Pulmonary Angiography (CTPA) is obtained (shown below). Which classic radiological sign is demonstrated on the peripheral lung window?',
                 'image_url' => $ctSvg,
                 'image_caption' => 'CT chest axial cut showing a peripheral, wedge-shaped pulmonary opacity with the base abutting the visceral pleura and rounded apex pointing towards the hilum.',
                 'correct_option' => 'D',
@@ -146,7 +145,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'derm-emergencies-infections',
                 'difficulty' => 'MEDIUM',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 48-year-old man presents with a dark, irregularly shaped skin lesion on his upper back that has expanded over the past 8 months. His wife noticed it bleeding after drying with a towel. On examination, the lesion measures 9 mm x 7 mm, exhibits irregular notched borders, and contains mixed variegated shades of black, dark brown, and slate blue (dermoscopy shown). Which microscopic parameter is the single most important prognostic factor for predicting 5-year survival and risk of metastatic dissemination in localized primary cutaneous disease?",
+                'stem' => 'A 48-year-old man presents with a dark, irregularly shaped skin lesion on his upper back that has expanded over the past 8 months. His wife noticed it bleeding after drying with a towel. On examination, the lesion measures 9 mm x 7 mm, exhibits irregular notched borders, and contains mixed variegated shades of black, dark brown, and slate blue (dermoscopy shown). Which microscopic parameter is the single most important prognostic factor for predicting 5-year survival and risk of metastatic dissemination in localized primary cutaneous disease?',
                 'image_url' => $dermSvg,
                 'image_caption' => 'Dermoscopy revealing asymmetric pigment network, atypical dots/globules, and focal blue-white veil consistent with invasive melanoma.',
                 'correct_option' => 'A',
@@ -169,7 +168,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'acute-abdomen-trauma',
                 'difficulty' => 'HARD',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 29-year-old unrestrained driver is brought to the trauma center following a high-speed head-on motor vehicle collision. Airway is intact, breath sounds are symmetric, and pulse oximetry is 98% on 4 L nasal cannula. Pulse is 128 bpm, BP is 82/50 mmHg despite 1,000 mL warm lactated Ringer solution. Abdomen is distended and diffusely tender. Extended FAST (eFAST) ultrasound shows significant anechoic fluid in the hepatorenal space (Morison pouch) and splenorenal recess. Pelvis is stable. Which of the following is the most appropriate next step in management?",
+                'stem' => 'A 29-year-old unrestrained driver is brought to the trauma center following a high-speed head-on motor vehicle collision. Airway is intact, breath sounds are symmetric, and pulse oximetry is 98% on 4 L nasal cannula. Pulse is 128 bpm, BP is 82/50 mmHg despite 1,000 mL warm lactated Ringer solution. Abdomen is distended and diffusely tender. Extended FAST (eFAST) ultrasound shows significant anechoic fluid in the hepatorenal space (Morison pouch) and splenorenal recess. Pelvis is stable. Which of the following is the most appropriate next step in management?',
                 'image_url' => null,
                 'image_caption' => null,
                 'correct_option' => 'B',
@@ -215,7 +214,7 @@ class CortexQuestionSeeder extends Seeder
                 'topic_slug' => 'high-risk-obstetrics',
                 'difficulty' => 'MEDIUM',
                 'question_type' => 'SINGLE_BEST_ANSWER',
-                'stem' => "A 32-year-old primigravida at 34 weeks gestation is brought to the triage unit with severe persistent right upper quadrant pain, throbbing frontal headache, and scotomata. Blood pressure is 172/112 mmHg on two measurements 20 minutes apart. Laboratory evaluation reveals: Hemoglobin 9.2 g/dL with schistocytes on peripheral blood smear, platelet count 64,000/uL, AST 240 U/L, ALT 210 U/L, total bilirubin 2.8 mg/dL, and urine protein 3+ on dipstick. After initiating magnesium sulfate for seizure prophylaxis, what is the definitive management?",
+                'stem' => 'A 32-year-old primigravida at 34 weeks gestation is brought to the triage unit with severe persistent right upper quadrant pain, throbbing frontal headache, and scotomata. Blood pressure is 172/112 mmHg on two measurements 20 minutes apart. Laboratory evaluation reveals: Hemoglobin 9.2 g/dL with schistocytes on peripheral blood smear, platelet count 64,000/uL, AST 240 U/L, ALT 210 U/L, total bilirubin 2.8 mg/dL, and urine protein 3+ on dipstick. After initiating magnesium sulfate for seizure prophylaxis, what is the definitive management?',
                 'image_url' => null,
                 'image_caption' => null,
                 'correct_option' => 'A',

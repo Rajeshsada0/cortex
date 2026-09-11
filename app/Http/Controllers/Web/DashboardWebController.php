@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Analytics\NationalRankPredictor;
 use App\Domain\Analytics\PerformanceQuadrantService;
 use App\Domain\Analytics\ReadinessScoreCalculator;
+use App\Domain\Analytics\StudyStreakService;
 use App\Domain\Scoring\ExamPathway;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
@@ -12,6 +14,7 @@ use App\Models\SpacedRepetitionQueue;
 use App\Models\Subject;
 use App\Models\TestSession;
 use App\Models\User;
+use App\Models\UserNoteBookmark;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,6 +24,8 @@ class DashboardWebController extends Controller
     public function __construct(
         private readonly ReadinessScoreCalculator $readinessCalculator,
         private readonly PerformanceQuadrantService $quadrantService,
+        private readonly NationalRankPredictor $rankPredictor,
+        private readonly StudyStreakService $streakService,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -79,6 +84,8 @@ class DashboardWebController extends Controller
             ->get();
 
         $pathwayEnum = ExamPathway::tryFrom($user->active_pathway ?? 'INI_CET') ?? ExamPathway::INI_CET;
+        $rankPrediction = $this->rankPredictor->predict($user, $readiness['readiness_score']);
+        $studyStreak = $this->streakService->calculate($user);
 
         return Inertia::render('dashboard', [
             'user' => [
@@ -93,8 +100,11 @@ class DashboardWebController extends Controller
             ],
             'readiness' => $readiness,
             'quadrants' => $quadrants,
+            'rankPrediction' => $rankPrediction,
+            'studyStreak' => $studyStreak,
             'subjects' => $subjects,
             'dueCardsCount' => $dueCardsCount,
+            'bookmarkedCount' => UserNoteBookmark::where('user_id', $user->id)->where('is_bookmarked', true)->count(),
             'recentSessions' => $recentSessions,
             'totalQuestions' => Question::count(),
             'totalAttempts' => QuestionAttempt::where('user_id', $user->id)->count(),

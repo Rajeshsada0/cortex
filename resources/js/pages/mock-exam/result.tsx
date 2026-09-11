@@ -10,15 +10,36 @@ import {
     Clock,
     Layers,
     Lightbulb,
+    BarChart3,
+    Printer,
+    ShieldAlert,
+    Award,
+    TrendingDown,
+    FileCheck2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
+import { RankPredictionData } from '@/components/cortex/national-rank-predictor';
+
+interface SubjectStat {
+    subject_id: string;
+    name: string;
+    total: number;
+    correct: number;
+    incorrect: number;
+    unanswered: number;
+    penalty_lost: number;
+    net_score: number;
+    accuracy: number;
+}
 
 interface ResultProps {
     user: any;
     session: any;
     questions: any;
+    subjectBreakdown?: SubjectStat[];
+    rankPrediction?: RankPredictionData;
     stats: {
         score: number;
         total: number;
@@ -27,10 +48,18 @@ interface ResultProps {
         unanswered: number;
         accuracy: number;
         timeSpentMinutes: number;
+        penaltyRate?: number;
     };
 }
 
-export default function MockExamResult({ user, session, questions: rawQuestions, stats }: ResultProps) {
+export default function MockExamResult({
+    user,
+    session,
+    questions: rawQuestions,
+    subjectBreakdown = [],
+    rankPrediction,
+    stats,
+}: ResultProps) {
     const questions = Array.isArray(rawQuestions)
         ? rawQuestions
         : (rawQuestions as any)?.data || [];
@@ -42,12 +71,24 @@ export default function MockExamResult({ user, session, questions: rawQuestions,
     const activeQuestion = questions[selectedQuestionIndex];
     const activeAttempt = activeQuestion ? attemptsMap.get(activeQuestion.id) : null;
 
+    // Diagnostic summaries
+    const sortedByAccuracy = [...subjectBreakdown].filter((s) => s.total > 0).sort((a, b) => b.accuracy - a.accuracy);
+    const topSubject = sortedByAccuracy.length > 0 ? sortedByAccuracy[0] : null;
+    const weakestSubject = sortedByAccuracy.length > 0 ? sortedByAccuracy[sortedByAccuracy.length - 1] : null;
+    const totalPenaltyLost = Math.round(subjectBreakdown.reduce((acc, curr) => acc + (curr.penalty_lost || 0), 0) * 100) / 100;
+    const sessionDate = session.completed_at || session.started_at || new Date().toISOString();
+    const formattedDate = new Date(sessionDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+
     return (
-        <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full">
+        <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full print:p-0 print:gap-4 print:text-black print:bg-white">
             <Head title={`Mock Exam Result — ${session.title || 'Grand Mock'}`} />
 
-            {/* Top Score Banner */}
-            <div className="flex flex-col justify-between gap-6 rounded-2xl border border-border bg-gradient-to-r from-[#102A43] via-[#102A43] to-[#1c3d5a] p-6 sm:p-8 text-white shadow-md sm:flex-row sm:items-center">
+            {/* Top Score Banner (Hidden on Print) */}
+            <div className="flex flex-col justify-between gap-6 rounded-2xl border border-border bg-gradient-to-r from-[#102A43] via-[#102A43] to-[#1c3d5a] p-6 sm:p-8 text-white shadow-md sm:flex-row sm:items-center print:hidden">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                         <span className="rounded bg-[#55BDEB]/20 px-2.5 py-0.5 text-xs font-bold text-[#55BDEB]">
@@ -65,8 +106,8 @@ export default function MockExamResult({ user, session, questions: rawQuestions,
                     </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-center justify-center rounded-xl bg-white/10 px-6 py-4 backdrop-blur-md">
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-col items-center justify-center rounded-xl bg-white/10 px-5 py-4 backdrop-blur-md">
                         <span className="text-xs text-neutral-300 uppercase tracking-wider font-semibold">
                             Final Scaled Score
                         </span>
@@ -76,6 +117,146 @@ export default function MockExamResult({ user, session, questions: rawQuestions,
                         <span className="text-[10px] text-neutral-400">
                             Out of {stats.total} Points
                         </span>
+                    </div>
+
+                    {rankPrediction && (
+                        <div className="flex flex-col items-center justify-center rounded-xl bg-white/10 px-5 py-4 backdrop-blur-md">
+                            <span className="text-xs text-neutral-300 uppercase tracking-wider font-semibold">
+                                Projected Rank
+                            </span>
+                            <span className="text-3xl font-extrabold text-[#2FB36F]">
+                                #{rankPrediction.predicted_rank.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] text-neutral-400">
+                                {rankPrediction.percentile}th Percentile
+                            </span>
+                        </div>
+                    )}
+
+                    <Button
+                        onClick={() => window.print()}
+                        className="gap-2 bg-[#55BDEB] hover:bg-[#43a9d7] text-neutral-950 font-bold shadow-sm"
+                    >
+                        <Printer className="size-4" />
+                        Print / PDF Scorecard
+                    </Button>
+                </div>
+            </div>
+
+            {/* Official Printable Transcript Header (Visible ONLY during print) */}
+            <div className="hidden print:flex flex-col border-b-2 border-neutral-900 pb-4 mb-2 text-neutral-900">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl font-black tracking-wider text-black">CORTEX MEDICAL AI</span>
+                            <span className="text-[9px] uppercase font-bold border border-black px-1.5 py-0.2">Official Examination Transcript</span>
+                        </div>
+                        <h1 className="text-lg font-black mt-1">POSTGRADUATE MEDICAL ENTRANCE SCORECARD & AUDIT</h1>
+                        <p className="text-[10px] text-neutral-600">Standardized Medical Assessment • Blueprint Quota & Negative Marking Diagnostics</p>
+                    </div>
+                    <div className="text-right">
+                        <span className="text-xs font-mono font-bold">TRANSCRIPT ID: CTX-{String(session.id).substring(0, 8).toUpperCase()}</span>
+                        <p className="text-[10px] text-neutral-600">Date Issued: {formattedDate}</p>
+                    </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-5 gap-3 text-xs border-t border-neutral-300 pt-2.5">
+                    <div>
+                        <span className="text-neutral-500 block text-[9px] uppercase">Candidate</span>
+                        <span className="font-bold">{user?.name || 'Dr. Candidate'}</span>
+                    </div>
+                    <div>
+                        <span className="text-neutral-500 block text-[9px] uppercase">Exam Pathway</span>
+                        <span className="font-bold">{session.exam_pathway}</span>
+                    </div>
+                    <div>
+                        <span className="text-neutral-500 block text-[9px] uppercase">Configuration</span>
+                        <span className="font-bold">{session.title || 'Grand Mock Exam'}</span>
+                    </div>
+                    <div>
+                        <span className="text-neutral-500 block text-[9px] uppercase">Final Scaled Score</span>
+                        <span className="font-bold text-sm">{stats.score} / {stats.total} ({stats.accuracy}%)</span>
+                    </div>
+                    <div>
+                        <span className="text-neutral-500 block text-[9px] uppercase">Predicted National Rank</span>
+                        <span className="font-bold text-sm text-black">
+                            #{rankPrediction?.predicted_rank.toLocaleString() ?? '—'} ({rankPrediction?.percentile ?? stats.accuracy}%ile)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Medical Audit & Executive Impact Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4">
+                {/* 1. Negative Marking Impact */}
+                <div className="flex flex-col justify-between rounded-xl border border-[#E05252]/30 bg-[#E05252]/5 p-4 print:border-neutral-300 print:bg-white">
+                    <div className="flex items-center gap-2">
+                        <ShieldAlert className="size-5 text-[#E05252]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground print:text-black">
+                            Negative Marking Loss
+                        </h3>
+                    </div>
+                    <div className="mt-2">
+                        <span className="text-2xl font-black text-[#E05252]">
+                            -{totalPenaltyLost > 0 ? totalPenaltyLost : (stats.incorrect * (stats.penaltyRate || 0)).toFixed(2)} pts
+                        </span>
+                        <p className="text-[11px] text-muted-foreground print:text-neutral-600 mt-1">
+                            {stats.incorrect} questions missed at -{stats.penaltyRate ?? 0.33} penalty deduction rate.
+                        </p>
+                    </div>
+                </div>
+
+                {/* 2. Top Performing Discipline */}
+                <div className="flex flex-col justify-between rounded-xl border border-[#2FB36F]/30 bg-[#2FB36F]/5 p-4 print:border-neutral-300 print:bg-white">
+                    <div className="flex items-center gap-2">
+                        <Award className="size-5 text-[#2FB36F]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground print:text-black">
+                            Highest Proficiency
+                        </h3>
+                    </div>
+                    <div className="mt-2">
+                        <span className="text-base font-bold text-[#2FB36F] print:text-neutral-900 line-clamp-1">
+                            {topSubject ? topSubject.name : 'Core Curriculum'}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground print:text-neutral-600 mt-1">
+                            {topSubject ? `${topSubject.accuracy}% accuracy (${topSubject.correct}/${topSubject.total} correct)` : 'Awaiting subject attempts'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* 3. Primary Vulnerability Discipline */}
+                <div className="flex flex-col justify-between rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 print:border-neutral-300 print:bg-white">
+                    <div className="flex items-center gap-2">
+                        <TrendingDown className="size-5 text-amber-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground print:text-black">
+                            Remediation Priority
+                        </h3>
+                    </div>
+                    <div className="mt-2">
+                        <span className="text-base font-bold text-amber-600 dark:text-amber-400 print:text-neutral-900 line-clamp-1">
+                            {weakestSubject ? weakestSubject.name : 'All Balanced'}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground print:text-neutral-600 mt-1">
+                            {weakestSubject ? `${weakestSubject.accuracy}% accuracy (${weakestSubject.incorrect} wrong, -${weakestSubject.penalty_lost} pts lost)` : 'No critical weaknesses'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* 4. Projected National Rank & Counselling */}
+                <div className="flex flex-col justify-between rounded-xl border border-[#55BDEB]/30 bg-[#55BDEB]/5 p-4 print:border-neutral-300 print:bg-white">
+                    <div className="flex items-center gap-2">
+                        <FileCheck2 className="size-5 text-[#55BDEB]" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground print:text-black">
+                            Predicted Rank & Seat
+                        </h3>
+                    </div>
+                    <div className="mt-2">
+                        <span className="text-2xl font-black text-[#55BDEB]">
+                            #{rankPrediction?.predicted_rank.toLocaleString() ?? '—'}
+                        </span>
+                        <p className="text-[11px] text-muted-foreground print:text-neutral-600 mt-1 line-clamp-1">
+                            {rankPrediction?.tier_status ?? 'AIR Top 10% Probability'}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -131,8 +312,94 @@ export default function MockExamResult({ user, session, questions: rawQuestions,
                 </div>
             </div>
 
-            {/* Question Review Deconstruction Split View */}
-            <div className="flex flex-col gap-4">
+            {/* Subject-Wise Diagnostic & Penalty Audit */}
+            {subjectBreakdown && subjectBreakdown.length > 0 && (
+                <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border pb-3">
+                        <div className="flex items-center gap-2">
+                            <BarChart3 className="size-5 text-[#55BDEB]" />
+                            <div>
+                                <h2 className="text-base font-bold text-foreground">
+                                    Subject-Wise Diagnostic & Penalty Audit
+                                </h2>
+                                <p className="text-xs text-muted-foreground">
+                                    Curricular distribution and negative-marking impact per medical discipline.
+                                </p>
+                            </div>
+                        </div>
+                        {stats.penaltyRate !== undefined && (
+                            <span className="self-start sm:self-auto rounded bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                                Penalty Rate: -{stats.penaltyRate} per wrong answer
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                            <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th className="px-4 py-3">Discipline / Subject</th>
+                                    <th className="px-3 py-3 text-center">Items</th>
+                                    <th className="px-3 py-3 text-center">Correct (+1)</th>
+                                    <th className="px-3 py-3 text-center">Wrong</th>
+                                    <th className="px-3 py-3 text-center">Unanswered</th>
+                                    <th className="px-3 py-3 text-center text-destructive">Penalty Lost</th>
+                                    <th className="px-3 py-3 text-center font-bold">Net Score</th>
+                                    <th className="px-4 py-3 text-right">Accuracy</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {subjectBreakdown.map((sb) => {
+                                    const accuracyClass =
+                                        sb.accuracy >= 70
+                                            ? 'text-[#2FB36F] font-bold'
+                                            : sb.accuracy >= 50
+                                            ? 'text-amber-500 font-semibold'
+                                            : 'text-[#E05252] font-bold';
+
+                                    return (
+                                        <tr key={sb.subject_id} className="hover:bg-muted/20 transition-colors">
+                                            <td className="px-4 py-3 font-semibold text-foreground">
+                                                {sb.name}
+                                            </td>
+                                            <td className="px-3 py-3 text-center font-mono text-muted-foreground">
+                                                {sb.total}
+                                            </td>
+                                            <td className="px-3 py-3 text-center font-mono font-bold text-[#2FB36F]">
+                                                {sb.correct}
+                                            </td>
+                                            <td className="px-3 py-3 text-center font-mono text-[#E05252]">
+                                                {sb.incorrect}
+                                            </td>
+                                            <td className="px-3 py-3 text-center font-mono text-muted-foreground">
+                                                {sb.unanswered}
+                                            </td>
+                                            <td className="px-3 py-3 text-center font-mono text-destructive">
+                                                {sb.penalty_lost > 0 ? `-${sb.penalty_lost}` : '0.00'}
+                                            </td>
+                                            <td className="px-3 py-3 text-center font-mono font-extrabold text-foreground">
+                                                {sb.net_score}
+                                            </td>
+                                            <td className={`px-4 py-3 text-right font-mono ${accuracyClass}`}>
+                                                {sb.accuracy}%
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Printable Security & Verification Footer */}
+                    <div className="hidden print:flex items-center justify-between border-t border-neutral-300 pt-3 mt-4 text-[9px] text-neutral-500">
+                        <span>Certified Transcript issued by Cortex Medical Education Assessment Platform</span>
+                        <span className="font-mono">Security Digest: {String(session.id).substring(0, 16).toUpperCase()} • Verified Authenticated</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Question Review Deconstruction Split View (Hidden on Print) */}
+            <div className="flex flex-col gap-4 print:hidden">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                     <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
                         Question-by-Question Diagnostic Review

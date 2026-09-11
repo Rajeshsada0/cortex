@@ -14,8 +14,14 @@ import {
     Layers,
     Share2,
     Clock,
+    Eye,
+    Strikethrough,
+    Award,
+    Check,
+    ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ClinicalImageViewer } from '@/components/cortex/clinical-image-viewer';
 import { ConfidenceSelector, ConfidenceType } from '@/components/cortex/confidence-selector';
 import { TierBreakdown } from '@/components/cortex/tier-breakdown';
@@ -56,12 +62,29 @@ interface RunnerProps {
     session: any;
     questions: { data: QuestionData[] } | QuestionData[];
     attempts?: any[];
+    mode?: 'TUTOR' | 'TIMED';
 }
 
-export default function MCQRunner({ user, session, questions: rawQuestions, attempts = [] }: RunnerProps) {
+export default function MCQRunner({
+    user,
+    session,
+    questions: rawQuestions,
+    attempts = [],
+    mode: propMode,
+}: RunnerProps) {
     const questions: QuestionData[] = Array.isArray(rawQuestions)
         ? rawQuestions
         : (rawQuestions as any)?.data || [];
+
+    const activeMode: 'TUTOR' | 'TIMED' =
+        propMode ||
+        (session?.session_type === 'TIMED_BLOCK' || session?.data?.session_type === 'TIMED_BLOCK'
+            ? 'TIMED'
+            : 'TUTOR');
+
+    const [isBlockFinished, setIsBlockFinished] = useState<boolean>(
+        Boolean(session?.is_completed || session?.data?.is_completed)
+    );
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -70,6 +93,9 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
     const [confidence, setConfidence] = useState<ConfidenceType>('HIGH');
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Strikethrough eliminated distractors: maps questionId -> array of option keys
+    const [eliminatedOptions, setEliminatedOptions] = useState<Record<string, string[]>>({});
 
     // Session state
     const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -87,6 +113,25 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
 
     const currentQuestion = questions[currentIndex];
 
+    // Load attempts initially
+    useEffect(() => {
+        if (attempts && attempts.length > 0) {
+            const initialAnswers: Record<string, string> = {};
+            const initialResults: Record<string, { isCorrect: boolean; selected: string }> = {};
+
+            attempts.forEach((att: any) => {
+                initialAnswers[att.question_id] = att.selected_option;
+                initialResults[att.question_id] = {
+                    isCorrect: att.is_correct,
+                    selected: att.selected_option,
+                };
+            });
+
+            setAnswers(initialAnswers);
+            setResults(initialResults);
+        }
+    }, []);
+
     // Load any existing attempt for the active question
     useEffect(() => {
         if (!currentQuestion) return;
@@ -94,32 +139,32 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
         setVisitedQuestions((prev) => new Set(prev).add(currentQuestion.id));
 
         const existingResult = results[currentQuestion.id];
-        if (existingResult) {
+        if (existingResult && (activeMode === 'TUTOR' || isBlockFinished)) {
             setSelectedOption(existingResult.selected);
             setIsSubmitted(true);
         } else if (answers[currentQuestion.id]) {
             setSelectedOption(answers[currentQuestion.id]);
-            setIsSubmitted(false);
+            setIsSubmitted(isBlockFinished);
         } else {
             setSelectedOption(null);
             setInitialOption(null);
             setWasSwitched(false);
             setIsSubmitted(false);
         }
-    }, [currentIndex, currentQuestion?.id]);
+    }, [currentIndex, currentQuestion?.id, isBlockFinished, activeMode]);
 
     // Track active question timer
     useEffect(() => {
-        if (isSubmitted) return;
+        if (isBlockFinished || (activeMode === 'TUTOR' && isSubmitted)) return;
         const interval = setInterval(() => {
             setSecondsElapsed((prev) => prev + 1);
         }, 1000);
         return () => clearInterval(interval);
-    }, [isSubmitted, currentIndex]);
+    }, [isSubmitted, isBlockFinished, activeMode, currentIndex]);
 
     // Handle Option Selection
     const handleSelectOption = (key: string) => {
-        if (isSubmitted) return;
+        if (isSubmitted || isBlockFinished) return;
 
         if (selectedOption && selectedOption !== key) {
             setWasSwitched(true);
@@ -129,6 +174,46 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
         }
         setSelectedOption(key);
         setAnswers((prev) => ({ ...prev, [currentQuestion.id]: key }));
+
+        // In TIMED mode, silently persist candidate answer attempt
+        if (activeMode === 'TIMED' && currentQuestion) {
+            const isCorrect = key.toUpperCase() === currentQuestion.correct_option.toUpperCase();
+            setResults((prev) => ({
+                ...prev,
+                [currentQuestion.id]: { isCorrect, selected: key },
+            }));
+
+            const sessId = session.id || session.data?.id;
+            fetch(`/api/v1/test-sessions/${sessId}/attempts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    question_id: currentQuestion.id,
+                    selected_option: key,
+                    confidence: confidence,
+                    time_taken_seconds: secondsElapsed,
+                    was_switched: wasSwitched,
+                    initial_option: initialOption,
+                }),
+            }).catch(() => {});
+        }
+    };
+
+    // Toggle Strikethrough for a distractor option
+    const toggleStrikethrough = (e: React.MouseEvent, optionKey: string) => {
+        e.stopPropagation();
+        if (!currentQuestion) return;
+
+        setEliminatedOptions((prev) => {
+            const currentList = prev[currentQuestion.id] || [];
+            const updated = currentList.includes(optionKey)
+                ? currentList.filter((k) => k !== optionKey)
+                : [...currentList, optionKey];
+            return { ...prev, [currentQuestion.id]: updated };
+        });
     };
 
     // Toggle Mark for Review
@@ -147,7 +232,7 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
         });
     }, [currentQuestion?.id]);
 
-    // Submit Answer
+    // Submit Answer (in Tutor Mode)
     const handleSubmitAnswer = async () => {
         if (!selectedOption || !currentQuestion || isSubmitted || isSubmitting) return;
 
@@ -172,7 +257,6 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
             });
 
             if (res.ok) {
-                const data = await res.json();
                 setIsSubmitted(true);
                 setResults((prev) => ({
                     ...prev,
@@ -181,16 +265,15 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
 
                 if (isCorrect) {
                     toast.success('Correct Answer!', {
-                        description: `Confidence: ${confidence} • Added to SM-2 Spaced Repetition Queue`,
+                        description: `Confidence: ${confidence} • Synced to SM-2 Spaced Repetition Queue`,
                     });
                 } else {
                     toast.error('Incorrect Choice', {
-                        description: `Correct was Option ${currentQuestion.correct_option}. Reset to Stage 0 (Due in 4h).`,
+                        description: `Correct was Option ${currentQuestion.correct_option}. Scheduled for rapid review.`,
                     });
                 }
             }
         } catch (err) {
-            // Local fallback
             setIsSubmitted(true);
             setResults((prev) => ({
                 ...prev,
@@ -201,10 +284,39 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
         }
     };
 
-    // Keyboard Shortcuts (A, B, C, D, 1-4, Enter, M, Arrows)
+    // Finish Block in Timed Mode
+    const handleFinishTimedBlock = async () => {
+        setIsSubmitting(true);
+        const sessId = session.id || session.data?.id;
+
+        try {
+            await fetch(`/api/v1/test-sessions/${sessId}/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    time_spent_seconds: secondsElapsed,
+                }),
+            });
+            setIsBlockFinished(true);
+            setIsSubmitted(true);
+            toast.success('Practice Block Submitted!', {
+                description: 'Scorecard generated. Explanations unlocked for review.',
+            });
+        } catch (e) {
+            setIsBlockFinished(true);
+            setIsSubmitted(true);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Keyboard Shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (showNoteModal) return; // Don't trigger when typing note
+            if (showNoteModal) return;
 
             const key = e.key.toUpperCase();
             if (['A', 'B', 'C', 'D'].includes(key)) {
@@ -216,10 +328,16 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                 handleSelectOption(map[key]);
             } else if (key === 'ENTER') {
                 e.preventDefault();
-                if (!isSubmitted) {
-                    handleSubmitAnswer();
-                } else if (currentIndex < questions.length - 1) {
-                    setCurrentIndex((prev) => prev + 1);
+                if (activeMode === 'TUTOR') {
+                    if (!isSubmitted) {
+                        handleSubmitAnswer();
+                    } else if (currentIndex < questions.length - 1) {
+                        setCurrentIndex((prev) => prev + 1);
+                    }
+                } else {
+                    if (currentIndex < questions.length - 1) {
+                        setCurrentIndex((prev) => prev + 1);
+                    }
                 }
             } else if (key === 'M') {
                 e.preventDefault();
@@ -233,7 +351,7 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isSubmitted, selectedOption, currentIndex, questions.length, showNoteModal]);
+    }, [isSubmitted, selectedOption, currentIndex, questions.length, showNoteModal, activeMode]);
 
     // Toggle Bookmark
     const toggleBookmark = async () => {
@@ -280,16 +398,36 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
     if (!currentQuestion) {
         return (
             <div className="flex h-[70vh] flex-col items-center justify-center p-6 text-center">
-                <h2 className="text-xl font-bold">No Questions Found</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                    Please return to Q-Bank builder to configure questions.
-                </p>
-                <Link href="/qbank" className="mt-4">
-                    <Button>Go to Q-Bank Builder</Button>
-                </Link>
+                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm max-w-md">
+                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                        <CheckCircle2 className="size-6 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold">No Questions In This Queue</h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        {session?.data?.title ?? 'This session'} currently has no questions matching the filter. Great work maintaining your clinical accuracy!
+                    </p>
+                    <div className="flex items-center justify-center gap-3 mt-6">
+                        <Link href="/dashboard">
+                            <Button variant="outline">Dashboard</Button>
+                        </Link>
+                        <Link href="/qbank">
+                            <Button>Go to Q-Bank Builder</Button>
+                        </Link>
+                    </div>
+                </div>
             </div>
         );
     }
+
+    // Score calculations when block is finished in Timed mode
+    const totalAnswered = Object.keys(answers).length;
+    const correctCount = Object.values(results).filter((r) => r.isCorrect).length;
+    const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+
+    const currentEliminations = eliminatedOptions[currentQuestion.id] || [];
+
+    // Should we show explanations for this question?
+    const showExplanation = activeMode === 'TUTOR' ? isSubmitted : isBlockFinished;
 
     return (
         <div className="flex flex-col gap-4 p-3 sm:p-5 lg:p-6 w-full min-h-[90vh]">
@@ -301,6 +439,9 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                     <span className="rounded bg-[#102A43] px-2.5 py-1 text-xs font-mono font-bold text-[#55BDEB]">
                         {currentQuestion.code}
                     </span>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                        {activeMode === 'TIMED' ? 'Timed Exam Block' : 'Tutor Mode'}
+                    </Badge>
                     <span className="hidden text-xs text-muted-foreground sm:inline">
                         {currentQuestion.subject?.name} • {currentQuestion.topic?.name}
                     </span>
@@ -364,21 +505,56 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                     >
                         <ChevronRight className="size-4" />
                     </Button>
+
+                    {/* Finish Timed Block Button */}
+                    {activeMode === 'TIMED' && !isBlockFinished && (
+                        <Button
+                            size="sm"
+                            onClick={handleFinishTimedBlock}
+                            disabled={isSubmitting}
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-8 ml-2"
+                        >
+                            {isSubmitting ? 'Grading...' : 'Finish Block'}
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            {/* Split-Screen Clinical Layout: Stem & Images (Left) | Options & Rationale (Right) */}
+            {/* Timed Mode Scorecard Banner (When Finished) */}
+            {activeMode === 'TIMED' && isBlockFinished && (
+                <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-md">
+                            <Award className="size-7" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-black text-foreground">
+                                Block Complete — Scorecard: {correctCount} / {questions.length} ({accuracy}%)
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Completed in {Math.round(secondsElapsed / 60)} minutes • Explanations and multi-tier rationales now unlocked below.
+                            </p>
+                        </div>
+                    </div>
+                    <Link href="/qbank">
+                        <Button variant="outline" size="sm" className="text-xs font-bold">
+                            Back to Test Builder
+                        </Button>
+                    </Link>
+                </div>
+            )}
+
+            {/* Split-Screen Clinical Layout */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
                 {/* LEFT COLUMN: Clinical Vignette & Image Viewer */}
                 <div className="flex flex-col gap-4 lg:col-span-7">
-                    {/* Clinical Vignette Stem */}
                     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-sm">
                         <div className="flex items-center justify-between border-b border-border pb-2">
                             <span className="text-xs font-bold uppercase tracking-wider text-[#55BDEB]">
                                 Clinical Vignette
                             </span>
                             <span className="text-[11px] text-muted-foreground">
-                                Keyboard: A/B/C/D or 1/2/3/4 • Enter: Submit
+                                Shortcuts: A/B/C/D or 1/2/3/4 • Arrow keys navigate
                             </span>
                         </div>
                         <p className="text-sm sm:text-base leading-relaxed text-foreground font-normal whitespace-pre-line">
@@ -386,7 +562,7 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                         </p>
                     </div>
 
-                    {/* High-Fidelity DICOM/Clinical Image Viewer (If Present) */}
+                    {/* Clinical Image Viewer */}
                     {currentQuestion.image_url && (
                         <ClinicalImageViewer
                             imageUrl={currentQuestion.image_url}
@@ -395,7 +571,7 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                         />
                     )}
 
-                    {/* Action Tray: Bookmark, Note, Flashcard */}
+                    {/* Action Tray: Bookmark, Note, Strikethrough Hint */}
                     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
                         <div className="flex items-center gap-2">
                             <Button
@@ -425,18 +601,17 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                                Spaced Repetition: SM-2 Active
-                            </span>
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <Strikethrough className="size-3.5 text-muted-foreground" />
+                            <span>Click cross/icon to rule out distractors</span>
                         </div>
                     </div>
                 </div>
 
                 {/* RIGHT COLUMN: Options Palette, Confidence Rating, and 3-Tier Rationale */}
                 <div className="flex flex-col gap-4 lg:col-span-5">
-                    {/* Pre-Submission Confidence Rating */}
-                    {!isSubmitted && (
+                    {/* Pre-Submission Confidence Rating in Tutor mode */}
+                    {activeMode === 'TUTOR' && !isSubmitted && (
                         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
                             <ConfidenceSelector
                                 value={confidence}
@@ -452,7 +627,7 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                             <span className="text-xs font-bold uppercase tracking-wider text-foreground">
                                 Answer Choices
                             </span>
-                            {isSubmitted && (
+                            {showExplanation && (
                                 <span className="text-xs font-bold text-[#2FB36F]">
                                     Correct: Option {currentQuestion.correct_option}
                                 </span>
@@ -462,71 +637,128 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                         <div className="flex flex-col gap-2">
                             {currentQuestion.options.map((opt) => {
                                 const isSelected = selectedOption === opt.option_key;
-                                const isCorrect = opt.option_key.toUpperCase() === currentQuestion.correct_option.toUpperCase();
+                                const isEliminated = currentEliminations.includes(opt.option_key);
+                                const isCorrect =
+                                    opt.option_key.toUpperCase() === currentQuestion.correct_option.toUpperCase();
 
                                 let optionStyle = 'border-border bg-background hover:bg-muted/40 text-foreground';
                                 let badgeStyle = 'bg-muted text-muted-foreground font-bold';
 
-                                if (isSubmitted) {
+                                if (showExplanation) {
                                     if (isCorrect) {
-                                        optionStyle = 'border-[#2FB36F] bg-[#2FB36F]/15 text-[#1e7e4c] dark:text-[#2FB36F] font-semibold ring-1 ring-[#2FB36F]';
+                                        optionStyle =
+                                            'border-[#2FB36F] bg-[#2FB36F]/15 text-[#1e7e4c] dark:text-[#2FB36F] font-semibold ring-1 ring-[#2FB36F]';
                                         badgeStyle = 'bg-[#2FB36F] text-white font-black shadow-xs';
                                     } else if (isSelected) {
-                                        optionStyle = 'border-[#E05252] bg-[#E05252]/15 text-[#a82828] dark:text-[#E05252] font-semibold ring-1 ring-[#E05252]';
+                                        optionStyle =
+                                            'border-[#E05252] bg-[#E05252]/15 text-[#a82828] dark:text-[#E05252] font-semibold ring-1 ring-[#E05252]';
                                         badgeStyle = 'bg-[#E05252] text-white font-black shadow-xs';
                                     } else {
                                         optionStyle = 'border-border/60 opacity-60 text-muted-foreground';
                                         badgeStyle = 'bg-muted text-muted-foreground font-semibold';
                                     }
                                 } else if (isSelected) {
-                                    optionStyle = 'border-[#0066FF] dark:border-[#55BDEB] bg-[#EBF5FC] dark:bg-sky-950/40 text-[#0A1E34] dark:text-slate-100 ring-1.5 ring-[#0066FF] dark:ring-[#55BDEB] font-semibold shadow-xs';
-                                    badgeStyle = 'bg-[#0066FF] dark:bg-[#55BDEB] text-white dark:text-neutral-950 font-black shadow-xs';
+                                    optionStyle =
+                                        'border-[#0066FF] dark:border-[#55BDEB] bg-[#EBF5FC] dark:bg-sky-950/40 text-[#0A1E34] dark:text-slate-100 ring-1.5 ring-[#0066FF] dark:ring-[#55BDEB] font-semibold shadow-xs';
+                                    badgeStyle =
+                                        'bg-[#0066FF] dark:bg-[#55BDEB] text-white dark:text-neutral-950 font-black shadow-xs';
+                                } else if (isEliminated) {
+                                    optionStyle =
+                                        'border-border/40 bg-muted/20 text-muted-foreground opacity-45 line-through';
                                 }
 
                                 return (
-                                    <button
+                                    <div
                                         key={opt.id || opt.option_key}
-                                        type="button"
-                                        disabled={isSubmitted}
                                         onClick={() => handleSelectOption(opt.option_key)}
-                                        className={`flex items-start gap-3 rounded-xl border p-3.5 text-left text-xs transition-all cursor-pointer ${optionStyle}`}
+                                        className={`group relative flex items-start gap-3 rounded-xl border p-3.5 text-left text-xs transition-all cursor-pointer ${optionStyle}`}
                                     >
                                         <span
                                             className={`flex size-6 shrink-0 items-center justify-center rounded-md text-xs ${badgeStyle}`}
                                         >
                                             {opt.option_key}
                                         </span>
-                                        <span className="flex-1 leading-relaxed">{opt.option_text}</span>
-                                    </button>
+                                        <span className={`flex-1 leading-relaxed ${isEliminated ? 'line-through' : ''}`}>
+                                            {opt.option_text}
+                                        </span>
+
+                                        {/* Strikethrough action icon */}
+                                        {!showExplanation && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => toggleStrikethrough(e, opt.option_key)}
+                                                className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted/80 text-muted-foreground ${
+                                                    isEliminated ? '!opacity-100 text-rose-500 font-bold' : ''
+                                                }`}
+                                                title="Strike through this distractor"
+                                            >
+                                                <Strikethrough className="size-3.5" />
+                                            </button>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>
 
-                        {/* Submit Button */}
-                        {!isSubmitted ? (
-                            <Button
-                                type="button"
-                                disabled={!selectedOption || isSubmitting}
-                                onClick={handleSubmitAnswer}
-                                className="mt-3 w-full bg-[#102A43] dark:bg-[#55BDEB] text-white dark:text-neutral-950 font-bold hover:opacity-90 h-10 shadow-sm"
-                            >
-                                {isSubmitting ? 'Verifying...' : 'Submit Answer (Enter)'}
-                            </Button>
-                        ) : (
-                            <div className="mt-3 flex gap-2">
+                        {/* Navigation / Action button based on mode */}
+                        {activeMode === 'TUTOR' ? (
+                            !isSubmitted ? (
                                 <Button
                                     type="button"
-                                    onClick={() => {
-                                        if (currentIndex < questions.length - 1) {
-                                            setCurrentIndex((prev) => prev + 1);
-                                        } else {
-                                            toast.info('Completed all questions in this block!');
-                                        }
-                                    }}
-                                    className="w-full bg-[#55BDEB] text-neutral-950 font-bold hover:bg-[#55BDEB]/90 h-10"
+                                    disabled={!selectedOption || isSubmitting}
+                                    onClick={handleSubmitAnswer}
+                                    className="mt-3 w-full bg-[#102A43] dark:bg-[#55BDEB] text-white dark:text-neutral-950 font-bold hover:opacity-90 h-10 shadow-sm"
                                 >
-                                    Next Question →
+                                    {isSubmitting ? 'Verifying...' : 'Submit Answer (Enter)'}
                                 </Button>
+                            ) : (
+                                <div className="mt-3 flex gap-2">
+                                    <Button
+                                        type="button"
+                                        onClick={() => {
+                                            if (currentIndex < questions.length - 1) {
+                                                setCurrentIndex((prev) => prev + 1);
+                                            } else {
+                                                toast.info('Completed all questions in this block!');
+                                            }
+                                        }}
+                                        className="w-full bg-[#55BDEB] text-neutral-950 font-bold hover:bg-[#55BDEB]/90 h-10"
+                                    >
+                                        Next Question →
+                                    </Button>
+                                </div>
+                            )
+                        ) : (
+                            <div className="mt-3 flex items-center justify-between gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={currentIndex === 0}
+                                    onClick={() => setCurrentIndex((prev) => prev - 1)}
+                                    className="w-1/2 text-xs font-bold"
+                                >
+                                    ← Previous
+                                </Button>
+                                {currentIndex < questions.length - 1 ? (
+                                    <Button
+                                        type="button"
+                                        onClick={() => setCurrentIndex((prev) => prev + 1)}
+                                        className="w-1/2 bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-xs"
+                                    >
+                                        Next Question →
+                                    </Button>
+                                ) : (
+                                    !isBlockFinished && (
+                                        <Button
+                                            type="button"
+                                            onClick={handleFinishTimedBlock}
+                                            disabled={isSubmitting}
+                                            className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                                        >
+                                            Submit Block
+                                        </Button>
+                                    )
+                                )}
                             </div>
                         )}
                     </div>
@@ -541,8 +773,8 @@ export default function MCQRunner({ user, session, questions: rawQuestions, atte
                         onSelectQuestion={setCurrentIndex}
                     />
 
-                    {/* Immediate Post-Answer 3-Tier Clinical Breakdown */}
-                    {isSubmitted && (
+                    {/* 3-Tier Clinical Breakdown & Rationale Table (Unlocked when submitted or review) */}
+                    {showExplanation && (
                         <>
                             <TierBreakdown
                                 learningObjective={currentQuestion.learning_objective}

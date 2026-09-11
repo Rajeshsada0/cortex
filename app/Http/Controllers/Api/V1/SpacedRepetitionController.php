@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Domain\Scoring\ConfidenceLevel;
 use App\Domain\SpacedRepetition\SpacedRepetitionService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\QuestionResource;
-use App\Models\Question;
 use App\Models\SpacedRepetitionQueue;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;

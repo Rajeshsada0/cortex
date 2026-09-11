@@ -1,5 +1,6 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2, HelpCircle, AlertCircle, Shuffle } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { AlertTriangle, CheckCircle2, HelpCircle, AlertCircle, Shuffle, ArrowRight } from 'lucide-react';
 
 interface QuadrantItem {
     title: string;
@@ -128,6 +129,20 @@ export function PerformanceQuadrant({
                     <p className="mt-3 text-xs text-muted-foreground">
                         {quadrants.mastered.description}
                     </p>
+                    <div className="mt-4 pt-3 border-t border-[#2FB36F]/20 flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground">High accuracy recall</span>
+                        {quadrants.mastered.count > 0 ? (
+                            <Link
+                                href="/qbank/runner?quadrant=mastered&mode=TUTOR"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#2FB36F]/15 px-3 py-1.5 text-xs font-semibold text-[#2FB36F] hover:bg-[#2FB36F]/25 transition-colors"
+                            >
+                                <span>Review ({quadrants.mastered.count})</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                        ) : (
+                            <span className="text-[11px] text-muted-foreground">0 questions</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Quadrant 2: Hazardous Blind Spot (DANGER ZONE) */}
@@ -161,6 +176,20 @@ export function PerformanceQuadrant({
                     <p className="mt-3 text-xs text-muted-foreground">
                         {quadrants.hazardous.description}
                     </p>
+                    <div className="mt-4 pt-3 border-t border-[#E05252]/20 flex items-center justify-between">
+                        <span className="text-[11px] text-[#E05252] font-semibold">Priority 1 Remediation</span>
+                        {quadrants.hazardous.count > 0 ? (
+                            <Link
+                                href="/qbank/runner?quadrant=hazardous&mode=TUTOR"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#E05252] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#E05252]/90 transition-all"
+                            >
+                                <span>Fix Blind Spots ({quadrants.hazardous.count})</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                        ) : (
+                            <span className="text-[11px] text-[#2FB36F] font-semibold">✓ No blind spots detected</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Quadrant 3: Unstable / Lucky Guess */}
@@ -191,6 +220,20 @@ export function PerformanceQuadrant({
                     <p className="mt-3 text-xs text-muted-foreground">
                         {quadrants.unstable.description}
                     </p>
+                    <div className="mt-4 pt-3 border-t border-[#F59E0B]/20 flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground">Spaced consolidation</span>
+                        {quadrants.unstable.count > 0 ? (
+                            <Link
+                                href="/qbank/runner?quadrant=unstable&mode=TUTOR"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#F59E0B] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#F59E0B]/90 transition-all"
+                            >
+                                <span>Consolidate Guesses ({quadrants.unstable.count})</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                        ) : (
+                            <span className="text-[11px] text-muted-foreground">0 unstable items</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Quadrant 4: Recognized Gap */}
@@ -221,6 +264,20 @@ export function PerformanceQuadrant({
                     <p className="mt-3 text-xs text-muted-foreground">
                         {quadrants.gap.description}
                     </p>
+                    <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground">Targeted study drill</span>
+                        {quadrants.gap.count > 0 ? (
+                            <Link
+                                href="/qbank/runner?quadrant=gap&mode=TUTOR"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                            >
+                                <span>Remediate Gaps ({quadrants.gap.count})</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                        ) : (
+                            <span className="text-[11px] text-muted-foreground">0 gaps detected</span>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

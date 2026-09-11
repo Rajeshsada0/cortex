@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Domain\Scoring\ConfidenceLevel;
 use App\Domain\SpacedRepetition\SpacedRepetitionService;
 use App\Domain\TestSession\TestSessionService;
 use App\Http\Controllers\Controller;

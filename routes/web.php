@@ -1,5 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardWebController;
+use App\Http\Controllers\Admin\AdminPathwayWebController;
+use App\Http\Controllers\Admin\AdminQuestionWebController;
+use App\Http\Controllers\Admin\AdminSubjectWebController;
+use App\Http\Controllers\Admin\AdminTopicWebController;
+use App\Http\Controllers\Admin\AdminUserWebController;
+use App\Http\Controllers\Web\BookmarkWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\DirectoryWebController;
 use App\Http\Controllers\Web\MockExamWebController;
@@ -48,41 +55,48 @@ Route::middleware(['auth', 'candidate'])->group(function () {
 
     // Study Planner
     Route::get('/planner', StudyPlannerWebController::class)->name('planner.index');
+
+    // Clinical Bookmarks & Notes Notebook
+    Route::get('/bookmarks', [BookmarkWebController::class, 'index'])->name('bookmarks.index');
 });
 
 // Admin Console & Content Management System
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Admin\AdminDashboardWebController::class, 'index'])->name('dashboard');
+    Route::get('/', [AdminDashboardWebController::class, 'index'])->name('dashboard');
 
     // Subject Curriculum
-    Route::get('/subjects', [\App\Http\Controllers\Admin\AdminSubjectWebController::class, 'index'])->name('subjects.index');
-    Route::post('/subjects', [\App\Http\Controllers\Admin\AdminSubjectWebController::class, 'store'])->name('subjects.store');
-    Route::put('/subjects/{subject}', [\App\Http\Controllers\Admin\AdminSubjectWebController::class, 'update'])->name('subjects.update');
-    Route::delete('/subjects/{subject}', [\App\Http\Controllers\Admin\AdminSubjectWebController::class, 'destroy'])->name('subjects.destroy');
+    Route::get('/subjects', [AdminSubjectWebController::class, 'index'])->name('subjects.index');
+    Route::post('/subjects', [AdminSubjectWebController::class, 'store'])->name('subjects.store');
+    Route::put('/subjects/{subject}', [AdminSubjectWebController::class, 'update'])->name('subjects.update');
+    Route::delete('/subjects/{subject}', [AdminSubjectWebController::class, 'destroy'])->name('subjects.destroy');
 
     // Topic & Subtopic Hierarchy
-    Route::get('/topics', [\App\Http\Controllers\Admin\AdminTopicWebController::class, 'index'])->name('topics.index');
-    Route::post('/topics', [\App\Http\Controllers\Admin\AdminTopicWebController::class, 'store'])->name('topics.store');
-    Route::put('/topics/{topic}', [\App\Http\Controllers\Admin\AdminTopicWebController::class, 'update'])->name('topics.update');
-    Route::delete('/topics/{topic}', [\App\Http\Controllers\Admin\AdminTopicWebController::class, 'destroy'])->name('topics.destroy');
-    Route::post('/topics/{topic}/subtopics', [\App\Http\Controllers\Admin\AdminTopicWebController::class, 'storeSubtopic'])->name('subtopics.store');
-    Route::delete('/subtopics/{subtopic}', [\App\Http\Controllers\Admin\AdminTopicWebController::class, 'destroySubtopic'])->name('subtopics.destroy');
+    Route::get('/topics', [AdminTopicWebController::class, 'index'])->name('topics.index');
+    Route::post('/topics', [AdminTopicWebController::class, 'store'])->name('topics.store');
+    Route::put('/topics/{topic}', [AdminTopicWebController::class, 'update'])->name('topics.update');
+    Route::delete('/topics/{topic}', [AdminTopicWebController::class, 'destroy'])->name('topics.destroy');
+    Route::post('/topics/{topic}/subtopics', [AdminTopicWebController::class, 'storeSubtopic'])->name('subtopics.store');
+    Route::delete('/subtopics/{subtopic}', [AdminTopicWebController::class, 'destroySubtopic'])->name('subtopics.destroy');
 
     // MCQ Questions Bank
-    Route::get('/questions', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'index'])->name('questions.index');
-    Route::get('/questions/create', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'create'])->name('questions.create');
-    Route::post('/questions', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'store'])->name('questions.store');
-    Route::get('/questions/{question}/edit', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'edit'])->name('questions.edit');
-    Route::put('/questions/{question}', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'update'])->name('questions.update');
-    Route::delete('/questions/{question}', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'destroy'])->name('questions.destroy');
-    Route::post('/questions/{question}/toggle-active', [\App\Http\Controllers\Admin\AdminQuestionWebController::class, 'toggleActive'])->name('questions.toggle-active');
+    Route::get('/questions', [AdminQuestionWebController::class, 'index'])->name('questions.index');
+    Route::get('/questions/create', [AdminQuestionWebController::class, 'create'])->name('questions.create');
+    Route::post('/questions', [AdminQuestionWebController::class, 'store'])->name('questions.store');
+    Route::post('/questions/upload-image', [AdminQuestionWebController::class, 'uploadImage'])->name('questions.upload-image');
+    Route::get('/questions/import', [AdminQuestionWebController::class, 'importView'])->name('questions.import');
+    Route::post('/questions/import', [AdminQuestionWebController::class, 'importProcess'])->name('questions.import.process');
+    Route::get('/questions/import/template/{format}', [AdminQuestionWebController::class, 'downloadTemplate'])->name('questions.import.template');
+    Route::get('/questions/{question}/edit', [AdminQuestionWebController::class, 'edit'])->name('questions.edit');
+    Route::put('/questions/{question}', [AdminQuestionWebController::class, 'update'])->name('questions.update');
+    Route::delete('/questions/{question}', [AdminQuestionWebController::class, 'destroy'])->name('questions.destroy');
+    Route::post('/questions/{question}/toggle-active', [AdminQuestionWebController::class, 'toggleActive'])->name('questions.toggle-active');
 
     // Exam Pathways & Blueprints
-    Route::get('/pathways', [\App\Http\Controllers\Admin\AdminPathwayWebController::class, 'index'])->name('pathways.index');
+    Route::get('/pathways', [AdminPathwayWebController::class, 'index'])->name('pathways.index');
 
     // User Directory & Role Assignment
-    Route::get('/users', [\App\Http\Controllers\Admin\AdminUserWebController::class, 'index'])->name('users.index');
-    Route::post('/users/{user}/toggle-admin', [\App\Http\Controllers\Admin\AdminUserWebController::class, 'toggleAdmin'])->name('users.toggle-admin');
+    Route::get('/users', [AdminUserWebController::class, 'index'])->name('users.index');
+    Route::post('/users/{user}/toggle-admin', [AdminUserWebController::class, 'toggleAdmin'])->name('users.toggle-admin');
 });
 
 require __DIR__.'/settings.php';

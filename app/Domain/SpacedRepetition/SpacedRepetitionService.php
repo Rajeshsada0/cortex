@@ -3,7 +3,6 @@
 namespace App\Domain\SpacedRepetition;
 
 use App\Domain\Scoring\ConfidenceLevel;
-use App\Models\QuestionAttempt;
 use App\Models\SpacedRepetitionQueue;
 use App\Models\User;
 use Illuminate\Support\Carbon;

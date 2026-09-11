@@ -7,6 +7,7 @@ import {
     Repeat,
     Calendar,
     SlidersHorizontal,
+    Bookmark,
     LayoutDashboard,
     HelpCircle,
     Layers,
@@ -62,6 +63,11 @@ const mainNavItems: NavItem[] = [
         title: 'Study Planner',
         href: '/planner',
         icon: Calendar,
+    },
+    {
+        title: 'Bookmarks & Notes',
+        href: '/bookmarks',
+        icon: Bookmark,
     },
 ];
 

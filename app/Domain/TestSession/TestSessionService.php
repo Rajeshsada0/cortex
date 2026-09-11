@@ -6,6 +6,7 @@ use App\Domain\Scoring\ExamPathway;
 use App\Domain\Scoring\MarkingEngine;
 use App\Models\Question;
 use App\Models\QuestionAttempt;
+use App\Models\Subject;
 use App\Models\TestSession;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -25,11 +26,13 @@ final class TestSessionService
         string $title,
         string $sessionType = 'PRACTICE',
         ?string $examPathway = null,
-        ?int $subjectId = null,
-        ?int $topicId = null,
+        int|array|null $subjectId = null,
+        int|array|null $topicId = null,
         ?string $difficulty = null,
         int $limit = 20,
-        ?int $durationMinutes = null
+        ?int $durationMinutes = null,
+        ?string $status = null,
+        ?array $questionIds = null
     ): array {
         $pathway = $examPathway ?? $user->active_pathway ?? 'INI_CET';
 
@@ -37,34 +40,65 @@ final class TestSessionService
             ->where('is_active', true)
             ->forExam($pathway);
 
-        if ($subjectId) {
-            $query->where('subject_id', $subjectId);
+        if (! empty($questionIds)) {
+            $query->whereIn('id', $questionIds);
         }
 
-        if ($topicId) {
-            $query->where('topic_id', $topicId);
+        if (! empty($subjectId)) {
+            if (is_array($subjectId)) {
+                $cleanSubjectIds = array_values(array_filter($subjectId));
+                if (! empty($cleanSubjectIds)) {
+                    $query->whereIn('subject_id', $cleanSubjectIds);
+                }
+            } else {
+                $query->where('subject_id', $subjectId);
+            }
         }
 
-        if ($difficulty) {
-            $query->where('difficulty', $difficulty);
+        if (! empty($topicId)) {
+            if (is_array($topicId)) {
+                $cleanTopicIds = array_values(array_filter($topicId));
+                if (! empty($cleanTopicIds)) {
+                    $query->whereIn('topic_id', $cleanTopicIds);
+                }
+            } else {
+                $query->where('topic_id', $topicId);
+            }
+        }
+
+        if ($difficulty && strtoupper($difficulty) !== 'ALL') {
+            $query->where('difficulty', strtoupper($difficulty));
+        }
+
+        if ($status && strtoupper($status) !== 'ALL') {
+            $query->status($user, $status);
         }
 
         /** @var Collection<int, Question> $questions */
         $questions = $query->inRandomOrder()->limit($limit)->get();
 
-        // If not enough questions found for strict filters, fallback to all active for the exam
-        if ($questions->isEmpty()) {
+        // If not enough questions found for strict filters and status is ALL, fallback
+        if ($questions->isEmpty() && empty($questionIds) && (! $status || strtoupper($status) === 'ALL')) {
             $questions = Question::query()
                 ->where('is_active', true)
+                ->forExam($pathway)
                 ->inRandomOrder()
                 ->limit($limit)
                 ->get();
+
+            if ($questions->isEmpty()) {
+                $questions = Question::query()
+                    ->where('is_active', true)
+                    ->inRandomOrder()
+                    ->limit($limit)
+                    ->get();
+            }
         }
 
         $totalQuestions = $questions->count();
         $calcDuration = $durationMinutes
             ? ($durationMinutes * 60)
-            : ($sessionType === 'GRAND_MOCK' ? 180 * 60 : $totalQuestions * 54); // ~0.9 min/Q
+            : ($sessionType === 'GRAND_MOCK' ? 180 * 60 : max(60, $totalQuestions * 60));
 
         $session = TestSession::create([
             'user_id' => $user->id,
@@ -81,7 +115,107 @@ final class TestSessionService
 
         return [
             'session' => $session,
-            'questions' => $questions->load(['subject', 'topic', 'options']),
+            'questions' => $questions->load(['subject', 'topic', 'subtopic', 'options']),
+        ];
+    }
+
+    /**
+     * Create a Grand Mock Exam session following the exact blueprint quota across medical subjects.
+     *
+     * @return array{session: TestSession, questions: Collection<int, Question>}
+     */
+    public function createBlueprintMockSession(
+        User $user,
+        ExamPathway $pathway,
+        int $targetQuestions = 200,
+        ?int $durationMinutes = null
+    ): array {
+        $quota = $pathway->blueprintQuota($targetQuestions);
+        $subjects = Subject::all()->keyBy('slug');
+
+        $selectedQuestionIds = collect();
+
+        // Sample per subject according to blueprint quota
+        foreach ($quota as $slug => $count) {
+            $subject = $subjects->get($slug);
+            if (! $subject) {
+                continue;
+            }
+
+            $subjectQuestions = Question::where('is_active', true)
+                ->where('subject_id', $subject->id)
+                ->forExam($pathway->value)
+                ->inRandomOrder()
+                ->limit($count)
+                ->pluck('id');
+
+            $selectedQuestionIds = $selectedQuestionIds->merge($subjectQuestions);
+        }
+
+        // Fill up remainder from active pathway questions if quota is not met
+        $needed = $targetQuestions - $selectedQuestionIds->count();
+        if ($needed > 0) {
+            $filler = Question::where('is_active', true)
+                ->whereNotIn('id', $selectedQuestionIds)
+                ->forExam($pathway->value)
+                ->inRandomOrder()
+                ->limit($needed)
+                ->pluck('id');
+
+            $selectedQuestionIds = $selectedQuestionIds->merge($filler);
+        }
+
+        // If still needed (e.g. limited total seeded pool in local demo), fill from any active questions
+        $stillNeeded = $targetQuestions - $selectedQuestionIds->count();
+        if ($stillNeeded > 0) {
+            $genericFiller = Question::where('is_active', true)
+                ->whereNotIn('id', $selectedQuestionIds)
+                ->inRandomOrder()
+                ->limit($stillNeeded)
+                ->pluck('id');
+
+            $selectedQuestionIds = $selectedQuestionIds->merge($genericFiller);
+        }
+
+        $finalQuestionIds = $selectedQuestionIds->unique()->slice(0, $targetQuestions)->values();
+
+        /** @var Collection<int, Question> $questions */
+        $questions = Question::whereIn('id', $finalQuestionIds)
+            ->with(['subject', 'topic', 'subtopic', 'options'])
+            ->get();
+
+        $totalQuestions = $questions->count();
+        $calcDuration = ($durationMinutes ?? $pathway->durationMinutes()) * 60;
+
+        $session = TestSession::create([
+            'user_id' => $user->id,
+            'title' => "{$pathway->label()} Official Grand Mock",
+            'session_type' => 'GRAND_MOCK',
+            'exam_pathway' => $pathway->value,
+            'total_questions' => $totalQuestions,
+            'duration_seconds' => $calcDuration,
+            'time_spent_seconds' => 0,
+            'score_obtained' => 0.0,
+            'is_completed' => false,
+            'started_at' => Carbon::now(),
+        ]);
+
+        // Pre-create placeholder question attempts for deterministic hall rendering
+        foreach ($questions as $q) {
+            QuestionAttempt::create([
+                'session_id' => $session->id,
+                'user_id' => $user->id,
+                'question_id' => $q->id,
+                'selected_option' => null,
+                'is_correct' => false,
+                'confidence' => 'HIGH',
+                'time_taken_seconds' => 0,
+            ]);
+        }
+
+        return [
+            'session' => $session,
+            'questions' => $questions,
         ];
     }
 

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Analytics\NationalRankPredictor;
 use App\Domain\Scoring\ExamPathway;
 use App\Domain\TestSession\TestSessionService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\QuestionResource;
 use App\Http\Resources\V1\TestSessionResource;
 use App\Models\Question;
-use App\Models\QuestionAttempt;
 use App\Models\TestSession;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -55,11 +55,18 @@ class MockExamWebController extends Controller
 
         $session = TestSession::with(['attempts'])->findOrFail($id);
 
-        $questions = Question::where('is_active', true)
-            ->forExam($session->exam_pathway)
-            ->with(['subject', 'topic', 'options', 'relevantExams'])
-            ->limit($session->total_questions)
-            ->get();
+        $attemptQuestionIds = $session->attempts->pluck('question_id')->filter();
+        if ($attemptQuestionIds->isNotEmpty()) {
+            $questions = Question::whereIn('id', $attemptQuestionIds)
+                ->with(['subject', 'topic', 'options', 'relevantExams'])
+                ->get();
+        } else {
+            $questions = Question::where('is_active', true)
+                ->forExam($session->exam_pathway)
+                ->with(['subject', 'topic', 'options', 'relevantExams'])
+                ->limit($session->total_questions)
+                ->get();
+        }
 
         return Inertia::render('mock-exam/hall', [
             'user' => $user,
@@ -70,7 +77,7 @@ class MockExamWebController extends Controller
     }
 
     /**
-     * Start a new Grand Mock session
+     * Start a new Grand Mock session following the official curriculum blueprint
      */
     public function launch(Request $request)
     {
@@ -78,20 +85,24 @@ class MockExamWebController extends Controller
 
         $pathway = ExamPathway::tryFrom($request->input('pathway', $user->active_pathway)) ?? ExamPathway::INI_CET;
 
-        $result = $this->testSessionService->createSession(
+        $targetQuestions = (int) $request->input('target_questions', 200);
+
+        $durationMinutes = $request->filled('duration_minutes')
+            ? (int) $request->input('duration_minutes')
+            : ($targetQuestions >= 200 ? 180 : ($targetQuestions >= 100 ? 90 : ($targetQuestions >= 50 ? 45 : 20)));
+
+        $result = $this->testSessionService->createBlueprintMockSession(
             user: $user,
-            title: "{$pathway->label()} All-India / National Grand Mock",
-            sessionType: 'GRAND_MOCK',
-            examPathway: $pathway->value,
-            limit: 20, // Sample 20 questions for mock run in local demo
-            durationMinutes: 45
+            pathway: $pathway,
+            targetQuestions: $targetQuestions,
+            durationMinutes: $durationMinutes
         );
 
         return redirect()->route('mock-exam.hall', ['id' => $result['session']->id]);
     }
 
     /**
-     * Exam Result & Negative Marking Breakdown
+     * Exam Result, Subject-by-Subject Breakdown & Negative Marking Diagnostics
      */
     public function result(Request $request, string $id): Response
     {
@@ -104,14 +115,53 @@ class MockExamWebController extends Controller
         $incorrect = $attempts->where('is_correct', false)->count();
         $unanswered = max(0, $session->total_questions - $attempts->count());
 
-        $questions = Question::whereIn('id', $attempts->pluck('question_id'))
+        $questionIds = $attempts->pluck('question_id')->filter();
+        $questions = Question::whereIn('id', $questionIds)
             ->with(['subject', 'topic', 'options'])
             ->get();
+
+        // Subject-by-subject breakdown
+        $subjectBreakdown = [];
+        $pathway = ExamPathway::tryFrom($session->exam_pathway) ?? ExamPathway::INI_CET;
+        $penaltyRate = $pathway->penaltyPerIncorrect();
+
+        foreach ($questions->groupBy('subject_id') as $subjId => $qGroup) {
+            $subjName = $qGroup->first()->subject?->name ?? 'Clinical Discipline';
+            $subjQIds = $qGroup->pluck('id');
+            $subjAttempts = $attempts->whereIn('question_id', $subjQIds)->whereNotNull('selected_option');
+
+            $sCorrect = $subjAttempts->where('is_correct', true)->count();
+            $sIncorrect = $subjAttempts->where('is_correct', false)->count();
+            $sUnanswered = max(0, $qGroup->count() - $subjAttempts->count());
+            $sPenalty = round($sIncorrect * $penaltyRate, 2);
+            $sNetScore = round($sCorrect - $sPenalty, 2);
+            $sAccuracy = $subjAttempts->count() > 0 ? round(($sCorrect / $subjAttempts->count()) * 100, 1) : 0;
+
+            $subjectBreakdown[] = [
+                'subject_id' => $subjId,
+                'name' => $subjName,
+                'total' => $qGroup->count(),
+                'correct' => $sCorrect,
+                'incorrect' => $sIncorrect,
+                'unanswered' => $sUnanswered,
+                'penalty_lost' => $sPenalty,
+                'net_score' => $sNetScore,
+                'accuracy' => $sAccuracy,
+            ];
+        }
+
+        $rankPredictor = app(NationalRankPredictor::class);
+        $mockScorePercentage = $session->total_questions > 0
+            ? max(0, ($session->score_obtained / $session->total_questions) * 100)
+            : 0;
+        $rankPrediction = $rankPredictor->predict($user, (float) $mockScorePercentage);
 
         return Inertia::render('mock-exam/result', [
             'user' => $user,
             'session' => new TestSessionResource($session),
             'questions' => QuestionResource::collection($questions),
+            'subjectBreakdown' => $subjectBreakdown,
+            'rankPrediction' => $rankPrediction,
             'stats' => [
                 'score' => (float) $session->score_obtained,
                 'total' => $session->total_questions,
@@ -120,6 +170,7 @@ class MockExamWebController extends Controller
                 'unanswered' => $unanswered,
                 'accuracy' => $attempts->count() > 0 ? round(($correct / $attempts->count()) * 100, 1) : 0,
                 'timeSpentMinutes' => round($session->time_spent_seconds / 60, 1),
+                'penaltyRate' => $penaltyRate,
             ],
         ]);
     }

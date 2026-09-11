@@ -92,4 +92,38 @@ final class PerformanceQuadrantService
             ],
         ];
     }
+
+    /**
+     * Get unique question IDs for a specific quadrant from the user's recent attempts
+     *
+     * @return array<int>
+     */
+    public function getQuadrantQuestionIds(User $user, string $quadrant): array
+    {
+        $targetQuadrant = strtolower(trim($quadrant));
+        $attempts = QuestionAttempt::where('user_id', $user->id)
+            ->latest('id')
+            ->limit(200)
+            ->get();
+
+        $questionIds = [];
+        foreach ($attempts as $attempt) {
+            $isHighConfidence = strtoupper((string) $attempt->confidence) === 'HIGH';
+            $isCorrect = (bool) $attempt->is_correct;
+
+            $matches = match ($targetQuadrant) {
+                'hazardous' => (! $isCorrect && $isHighConfidence),
+                'unstable', 'lucky_guess' => ($isCorrect && ! $isHighConfidence),
+                'gap' => (! $isCorrect && ! $isHighConfidence),
+                'mastered' => ($isCorrect && $isHighConfidence),
+                default => false,
+            };
+
+            if ($matches && $attempt->question_id) {
+                $questionIds[] = $attempt->question_id;
+            }
+        }
+
+        return array_values(array_unique($questionIds));
+    }
 }

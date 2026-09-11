@@ -15,6 +15,7 @@ import {
     Layers,
     Activity,
     FileText,
+    Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -142,6 +143,12 @@ export default function QuestionsIndex({
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
+                        <Link href="/admin/questions/import">
+                            <Button variant="outline" className="border-border text-xs font-bold gap-1.5 shadow-xs hover:border-[#0066FF] hover:text-[#0066FF]">
+                                <Upload className="size-4 text-[#0066FF]" />
+                                Bulk Import
+                            </Button>
+                        </Link>
                         <Link href="/admin/questions/create">
                             <Button className="bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-xs gap-1.5 shadow-md">
                                 <Plus className="size-4" />

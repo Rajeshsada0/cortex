@@ -53,4 +53,79 @@ enum ExamPathway: string
             self::COMBINED => '+1.0 Correct / -0.25 Incorrect',
         };
     }
+
+    public function penaltyPerIncorrect(): float
+    {
+        return match ($this) {
+            self::MECEE_PG => 0.25,
+            self::INI_CET => 0.33,
+            self::USMLE_STEP1 => 0.0,
+            self::USMLE_STEP2CK => 0.0,
+            self::COMBINED => 0.25,
+        };
+    }
+
+    /**
+     * Proportional percentage weights for 19 medical subjects matching national entrance standards.
+     *
+     * @return array<string, float> [subject_slug => percentage]
+     */
+    public function blueprintWeights(): array
+    {
+        return [
+            // Pre-Clinical (18%)
+            'anatomy' => 6.0,
+            'physiology' => 6.0,
+            'biochemistry' => 6.0,
+
+            // Para-Clinical (32%)
+            'pathology' => 9.0,
+            'pharmacology' => 9.0,
+            'microbiology' => 6.0,
+            'forensic-medicine' => 3.0,
+            'community-medicine' => 5.0,
+
+            // Clinical (50%)
+            'general-medicine' => 12.0,
+            'general-surgery' => 12.0,
+            'obstetrics-gynecology' => 10.0,
+            'pediatrics' => 6.0,
+            'orthopedics' => 3.0,
+            'ophthalmology' => 3.0,
+            'ent' => 3.0,
+            'dermatology' => 2.0,
+            'psychiatry' => 2.0,
+            'radiology' => 3.0,
+            'anesthesiology' => 2.0,
+        ];
+    }
+
+    /**
+     * Compute integer question quota per subject for a mock exam of given size.
+     *
+     * @return array<string, int>
+     */
+    public function blueprintQuota(int $total = 200): array
+    {
+        $weights = $this->blueprintWeights();
+        $quota = [];
+        $sum = 0;
+
+        foreach ($weights as $slug => $pct) {
+            $count = (int) round(($pct / 100.0) * $total);
+            if ($total >= count($weights)) {
+                $count = max(1, $count);
+            }
+            $quota[$slug] = $count;
+            $sum += $count;
+        }
+
+        // Adjust rounding difference on general medicine
+        $diff = $total - $sum;
+        if ($diff !== 0 && isset($quota['general-medicine'])) {
+            $quota['general-medicine'] = max(1, $quota['general-medicine'] + $diff);
+        }
+
+        return $quota;
+    }
 }

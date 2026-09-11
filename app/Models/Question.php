@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Domain\Scoring\DifficultyLevel;
-use App\Domain\Scoring\QuestionType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -154,6 +152,44 @@ class Question extends Model
         if ($upperStatus === 'BOOKMARKED') {
             return $query->whereHas('bookmarks', function ($q) use ($user) {
                 $q->where('user_id', $user->id)->where('is_bookmarked', true);
+            });
+        }
+
+        if ($upperStatus === 'HAZARDOUS') {
+            return $query->whereHas('attempts', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->where('is_correct', false)
+                    ->where('confidence', 'HIGH');
+            });
+        }
+
+        if ($upperStatus === 'UNSTABLE' || $upperStatus === 'LUCKY_GUESS') {
+            return $query->whereHas('attempts', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->where('is_correct', true)
+                    ->where(function ($c) {
+                        $c->where('confidence', '!=', 'HIGH')
+                            ->orWhereNull('confidence');
+                    });
+            });
+        }
+
+        if ($upperStatus === 'GAP') {
+            return $query->whereHas('attempts', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->where('is_correct', false)
+                    ->where(function ($c) {
+                        $c->where('confidence', '!=', 'HIGH')
+                            ->orWhereNull('confidence');
+                    });
+            });
+        }
+
+        if ($upperStatus === 'MASTERED') {
+            return $query->whereHas('attempts', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->where('is_correct', true)
+                    ->where('confidence', 'HIGH');
             });
         }
 

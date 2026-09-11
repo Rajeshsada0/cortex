@@ -11,6 +11,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -21,8 +23,9 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(\Laravel\Fortify\Contracts\LoginResponse::class, function () {
-            return new class implements \Laravel\Fortify\Contracts\LoginResponse {
+        $this->app->singleton(LoginResponse::class, function () {
+            return new class implements LoginResponse
+            {
                 public function toResponse($request)
                 {
                     if ($request->user() && $request->user()->is_admin) {
@@ -34,8 +37,9 @@ class FortifyServiceProvider extends ServiceProvider
             };
         });
 
-        $this->app->singleton(\Laravel\Fortify\Contracts\TwoFactorLoginResponse::class, function () {
-            return new class implements \Laravel\Fortify\Contracts\TwoFactorLoginResponse {
+        $this->app->singleton(TwoFactorLoginResponse::class, function () {
+            return new class implements TwoFactorLoginResponse
+            {
                 public function toResponse($request)
                 {
                     if ($request->user() && $request->user()->is_admin) {

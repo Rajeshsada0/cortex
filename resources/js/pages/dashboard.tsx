@@ -12,10 +12,13 @@ import {
     BookOpen,
     Layers,
     Sparkles,
+    Bookmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReadinessGauge } from '@/components/cortex/readiness-gauge';
 import { PerformanceQuadrant } from '@/components/cortex/performance-quadrant';
+import { NationalRankPredictor, RankPredictionData } from '@/components/cortex/national-rank-predictor';
+import { StudyStreakHeatmap, StudyStreakData } from '@/components/cortex/study-streak-heatmap';
 import { PathwaySelector } from '@/components/cortex/pathway-selector';
 
 interface DashboardProps {
@@ -40,6 +43,8 @@ interface DashboardProps {
         };
     };
     quadrants: any;
+    rankPrediction?: RankPredictionData;
+    studyStreak?: StudyStreakData;
     subjects: Array<{
         id: number;
         name: string;
@@ -50,6 +55,7 @@ interface DashboardProps {
         mastery_percentage: number;
     }>;
     dueCardsCount: number;
+    bookmarkedCount?: number;
     recentSessions: any[];
     totalQuestions: number;
     totalAttempts: number;
@@ -59,8 +65,11 @@ export default function Dashboard({
     user,
     readiness,
     quadrants,
+    rankPrediction,
+    studyStreak,
     subjects,
     dueCardsCount,
+    bookmarkedCount = 0,
     recentSessions,
     totalQuestions,
     totalAttempts,
@@ -100,7 +109,7 @@ export default function Dashboard({
             </div>
 
             {/* Quick Metric Stats Banner */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Daily Target
@@ -132,18 +141,34 @@ export default function Dashboard({
 
                 <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Clinical Bookmarks
+                    </span>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-2xl font-extrabold text-amber-500">{bookmarkedCount}</span>
+                        <span className="text-xs text-muted-foreground">Flagged</span>
+                    </div>
+                    <Link
+                        href="/bookmarks"
+                        className="mt-1 flex items-center text-[11px] font-semibold text-[#55BDEB] hover:underline"
+                    >
+                        Open Notebook <ArrowRight className="size-3 ml-1" />
+                    </Link>
+                </div>
+
+                <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Total Solved
                     </span>
                     <div className="mt-2 flex items-baseline gap-2">
                         <span className="text-2xl font-extrabold text-[#2FB36F]">{totalAttempts}</span>
-                        <span className="text-xs text-muted-foreground">/ {totalQuestions} Pool</span>
+                        <span className="text-xs text-muted-foreground">/ {totalQuestions}</span>
                     </div>
                     <span className="mt-1 text-[11px] text-muted-foreground">
                         {totalQuestions > 0 ? Math.round((totalAttempts / totalQuestions) * 100) : 0}% Q-Bank completed
                     </span>
                 </div>
 
-                <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm col-span-2 sm:col-span-1">
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Mock Exam Status
                     </span>
@@ -178,6 +203,14 @@ export default function Dashboard({
                         quadrants={quadrants.quadrants}
                         answerSwitching={quadrants.answer_switching}
                     />
+                </div>
+
+                <div className="lg:col-span-12">
+                    <NationalRankPredictor prediction={rankPrediction} />
+                </div>
+
+                <div className="lg:col-span-12">
+                    <StudyStreakHeatmap streakData={studyStreak} />
                 </div>
             </div>
 

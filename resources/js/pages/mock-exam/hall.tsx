@@ -10,6 +10,9 @@ import {
     ChevronRight,
     CheckCircle,
     ShieldAlert,
+    ShieldCheck,
+    WifiOff,
+    Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ClinicalImageViewer } from '@/components/cortex/clinical-image-viewer';
@@ -48,16 +51,18 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
 
     const sessionId = session.id || session.data?.id;
     const initialDuration = session.duration_seconds || session.data?.duration_seconds || 45 * 60;
+    const storageKey = `cortex_mock_session_${sessionId}`;
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(new Set());
-    const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set([questions[0]?.id]));
+    const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set([questions[0]?.id].filter(Boolean)));
 
     // Timers
     const [secondsRemaining, setSecondsRemaining] = useState(initialDuration);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
 
     // Proctoring & Blur Violation Tracking
     const [blurViolations, setBlurViolations] = useState(0);
@@ -67,17 +72,108 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
 
     const currentQuestion = questions[currentIndex];
 
-    // Load any existing attempts into state
+    // 1. Hydrate state from server attempts & local offline backup
     useEffect(() => {
+        const mappedAnswers: Record<string, string> = {};
+
+        // Seed from database attempts if available
         if (attempts && attempts.length > 0) {
-            const mappedAnswers: Record<string, string> = {};
             attempts.forEach((att: any) => {
                 if (att.question_id && att.selected_option) {
                     mappedAnswers[att.question_id] = att.selected_option;
                 }
             });
-            setAnswers(mappedAnswers);
         }
+
+        // Restore from client-side persistent storage
+        try {
+            const cached = localStorage.getItem(storageKey);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                let restoredCount = 0;
+
+                if (parsed.answers && typeof parsed.answers === 'object') {
+                    Object.assign(mappedAnswers, parsed.answers);
+                    restoredCount = Object.keys(parsed.answers).length;
+                }
+
+                if (Array.isArray(parsed.markedQuestions) && parsed.markedQuestions.length > 0) {
+                    setMarkedQuestions(new Set(parsed.markedQuestions));
+                }
+
+                if (Array.isArray(parsed.visitedQuestions) && parsed.visitedQuestions.length > 0) {
+                    setVisitedQuestions(new Set([...parsed.visitedQuestions, questions[0]?.id].filter(Boolean)));
+                }
+
+                if (typeof parsed.currentIndex === 'number' && parsed.currentIndex >= 0 && parsed.currentIndex < questions.length) {
+                    setCurrentIndex(parsed.currentIndex);
+                }
+
+                if (typeof parsed.secondsRemaining === 'number' && parsed.savedAt) {
+                    const drift = Math.max(0, Math.floor((Date.now() - parsed.savedAt) / 1000));
+                    const adjustedRemaining = Math.max(1, parsed.secondsRemaining - drift);
+                    const adjustedElapsed = (parsed.secondsElapsed || 0) + drift;
+                    setSecondsRemaining(adjustedRemaining);
+                    setSecondsElapsed(adjustedElapsed);
+                }
+
+                if (restoredCount > 0 || (parsed.markedQuestions && parsed.markedQuestions.length > 0)) {
+                    toast.success('Session Auto-Recovered', {
+                        description: `Restored ${restoredCount} answered questions from crash-resilient local cache.`,
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Storage recovery error', e);
+        }
+
+        setAnswers(mappedAnswers);
+    }, [storageKey]);
+
+    // 2. Auto-save session state to localStorage on updates
+    useEffect(() => {
+        if (!sessionId) return;
+        try {
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                    sessionId,
+                    answers,
+                    markedQuestions: Array.from(markedQuestions),
+                    visitedQuestions: Array.from(visitedQuestions),
+                    secondsRemaining,
+                    secondsElapsed,
+                    currentIndex,
+                    savedAt: Date.now(),
+                })
+            );
+        } catch (e) {
+            // Storage quota full or disabled
+        }
+    }, [storageKey, sessionId, answers, markedQuestions, visitedQuestions, secondsRemaining, secondsElapsed, currentIndex]);
+
+    // 3. Network status resilience listeners
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOffline(false);
+            toast.success('Network Reconnected', {
+                description: 'Examination connection re-established. Responses synced.',
+            });
+        };
+        const handleOffline = () => {
+            setIsOffline(true);
+            toast.warning('Network Offline', {
+                description: 'Local auto-save is protecting your responses. Do not refresh.',
+            });
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
     }, []);
 
     // Track visited question
@@ -178,12 +274,19 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
             });
 
             if (res.ok) {
+                try {
+                    localStorage.removeItem(storageKey);
+                } catch (e) {}
+
                 if (document.fullscreenElement) {
                     await document.exitFullscreen().catch(() => {});
                 }
                 router.visit(`/mock-exam/${sessionId}/result`);
             }
         } catch (e) {
+            try {
+                localStorage.removeItem(storageKey);
+            } catch (err) {}
             router.visit(`/mock-exam/${sessionId}/result`);
         } finally {
             setIsSubmitting(false);
@@ -213,6 +316,19 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     <span className="text-xs font-semibold text-foreground hidden sm:inline">
                         Question {currentIndex + 1} of {questions.length}
                     </span>
+
+                    {/* Auto-Save & Offline Status */}
+                    {isOffline ? (
+                        <span className="hidden md:flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                            <WifiOff className="size-3" />
+                            Offline Mode (Local Cache Active)
+                        </span>
+                    ) : (
+                        <span className="hidden md:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            <ShieldCheck className="size-3 text-emerald-500" />
+                            Auto-Save Protected
+                        </span>
+                    )}
                 </div>
 
                 {/* Center: Live Authoritative Countdown Timer */}
@@ -259,6 +375,16 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     </Button>
                 </div>
             </header>
+
+            {/* Final 5-Minute Warning Banner */}
+            {secondsRemaining <= 300 && secondsRemaining > 0 && (
+                <div className="flex items-center justify-between bg-[#E05252]/15 border-b border-[#E05252]/30 px-4 py-2 text-xs font-bold text-[#E05252] animate-pulse">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="size-4 shrink-0" />
+                        <span>FINAL 5-MINUTE WARNING: Exam will auto-submit at 00:00! Review your marked and unanswered questions in the palette now.</span>
+                    </div>
+                </div>
+            )}
 
             {/* Main Hall Layout */}
             <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 w-full lg:grid lg:grid-cols-12 items-start">

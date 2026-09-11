@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Domain\Scoring\ExamPathway;
+use App\Domain\Analytics\PerformanceQuadrantService;
 use App\Domain\TestSession\TestSessionService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\QuestionResource;
@@ -10,7 +10,6 @@ use App\Http\Resources\V1\TestSessionResource;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\TestSession;
-use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,6 +19,7 @@ class QBankWebController extends Controller
 {
     public function __construct(
         private readonly TestSessionService $testSessionService,
+        private readonly PerformanceQuadrantService $performanceQuadrantService,
     ) {}
 
     /**
@@ -28,12 +28,38 @@ class QBankWebController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
-        $subjects = Subject::with('topics')->orderBy('order_index')->get();
+        $pathway = $user->active_pathway ?? 'INI_CET';
+
+        $baseQuery = Question::where('is_active', true)->forExam($pathway);
+
+        $totalPathwayQuestions = (clone $baseQuery)->count();
+        $unusedQuestions = (clone $baseQuery)->status($user, 'UNUSED')->count();
+        $incorrectQuestions = (clone $baseQuery)->status($user, 'INCORRECT')->count();
+        $bookmarkedQuestions = (clone $baseQuery)->status($user, 'BOOKMARKED')->count();
+        $hazardousQuestions = (clone $baseQuery)->status($user, 'HAZARDOUS')->count();
+        $unstableQuestions = (clone $baseQuery)->status($user, 'UNSTABLE')->count();
+
+        $subjects = Subject::with(['topics' => function ($q) {
+            $q->orderBy('high_yield_priority', 'desc');
+        }])
+            ->withCount(['questions' => function ($q) use ($pathway) {
+                $q->where('is_active', true)->forExam($pathway);
+            }])
+            ->orderBy('order_index')
+            ->get();
 
         return Inertia::render('qbank/index', [
             'user' => $user,
             'subjects' => $subjects,
-            'activePathway' => $user->active_pathway,
+            'activePathway' => $pathway,
+            'counts' => [
+                'total' => $totalPathwayQuestions,
+                'unused' => $unusedQuestions,
+                'incorrect' => $incorrectQuestions,
+                'bookmarked' => $bookmarkedQuestions,
+                'hazardous' => $hazardousQuestions,
+                'unstable' => $unstableQuestions,
+            ],
             'totalQuestions' => Question::count(),
         ]);
     }
@@ -55,17 +81,61 @@ class QBankWebController extends Controller
                 ->limit($session->total_questions)
                 ->get();
         } else {
-            // Create a quick practice session if none provided
+            $mode = strtoupper((string) $request->query('mode', 'TUTOR'));
+            if (! in_array($mode, ['TUTOR', 'TIMED'])) {
+                $mode = 'TUTOR';
+            }
+
+            $sessionType = $mode === 'TIMED' ? 'TIMED_BLOCK' : 'PRACTICE';
+            $pathway = $request->query('pathway', $user->active_pathway ?? 'INI_CET');
+            $status = $request->query('status', 'ALL');
+            $quadrant = $request->query('quadrant');
+            $difficulty = $request->query('difficulty', 'ALL');
+            $limit = max(1, min(100, (int) $request->query('limit', 10)));
+
+            $questionIds = null;
+            if ($quadrant) {
+                $status = strtoupper((string) $quadrant);
+                $questionIds = $this->performanceQuadrantService->getQuadrantQuestionIds($user, $quadrant);
+            }
+
+            $rawSubjects = $request->query('subject_ids', $request->query('subject_id'));
+            $subjectIds = null;
+            if ($rawSubjects) {
+                $subjectIds = is_array($rawSubjects)
+                    ? array_map('intval', $rawSubjects)
+                    : array_map('intval', explode(',', (string) $rawSubjects));
+            }
+
+            $rawTopics = $request->query('topic_ids', $request->query('topic_id'));
+            $topicIds = null;
+            if ($rawTopics) {
+                $topicIds = is_array($rawTopics)
+                    ? array_map('intval', $rawTopics)
+                    : array_map('intval', explode(',', (string) $rawTopics));
+            }
+
+            $title = match (strtoupper((string) ($quadrant ?? ''))) {
+                'HAZARDOUS' => 'Hazardous Blind Spot Remediation ('.$pathway.')',
+                'UNSTABLE', 'LUCKY_GUESS' => 'Lucky Guess & Unstable Remediation ('.$pathway.')',
+                'GAP' => 'Knowledge Gap Remediation ('.$pathway.')',
+                'MASTERED' => 'Mastered Concepts Revision ('.$pathway.')',
+                default => ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')',
+            };
+
             $result = $this->testSessionService->createSession(
                 user: $user,
-                title: 'High-Yield Clinical Practice Block',
-                sessionType: 'PRACTICE',
-                examPathway: $request->query('pathway', $user->active_pathway),
-                subjectId: $request->query('subject_id') ? (int) $request->query('subject_id') : null,
-                topicId: $request->query('topic_id') ? (int) $request->query('topic_id') : null,
-                difficulty: $request->query('difficulty'),
-                limit: 10
+                title: $title,
+                sessionType: $sessionType,
+                examPathway: $pathway,
+                subjectId: $subjectIds,
+                topicId: $topicIds,
+                difficulty: $difficulty !== 'ALL' ? $difficulty : null,
+                limit: $limit,
+                status: $questionIds !== null ? null : $status,
+                questionIds: $questionIds
             );
+
             $session = $result['session'];
             $questions = $result['questions'];
         }
@@ -75,6 +145,7 @@ class QBankWebController extends Controller
             'session' => new TestSessionResource($session),
             'questions' => QuestionResource::collection($questions),
             'attempts' => $session->attempts ?? [],
+            'mode' => $session->session_type === 'TIMED_BLOCK' ? 'TIMED' : 'TUTOR',
         ]);
     }
 }
