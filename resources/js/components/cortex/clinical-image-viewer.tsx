@@ -78,7 +78,7 @@ export function ClinicalImageViewer({
     const watermarkText = `${watermark.user_email || watermark.user_id} • IP:${watermark.ip || '127.0.0.1'} • ${watermark.token || 'CTX-DRM'}`;
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-black/95 text-white shadow-inner">
+        <div className="group border-border relative flex flex-col overflow-hidden rounded-xl border bg-black/95 text-white shadow-inner">
             {/* Top Toolbar */}
             <div className="flex items-center justify-between border-b border-white/10 bg-neutral-900/90 px-3 py-2 text-xs backdrop-blur-md">
                 <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export function ClinicalImageViewer({
                         }`}
                         title="DICOM Windowing (Brightness / Contrast)"
                     >
-                        <Sliders className="size-3.5 mr-1" />
+                        <Sliders className="mr-1 size-3.5" />
                         Windowing
                     </Button>
                     <Button
@@ -150,10 +150,14 @@ export function ClinicalImageViewer({
                             min="40"
                             max="160"
                             value={brightness}
-                            onChange={(e) => setBrightness(Number(e.target.value))}
+                            onChange={(e) =>
+                                setBrightness(Number(e.target.value))
+                            }
                             className="h-1.5 w-24 cursor-pointer accent-[#55BDEB]"
                         />
-                        <span className="font-mono text-[10px] text-white/60">{brightness}%</span>
+                        <span className="font-mono text-[10px] text-white/60">
+                            {brightness}%
+                        </span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -164,10 +168,14 @@ export function ClinicalImageViewer({
                             min="50"
                             max="200"
                             value={contrast}
-                            onChange={(e) => setContrast(Number(e.target.value))}
+                            onChange={(e) =>
+                                setContrast(Number(e.target.value))
+                            }
                             className="h-1.5 w-24 cursor-pointer accent-[#55BDEB]"
                         />
-                        <span className="font-mono text-[10px] text-white/60">{contrast}%</span>
+                        <span className="font-mono text-[10px] text-white/60">
+                            {contrast}%
+                        </span>
                     </div>
 
                     <Button
@@ -189,7 +197,7 @@ export function ClinicalImageViewer({
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
-                className="relative flex min-h-[260px] max-h-[460px] w-full cursor-grab items-center justify-center overflow-hidden bg-neutral-950 p-2 select-none active:cursor-grabbing"
+                className="relative flex max-h-[460px] min-h-[260px] w-full cursor-grab items-center justify-center overflow-hidden bg-neutral-950 p-2 select-none active:cursor-grabbing"
             >
                 {/* Clinical Image with CSS Filters */}
                 <div
@@ -198,20 +206,22 @@ export function ClinicalImageViewer({
                         filter: `brightness(${brightness}%) contrast(${contrast}%) ${
                             isInverted ? 'invert(1)' : ''
                         }`,
-                        transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                        transition: isDragging
+                            ? 'none'
+                            : 'transform 0.1s ease-out',
                     }}
-                    className="relative flex items-center justify-center max-w-full"
+                    className="relative flex max-w-full items-center justify-center"
                 >
                     <img
                         src={imageUrl}
                         alt={alt}
-                        className="max-h-[380px] w-auto rounded object-contain pointer-events-none"
+                        className="pointer-events-none max-h-[380px] w-auto rounded object-contain"
                     />
                 </div>
 
                 {/* Anti-Scraping Dynamic Watermark Overlay */}
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden opacity-25">
-                    <div className="grid grid-cols-2 gap-16 -rotate-25 transform select-none font-mono text-[11px] font-bold tracking-widest text-white/40">
+                    <div className="grid -rotate-25 transform grid-cols-2 gap-16 font-mono text-[11px] font-bold tracking-widest text-white/40 select-none">
                         <span>{watermarkText}</span>
                         <span>{watermarkText}</span>
                         <span>{watermarkText}</span>
@@ -220,7 +230,7 @@ export function ClinicalImageViewer({
                 </div>
 
                 {/* DRM Security Tag */}
-                <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 rounded bg-black/70 px-2 py-0.5 text-[9px] font-mono text-white/50 backdrop-blur-sm">
+                <div className="pointer-events-none absolute right-2 bottom-2 flex items-center gap-1 rounded bg-black/70 px-2 py-0.5 font-mono text-[9px] text-white/50 backdrop-blur-sm">
                     <Shield className="size-3 text-[#55BDEB]" />
                     <span>ENCRYPTED DRM ASSET</span>
                 </div>
@@ -229,7 +239,9 @@ export function ClinicalImageViewer({
             {/* Caption Banner */}
             {caption && (
                 <div className="border-t border-white/10 bg-neutral-900/90 px-3 py-1.5 text-xs text-white/80">
-                    <span className="font-semibold text-[#55BDEB]">Clinical Finding: </span>
+                    <span className="font-semibold text-[#55BDEB]">
+                        Clinical Finding:{' '}
+                    </span>
                     {caption}
                 </div>
             )}

@@ -61,7 +61,7 @@ class BookmarkWebController extends Controller
                         'id' => $q->topic->id,
                         'name' => $q->topic->name,
                     ] : null,
-                    'options' => $q->options->map(fn ($opt) => [
+                    'options' => $q->options->sortBy('option_key')->values()->map(fn ($opt) => [
                         'option_key' => $opt->option_key,
                         'option_text' => $opt->option_text,
                         'rationale' => $opt->rationale,

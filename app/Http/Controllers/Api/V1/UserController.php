@@ -42,7 +42,7 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'active_pathway' => 'nullable|string|in:MECEE_PG,INI_CET,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
+            'active_pathway' => 'nullable|string|in:MECEE_PG,INI_CET,NEET_PG,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
             'target_exam_date' => 'nullable|date',
             'daily_study_hours' => 'nullable|integer|min:1|max:18',
             'daily_mcq_target' => 'nullable|integer|min:10|max:500',

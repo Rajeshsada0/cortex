@@ -24,28 +24,34 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 <Form {...email.form()}>
                     {({ processing, errors }) => (
                         <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                            <div className="grid gap-1.5">
+                                <Label
+                                    htmlFor="email"
+                                    className="text-xs font-bold text-slate-900 dark:text-slate-900"
+                                >
+                                    Medical Email Address
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     name="email"
-                                    autoComplete="off"
+                                    autoComplete="email"
                                     autoFocus
-                                    placeholder="email@example.com"
+                                    placeholder="doctor@institution.org"
+                                    className="h-11 rounded-xl border border-sky-200/90 bg-slate-50/80 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all dark:bg-slate-50/80 dark:text-slate-900 dark:border-sky-200/90 dark:placeholder:text-slate-400"
                                 />
 
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="my-6 flex items-center justify-start">
+                            <div className="my-2 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className="h-12 w-full rounded-xl bg-gradient-to-r from-[#0284c7] via-[#0284c7] to-[#0ea5e9] text-xs font-bold text-white shadow-lg shadow-sky-500/25 hover:brightness-105 active:scale-[0.99] transition-all"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
                                     {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     )}
                                     Email password reset link
                                 </Button>
@@ -54,9 +60,14 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="text-muted-foreground space-x-1 text-center text-sm">
-                    <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                <div className="pt-2 text-center text-xs font-medium text-slate-600">
+                    <span>Or, return to </span>
+                    <TextLink
+                        href={login()}
+                        className="font-bold text-sky-600 hover:text-sky-700 hover:underline"
+                    >
+                        log in
+                    </TextLink>
                 </div>
             </div>
         </>

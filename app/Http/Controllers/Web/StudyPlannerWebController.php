@@ -17,8 +17,8 @@ class StudyPlannerWebController extends Controller
     {
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
-        $targetDate = $user?->target_exam_date ?? Carbon::now()->addMonths(4);
-        $daysRemaining = max(1, Carbon::now()->diffInDays($targetDate, false));
+        $targetDate = $user?->target_exam_date ? Carbon::parse($user->target_exam_date) : Carbon::now()->addMonths(4);
+        $daysRemaining = round(max(1, Carbon::now()->diffInDays($targetDate, false)), 2);
 
         $totalQuestions = Question::count();
         $attempted = QuestionAttempt::where('user_id', $user?->id ?? 0)->distinct('question_id')->count('question_id');

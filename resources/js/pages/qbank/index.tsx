@@ -58,7 +58,14 @@ export default function QBankIndex({
     user,
     subjects,
     activePathway,
-    counts = { total: 0, unused: 0, incorrect: 0, bookmarked: 0, hazardous: 0, unstable: 0 },
+    counts = {
+        total: 0,
+        unused: 0,
+        incorrect: 0,
+        bookmarked: 0,
+        hazardous: 0,
+        unstable: 0,
+    },
     totalQuestions,
 }: QBankIndexProps) {
     // Mode: TUTOR vs TIMED
@@ -78,7 +85,9 @@ export default function QBankIndex({
 
     const toggleSubject = (id: number) => {
         setSelectedSubjectIds((prev) =>
-            prev.includes(id) ? prev.filter((sId) => sId !== id) : [...prev, id]
+            prev.includes(id)
+                ? prev.filter((sId) => sId !== id)
+                : [...prev, id],
         );
     };
 
@@ -108,106 +117,130 @@ export default function QBankIndex({
     };
 
     // Calculate approximate questions available based on selection
-    const selectedSubjectsCount = selectedSubjectIds.length > 0 ? selectedSubjectIds.length : subjects.length;
+    const selectedSubjectsCount =
+        selectedSubjectIds.length > 0
+            ? selectedSubjectIds.length
+            : subjects.length;
 
     return (
-        <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+        <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
             <Head title="Custom Test Builder — Cortex Q-Bank" />
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+            <div className="border-cortex-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
                 <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[#0066FF]/20 bg-[#0066FF]/10 px-3 py-1 text-xs font-bold text-[#0066FF] mb-2">
+                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-400">
                         <Sparkles className="size-3.5" />
                         <span>Adaptive Clinical Test Generator</span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                    <h1 className="font-heading text-2xl font-black tracking-tight text-white sm:text-3xl">
                         Custom Q-Bank Test Builder
                     </h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        Tailor high-yield clinical practice blocks by exam simulation mode, prior attempts, and 19-subject disciplines.
+                    <p className="mt-1 text-xs text-slate-300 sm:text-sm">
+                        Tailor high-yield clinical practice blocks by exam
+                        simulation mode, prior attempts, and 19-subject
+                        disciplines.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                    <Badge variant="outline" className="text-xs font-mono py-1 px-2.5 border-border">
-                        Pathway: <span className="font-bold text-[#0066FF] ml-1">{activePathway}</span>
-                    </Badge>
+                    <div className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 font-mono text-xs text-slate-300">
+                        Pathway:{' '}
+                        <span className="ml-1 font-bold text-cyan-400">
+                            {activePathway}
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {/* Step 1: Test Mode Selection */}
             <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[#0066FF] text-xs font-bold text-white">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
                         1
                     </span>
-                    <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
+                    <h2 className="text-sm font-black tracking-wider text-white uppercase">
                         Choose Test Mode
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {/* Tutor Mode */}
                     <div
                         onClick={() => setMode('TUTOR')}
-                        className={`cursor-pointer rounded-2xl border-2 p-5 transition-all flex flex-col justify-between ${
+                        className={`card-glow flex cursor-pointer flex-col justify-between rounded-2xl border-2 p-5 transition-all ${
                             mode === 'TUTOR'
-                                ? 'border-[#0066FF] bg-blue-50/50 dark:bg-blue-950/20 shadow-sm ring-1 ring-[#0066FF]'
-                                : 'border-border bg-card hover:border-border/80 hover:bg-muted/20'
+                                ? 'border-cyan-400 bg-[#0e2238] shadow-lg ring-1 shadow-cyan-950/40 ring-cyan-400/50'
+                                : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover hover:border-slate-600'
                         }`}
                     >
                         <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-[#0066FF]">
-                                    <Sparkles className="size-5" />
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex size-11 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400 shadow-xs">
+                                    <Sparkles className="size-5.5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <h3 className="flex items-center gap-2 text-sm font-bold text-white">
                                         <span>Tutor Mode</span>
-                                        <Badge className="bg-[#0066FF] text-[10px] text-white">Recommended</Badge>
+                                        <span className="rounded-full bg-cyan-500 px-2.5 py-0.5 text-[10px] font-black text-slate-950">
+                                            Recommended
+                                        </span>
                                     </h3>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        Immediate feedback and multi-tiered rationale after each question.
+                                    <p className="mt-1 text-xs font-medium text-slate-300">
+                                        Immediate feedback and multi-tiered
+                                        rationale after each question.
                                     </p>
                                 </div>
                             </div>
-                            {mode === 'TUTOR' && <CheckCircle2 className="size-5 text-[#0066FF]" />}
+                            {mode === 'TUTOR' && (
+                                <CheckCircle2 className="size-5.5 text-cyan-400" />
+                            )}
                         </div>
-                        <div className="mt-4 pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-3">
-                            <span className="flex items-center gap-1">✓ Instant Foundation Explanations</span>
-                            <span className="flex items-center gap-1">✓ SM-2 Confidence Rating</span>
+                        <div className="mt-4 flex items-center gap-4 border-t border-slate-800/80 pt-3 text-xs font-medium text-cyan-300">
+                            <span className="flex items-center gap-1.5">
+                                ✓ Instant Foundation Explanations
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                ✓ SM-2 Confidence Rating
+                            </span>
                         </div>
                     </div>
 
                     {/* Timed Exam Mode */}
                     <div
                         onClick={() => setMode('TIMED')}
-                        className={`cursor-pointer rounded-2xl border-2 p-5 transition-all flex flex-col justify-between ${
+                        className={`card-glow flex cursor-pointer flex-col justify-between rounded-2xl border-2 p-5 transition-all ${
                             mode === 'TIMED'
-                                ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm ring-1 ring-amber-500'
-                                : 'border-border bg-card hover:border-border/80 hover:bg-muted/20'
+                                ? 'border-amber-400 bg-[#1c180e] shadow-lg ring-1 shadow-amber-950/40 ring-amber-400/50'
+                                : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover hover:border-slate-600'
                         }`}
                     >
                         <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-                                    <Clock className="size-5" />
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex size-11 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 shadow-xs">
+                                    <Clock className="size-5.5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-foreground">
+                                    <h3 className="text-sm font-bold text-white">
                                         Timed Simulation Mode
                                     </h3>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        Strict countdown timer, answers hidden until test submission.
+                                    <p className="mt-1 text-xs font-medium text-slate-300">
+                                        Strict countdown timer, answers hidden
+                                        until test submission.
                                     </p>
                                 </div>
                             </div>
-                            {mode === 'TIMED' && <CheckCircle2 className="size-5 text-amber-500" />}
+                            {mode === 'TIMED' && (
+                                <CheckCircle2 className="size-5.5 text-amber-400" />
+                            )}
                         </div>
-                        <div className="mt-4 pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-3">
-                            <span className="flex items-center gap-1">✓ Realistic Exam Speed (60s/Q)</span>
-                            <span className="flex items-center gap-1">✓ End-of-block Scorecard</span>
+                        <div className="mt-4 flex items-center gap-4 border-t border-slate-800/80 pt-3 text-xs font-medium text-amber-300">
+                            <span className="flex items-center gap-1.5">
+                                ✓ Realistic Exam Speed (60s/Q)
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                ✓ End-of-block Scorecard
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -215,30 +248,48 @@ export default function QBankIndex({
 
             {/* Step 2: Question Pool Status Filter */}
             <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[#0066FF] text-xs font-bold text-white">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
                         2
                     </span>
-                    <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
+                    <h2 className="text-sm font-black tracking-wider text-white uppercase">
                         Question Status Filter
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     {/* All */}
                     <div
                         onClick={() => setStatusMode('ALL')}
                         className={`cursor-pointer rounded-2xl border p-4 transition-all ${
                             statusMode === 'ALL'
-                                ? 'border-[#0066FF] bg-[#0066FF]/10 text-[#0066FF] font-bold shadow-xs'
-                                : 'border-border bg-card hover:bg-muted/30 text-muted-foreground'
+                                ? 'border-2 border-cyan-400 bg-[#0e2238] shadow-md'
+                                : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover hover:border-slate-600'
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs">All Questions</span>
-                            <Badge variant="secondary" className="text-[10px] font-mono">{counts.total}</Badge>
+                            <span className="text-xs font-bold text-white">
+                                All Questions
+                            </span>
+                            <span
+                                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${
+                                    statusMode === 'ALL'
+                                        ? 'bg-cyan-500 text-slate-950'
+                                        : 'border border-slate-700 bg-slate-800 text-slate-300'
+                                }`}
+                            >
+                                {counts.total}
+                            </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">Entire question bank</p>
+                        <p
+                            className={`mt-1.5 text-[11px] ${
+                                statusMode === 'ALL'
+                                    ? 'font-medium text-cyan-200'
+                                    : 'text-slate-400'
+                            }`}
+                        >
+                            Entire question bank
+                        </p>
                     </div>
 
                     {/* Unused */}
@@ -246,15 +297,33 @@ export default function QBankIndex({
                         onClick={() => setStatusMode('UNUSED')}
                         className={`cursor-pointer rounded-2xl border p-4 transition-all ${
                             statusMode === 'UNUSED'
-                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold shadow-xs'
-                                : 'border-border bg-card hover:bg-muted/30 text-muted-foreground'
+                                ? 'border-2 border-emerald-400 bg-emerald-950/40 shadow-md'
+                                : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover hover:border-slate-600'
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs">Unattempted</span>
-                            <Badge variant="secondary" className="text-[10px] font-mono">{counts.unused}</Badge>
+                            <span className="text-xs font-bold text-white">
+                                Unattempted
+                            </span>
+                            <span
+                                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${
+                                    statusMode === 'UNUSED'
+                                        ? 'bg-emerald-500 text-slate-950'
+                                        : 'border border-slate-700 bg-slate-800 text-slate-300'
+                                }`}
+                            >
+                                {counts.unused}
+                            </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">Never attempted yet</p>
+                        <p
+                            className={`mt-1.5 text-[11px] ${
+                                statusMode === 'UNUSED'
+                                    ? 'font-medium text-emerald-200'
+                                    : 'text-slate-400'
+                            }`}
+                        >
+                            Never attempted yet
+                        </p>
                     </div>
 
                     {/* Incorrect */}
@@ -262,15 +331,33 @@ export default function QBankIndex({
                         onClick={() => setStatusMode('INCORRECT')}
                         className={`cursor-pointer rounded-2xl border p-4 transition-all ${
                             statusMode === 'INCORRECT'
-                                ? 'border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 font-bold shadow-xs'
-                                : 'border-border bg-card hover:bg-muted/30 text-muted-foreground'
+                                ? 'border-2 border-rose-400 bg-rose-950/40 shadow-md'
+                                : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover hover:border-slate-600'
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs">Missed / Wrong</span>
-                            <Badge variant="secondary" className="text-[10px] font-mono">{counts.incorrect}</Badge>
+                            <span className="text-xs font-bold text-white">
+                                Missed / Wrong
+                            </span>
+                            <span
+                                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${
+                                    statusMode === 'INCORRECT'
+                                        ? 'bg-rose-500 text-white'
+                                        : 'border border-slate-700 bg-slate-800 text-slate-300'
+                                }`}
+                            >
+                                {counts.incorrect}
+                            </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">General remediation</p>
+                        <p
+                            className={`mt-1.5 text-[11px] ${
+                                statusMode === 'INCORRECT'
+                                    ? 'font-medium text-rose-200'
+                                    : 'text-slate-400'
+                            }`}
+                        >
+                            General remediation
+                        </p>
                     </div>
 
                     {/* Hazardous Blind Spots */}
@@ -278,15 +365,27 @@ export default function QBankIndex({
                         onClick={() => setStatusMode('HAZARDOUS')}
                         className={`cursor-pointer rounded-2xl border p-4 transition-all ${
                             statusMode === 'HAZARDOUS'
-                                ? 'border-[#E05252] bg-[#E05252]/10 text-[#E05252] font-bold shadow-xs ring-1 ring-[#E05252]'
-                                : 'border-border bg-card hover:border-[#E05252]/50 hover:bg-[#E05252]/5 text-muted-foreground'
+                                ? 'border-2 border-rose-500 bg-rose-950/60 shadow-md ring-1 ring-rose-500/40'
+                                : 'bg-cortex-card border-rose-900/50 hover:border-rose-700/60 hover:bg-rose-950/20'
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-[#E05252] font-semibold">Hazardous Blind Spots</span>
-                            <Badge className="bg-[#E05252] text-[10px] font-mono text-white">{counts.hazardous ?? 0}</Badge>
+                            <span className="text-xs font-bold text-rose-400">
+                                Hazardous Blind Spots
+                            </span>
+                            <span className="rounded bg-rose-600 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                                {counts.hazardous ?? 0}
+                            </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">High-confidence misses</p>
+                        <p
+                            className={`mt-1.5 text-[11px] ${
+                                statusMode === 'HAZARDOUS'
+                                    ? 'font-medium text-rose-200'
+                                    : 'text-slate-400'
+                            }`}
+                        >
+                            High-confidence misses
+                        </p>
                     </div>
 
                     {/* Lucky Guesses / Unstable */}
@@ -294,15 +393,27 @@ export default function QBankIndex({
                         onClick={() => setStatusMode('UNSTABLE')}
                         className={`cursor-pointer rounded-2xl border p-4 transition-all ${
                             statusMode === 'UNSTABLE'
-                                ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold shadow-xs ring-1 ring-amber-500'
-                                : 'border-border bg-card hover:border-amber-500/50 hover:bg-amber-500/5 text-muted-foreground'
+                                ? 'border-2 border-amber-400 bg-amber-950/60 shadow-md ring-1 ring-amber-500/40'
+                                : 'bg-cortex-card border-amber-900/50 hover:border-amber-700/60 hover:bg-amber-950/20'
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">Lucky Guesses</span>
-                            <Badge className="bg-amber-500 text-[10px] font-mono text-white">{counts.unstable ?? 0}</Badge>
+                            <span className="text-xs font-bold text-amber-400">
+                                Lucky Guesses
+                            </span>
+                            <span className="rounded bg-amber-500 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-950">
+                                {counts.unstable ?? 0}
+                            </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">Low-confidence hits</p>
+                        <p
+                            className={`mt-1.5 text-[11px] ${
+                                statusMode === 'UNSTABLE'
+                                    ? 'font-medium text-amber-200'
+                                    : 'text-slate-400'
+                            }`}
+                        >
+                            Low-confidence hits
+                        </p>
                     </div>
 
                     {/* Bookmarked */}
@@ -310,15 +421,33 @@ export default function QBankIndex({
                         onClick={() => setStatusMode('BOOKMARKED')}
                         className={`cursor-pointer rounded-2xl border p-4 transition-all ${
                             statusMode === 'BOOKMARKED'
-                                ? 'border-indigo-500 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs'
-                                : 'border-border bg-card hover:bg-muted/30 text-muted-foreground'
+                                ? 'border-2 border-indigo-400 bg-indigo-950/40 shadow-md'
+                                : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover hover:border-slate-600'
                         }`}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs">Bookmarked</span>
-                            <Badge variant="secondary" className="text-[10px] font-mono">{counts.bookmarked}</Badge>
+                            <span className="text-xs font-bold text-white">
+                                Bookmarked
+                            </span>
+                            <span
+                                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${
+                                    statusMode === 'BOOKMARKED'
+                                        ? 'bg-indigo-500 text-white'
+                                        : 'border border-slate-700 bg-slate-800 text-slate-300'
+                                }`}
+                            >
+                                {counts.bookmarked}
+                            </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">Saved to personal binder</p>
+                        <p
+                            className={`mt-1.5 text-[11px] ${
+                                statusMode === 'BOOKMARKED'
+                                    ? 'font-medium text-indigo-200'
+                                    : 'text-slate-400'
+                            }`}
+                        >
+                            Saved to personal binder
+                        </p>
                     </div>
                 </div>
             </div>
@@ -326,11 +455,11 @@ export default function QBankIndex({
             {/* Step 3: Medical Subjects Multi-Select */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="flex size-6 items-center justify-center rounded-full bg-[#0066FF] text-xs font-bold text-white">
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
                             3
                         </span>
-                        <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
+                        <h2 className="text-sm font-black tracking-wider text-white uppercase">
                             Medical Curriculum Disciplines
                         </h2>
                     </div>
@@ -339,49 +468,81 @@ export default function QBankIndex({
                         <button
                             type="button"
                             onClick={selectAllSubjects}
-                            className="font-bold text-[#0066FF] hover:underline"
+                            className="cursor-pointer font-bold text-cyan-400 transition hover:text-cyan-300 hover:underline"
                         >
                             Select All
                         </button>
-                        <span className="text-muted-foreground">•</span>
+                        <span className="text-slate-600">•</span>
                         <button
                             type="button"
                             onClick={clearAllSubjects}
-                            className="text-muted-foreground hover:text-foreground"
+                            className="cursor-pointer text-slate-400 transition hover:text-white"
                         >
                             Clear (All Integrated)
                         </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {subjects.map((sub) => {
-                        const isSelected = selectedSubjectIds.length === 0 || selectedSubjectIds.includes(sub.id);
-                        const isExplicitlyPicked = selectedSubjectIds.includes(sub.id);
+                        const isExplicitlyPicked = selectedSubjectIds.includes(
+                            sub.id,
+                        );
+                        const isAllSelected = selectedSubjectIds.length === 0;
 
                         return (
                             <button
                                 key={sub.id}
                                 type="button"
                                 onClick={() => toggleSubject(sub.id)}
-                                className={`rounded-xl border p-3 text-left transition-all flex flex-col justify-between gap-1.5 ${
+                                className={`flex cursor-pointer flex-col justify-between gap-2 rounded-xl p-3 text-left transition-all ${
                                     isExplicitlyPicked
-                                        ? 'border-[#0066FF] bg-blue-50/70 dark:bg-blue-950/40 text-foreground ring-1 ring-[#0066FF]'
-                                        : selectedSubjectIds.length === 0
-                                          ? 'border-border bg-card text-foreground hover:bg-muted/30'
-                                          : 'border-border/50 bg-muted/20 text-muted-foreground opacity-60 hover:opacity-100'
+                                        ? 'border-2 border-cyan-400 bg-[#0e2238] shadow-md ring-1 shadow-cyan-950/40 ring-cyan-400/40'
+                                        : isAllSelected
+                                          ? 'border-cortex-border bg-cortex-card hover:bg-cortex-hover border hover:border-slate-600'
+                                          : 'border border-slate-800/60 bg-slate-900/40 opacity-40 hover:border-slate-700 hover:opacity-90'
                                 }`}
                             >
-                                <div className="flex items-start justify-between gap-1">
-                                    <span className="text-xs font-bold truncate">{sub.name}</span>
-                                    {isExplicitlyPicked && <Check className="size-3.5 text-[#0066FF] shrink-0" />}
+                                <div className="flex items-start justify-between gap-1.5">
+                                    <span
+                                        className={`truncate text-xs font-bold ${
+                                            isExplicitlyPicked
+                                                ? 'text-white'
+                                                : isAllSelected
+                                                  ? 'text-slate-100'
+                                                  : 'text-slate-400'
+                                        }`}
+                                    >
+                                        {sub.name}
+                                    </span>
+                                    {isExplicitlyPicked && (
+                                        <Check className="size-3.5 shrink-0 font-bold text-cyan-400" />
+                                    )}
                                 </div>
-                                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                                    <span>{sub.topics?.length || 0} topics</span>
+                                <div className="flex items-center justify-between text-[11px]">
+                                    <span
+                                        className={
+                                            isExplicitlyPicked
+                                                ? 'font-medium text-cyan-300'
+                                                : isAllSelected
+                                                  ? 'text-slate-400'
+                                                  : 'text-slate-500'
+                                        }
+                                    >
+                                        {sub.topics?.length || 0} topics
+                                    </span>
                                     {sub.questions_count !== undefined && (
-                                        <Badge variant="secondary" className="text-[9px] px-1 h-4 font-mono">
+                                        <span
+                                            className={`rounded px-1.5 py-0.5 font-mono text-[9px] font-bold ${
+                                                isExplicitlyPicked
+                                                    ? 'border border-cyan-500/40 bg-cyan-950 text-cyan-300'
+                                                    : isAllSelected
+                                                      ? 'border border-slate-700 bg-slate-800 text-slate-300'
+                                                      : 'border border-slate-800 bg-slate-900 text-slate-500'
+                                            }`}
+                                        >
                                             {sub.questions_count} Qs
-                                        </Badge>
+                                        </span>
                                     )}
                                 </div>
                             </button>
@@ -391,14 +552,14 @@ export default function QBankIndex({
             </div>
 
             {/* Step 4: Test Size & Difficulty */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">
                 {/* Difficulty */}
                 <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <span className="flex size-6 items-center justify-center rounded-full bg-[#0066FF] text-xs font-bold text-white">
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
                             4
                         </span>
-                        <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
+                        <h2 className="text-sm font-black tracking-wider text-white uppercase">
                             Difficulty Level
                         </h2>
                     </div>
@@ -409,10 +570,10 @@ export default function QBankIndex({
                                 key={diff}
                                 type="button"
                                 onClick={() => setDifficulty(diff)}
-                                className={`rounded-xl border py-2.5 px-3 text-xs font-bold transition-all text-center ${
+                                className={`cursor-pointer rounded-xl px-3 py-2.5 text-center text-xs font-bold transition-all ${
                                     difficulty === diff
-                                        ? 'border-[#0066FF] bg-[#0066FF] text-white shadow-xs'
-                                        : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                                        ? 'border-2 border-cyan-400 bg-cyan-500 font-black text-slate-950 shadow-md shadow-cyan-500/25'
+                                        : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover border text-slate-200 hover:border-slate-600 hover:text-white'
                                 }`}
                             >
                                 {diff === 'ALL' ? 'Mixed' : diff}
@@ -423,11 +584,11 @@ export default function QBankIndex({
 
                 {/* Question Count */}
                 <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <span className="flex size-6 items-center justify-center rounded-full bg-[#0066FF] text-xs font-bold text-white">
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
                             5
                         </span>
-                        <h2 className="text-sm font-black uppercase tracking-wider text-foreground">
+                        <h2 className="text-sm font-black tracking-wider text-white uppercase">
                             Number of Questions
                         </h2>
                     </div>
@@ -438,10 +599,10 @@ export default function QBankIndex({
                                 key={num}
                                 type="button"
                                 onClick={() => setQuestionCount(num)}
-                                className={`rounded-xl border py-2.5 px-3 text-xs font-bold transition-all text-center ${
+                                className={`cursor-pointer rounded-xl px-3 py-2.5 text-center text-xs font-bold transition-all ${
                                     questionCount === num
-                                        ? 'border-[#0066FF] bg-[#0066FF] text-white shadow-xs'
-                                        : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                                        ? 'border-2 border-cyan-400 bg-cyan-500 font-black text-slate-950 shadow-md shadow-cyan-500/25'
+                                        : 'border-cortex-border bg-cortex-card hover:bg-cortex-hover border text-slate-200 hover:border-slate-600 hover:text-white'
                                 }`}
                             >
                                 {num} Qs
@@ -452,35 +613,39 @@ export default function QBankIndex({
             </div>
 
             {/* Launch Action Banner */}
-            <div className="rounded-2xl border-2 border-[#0066FF]/30 bg-gradient-to-r from-blue-50/60 to-sky-50/60 dark:from-blue-950/30 dark:to-sky-950/20 p-5 sm:p-6 shadow-sm mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
+            <div className="card-glow mt-2 flex flex-col justify-between gap-5 rounded-2xl border border-cyan-500/40 bg-gradient-to-r from-[#0c1e33] via-[#0d1f36] to-[#0a1626] p-6 shadow-xl sm:flex-row sm:items-center">
+                <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#0066FF] uppercase tracking-wider">
+                        <span className="text-xs font-black tracking-wider text-cyan-400 uppercase">
                             Ready to Launch
                         </span>
-                        <Badge variant="outline" className="text-[10px] font-mono border-[#0066FF]/40">
-                            {mode === 'TUTOR' ? 'Tutor Mode' : 'Timed Simulation'}
-                        </Badge>
-                        <Badge variant="outline" className="text-[10px] font-mono border-border">
+                        <span className="rounded-md border border-cyan-500/40 bg-cyan-950/80 px-2.5 py-0.5 font-mono text-xs font-semibold text-cyan-300">
+                            {mode === 'TUTOR'
+                                ? 'Tutor Mode'
+                                : 'Timed Simulation'}
+                        </span>
+                        <span className="rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-0.5 font-mono text-xs font-semibold text-slate-200">
                             {statusMode}
-                        </Badge>
+                        </span>
                     </div>
-                    <h3 className="text-base sm:text-lg font-black text-foreground">
-                        {questionCount} Clinical Vignette MCQs • {selectedSubjectsCount} Disciplines
+                    <h3 className="text-lg font-black text-white sm:text-xl">
+                        {questionCount} Clinical Vignette MCQs •{' '}
+                        {selectedSubjectsCount} Disciplines
                     </h3>
-                    <p className="text-xs text-muted-foreground">
-                        Estimated duration: ~{Math.round(questionCount * 1.0)} minutes at official examination pacing.
+                    <p className="text-xs font-medium text-slate-300">
+                        Estimated duration: ~{Math.round(questionCount * 1.0)}{' '}
+                        minutes at official examination pacing.
                     </p>
                 </div>
 
                 <Button
                     onClick={handleLaunch}
                     size="lg"
-                    className="bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-sm gap-2 shadow-lg hover:scale-[1.02] transition-all shrink-0 px-7"
+                    className="shrink-0 cursor-pointer gap-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 px-8 py-3 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/25 transition-all hover:scale-[1.02] hover:from-cyan-400 hover:to-sky-400"
                 >
-                    <PlaySquare className="size-5" />
+                    <PlaySquare className="size-5 fill-slate-950 text-cyan-400" />
                     <span>Start Practice Session</span>
-                    <ArrowRight className="size-4" />
+                    <ArrowRight className="size-4.5" />
                 </Button>
             </div>
         </div>

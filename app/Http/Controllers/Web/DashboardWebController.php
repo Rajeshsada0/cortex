@@ -77,11 +77,32 @@ class DashboardWebController extends Controller
             })
             ->count();
 
-        // 5. Recent test sessions
+        // 5. Test session metrics & real counts
         $recentSessions = TestSession::where('user_id', $user->id)
             ->latest('created_at')
             ->limit(4)
             ->get();
+
+        $grandMocksCount = TestSession::where('user_id', $user->id)
+            ->where('session_type', 'GRAND_MOCK')
+            ->count();
+
+        $completedSessionsCount = TestSession::where('user_id', $user->id)
+            ->where('is_completed', true)
+            ->count();
+
+        $completedSessions = TestSession::where('user_id', $user->id)
+            ->where('is_completed', true)
+            ->get();
+
+        $avgScorePercent = $completedSessions->isNotEmpty()
+            ? round((float) $completedSessions->avg(fn ($s) => $s->total_questions > 0 ? ($s->score_obtained / $s->total_questions) * 100 : 0), 1)
+            : null;
+
+        $targetDate = $user->target_exam_date;
+        $daysUntilExam = $targetDate
+            ? (int) max(0, ceil(now()->floatDiffInDays($targetDate, false)))
+            : null;
 
         $pathwayEnum = ExamPathway::tryFrom($user->active_pathway ?? 'INI_CET') ?? ExamPathway::INI_CET;
         $rankPrediction = $this->rankPredictor->predict($user, $readiness['readiness_score']);
@@ -95,6 +116,7 @@ class DashboardWebController extends Controller
                 'active_pathway' => $user->active_pathway ?? 'INI_CET',
                 'pathway_label' => $pathwayEnum->label(),
                 'target_exam_date' => $user->target_exam_date?->toDateString(),
+                'days_until_exam' => $daysUntilExam,
                 'daily_study_hours' => $user->daily_study_hours,
                 'daily_mcq_target' => $user->daily_mcq_target,
             ],
@@ -106,6 +128,9 @@ class DashboardWebController extends Controller
             'dueCardsCount' => $dueCardsCount,
             'bookmarkedCount' => UserNoteBookmark::where('user_id', $user->id)->where('is_bookmarked', true)->count(),
             'recentSessions' => $recentSessions,
+            'grandMocksCount' => $grandMocksCount,
+            'completedSessionsCount' => $completedSessionsCount,
+            'avgScorePercent' => $avgScorePercent,
             'totalQuestions' => Question::count(),
             'totalAttempts' => QuestionAttempt::where('user_id', $user->id)->count(),
         ]);

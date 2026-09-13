@@ -24,64 +24,75 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                 resetOnSuccess={['password', 'password_confirmation']}
             >
                 {({ processing, errors }) => (
-                    <div className="grid gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
+                    <div className="grid gap-4">
+                        <div className="grid gap-1.5">
+                            <Label
+                                htmlFor="email"
+                                className="text-xs font-bold text-slate-900 dark:text-slate-900"
+                            >
+                                Medical Email Address
+                            </Label>
                             <Input
                                 id="email"
                                 type="email"
                                 name="email"
                                 autoComplete="email"
                                 value={email}
-                                className="mt-1 block w-full"
+                                className="h-11 rounded-xl border border-sky-200/90 bg-slate-100/80 px-3.5 text-xs text-slate-900 transition-all dark:bg-slate-100/80 dark:text-slate-900 dark:border-sky-200/90"
                                 readOnly
                             />
                             <InputError
                                 message={errors.email}
-                                className="mt-2"
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                        <div className="grid gap-1.5">
+                            <Label
+                                htmlFor="password"
+                                className="text-xs font-bold text-slate-900 dark:text-slate-900"
+                            >
+                                New Password
+                            </Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
+                                className="h-11 rounded-xl border border-sky-200/90 bg-slate-50/80 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all dark:bg-slate-50/80 dark:text-slate-900 dark:border-sky-200/90 dark:placeholder:text-slate-400"
                                 autoFocus
-                                placeholder="Password"
+                                placeholder="Minimum 8 characters"
                                 passwordrules={passwordRules}
                             />
                             <InputError message={errors.password} />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
-                                Confirm password
+                        <div className="grid gap-1.5">
+                            <Label
+                                htmlFor="password_confirmation"
+                                className="text-xs font-bold text-slate-900 dark:text-slate-900"
+                            >
+                                Confirm New Password
                             </Label>
                             <PasswordInput
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                placeholder="Confirm password"
+                                className="h-11 rounded-xl border border-sky-200/90 bg-slate-50/80 px-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100 transition-all dark:bg-slate-50/80 dark:text-slate-900 dark:border-sky-200/90 dark:placeholder:text-slate-400"
+                                placeholder="Re-enter new password"
                                 passwordrules={passwordRules}
                             />
                             <InputError
                                 message={errors.password_confirmation}
-                                className="mt-2"
                             />
                         </div>
 
                         <Button
                             type="submit"
-                            className="mt-4 w-full"
+                            className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-[#0284c7] via-[#0284c7] to-[#0ea5e9] text-xs font-bold text-white shadow-lg shadow-sky-500/25 hover:brightness-105 active:scale-[0.99] transition-all"
                             disabled={processing}
                             data-test="reset-password-button"
                         >
-                            {processing && <Spinner />}
-                            Reset password
+                            {processing && <Spinner className="mr-2" />}
+                            Reset Candidate Password
                         </Button>
                     </div>
                 )}

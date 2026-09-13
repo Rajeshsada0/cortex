@@ -9,8 +9,18 @@ interface ConfidenceSelectorProps {
     disabled?: boolean;
 }
 
-export function ConfidenceSelector({ value, onChange, disabled = false }: ConfidenceSelectorProps) {
-    const options: { id: ConfidenceType; label: string; sub: string; color: string; icon: any }[] = [
+export function ConfidenceSelector({
+    value,
+    onChange,
+    disabled = false,
+}: ConfidenceSelectorProps) {
+    const options: {
+        id: ConfidenceType;
+        label: string;
+        sub: string;
+        color: string;
+        icon: any;
+    }[] = [
         {
             id: 'LOW',
             label: 'Low',
@@ -36,7 +46,7 @@ export function ConfidenceSelector({ value, onChange, disabled = false }: Confid
 
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                 Pre-Submission Confidence Rating
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -50,15 +60,19 @@ export function ConfidenceSelector({ value, onChange, disabled = false }: Confid
                             disabled={disabled}
                             data-selected={isSelected}
                             onClick={() => onChange(opt.id)}
-                            className={`flex flex-col items-center justify-center rounded-xl border border-border p-2 text-center transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${opt.color} ${
-                                isSelected ? 'ring-1 ring-current font-bold' : 'bg-background hover:bg-muted/50'
+                            className={`border-border flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2 text-center transition-all disabled:cursor-not-allowed disabled:opacity-50 ${opt.color} ${
+                                isSelected
+                                    ? 'font-bold ring-1 ring-current'
+                                    : 'bg-background hover:bg-muted/50'
                             }`}
                         >
                             <div className="flex items-center gap-1">
                                 <Icon className="size-3.5" />
                                 <span className="text-xs">{opt.label}</span>
                             </div>
-                            <span className="text-[10px] text-muted-foreground">{opt.sub}</span>
+                            <span className="text-muted-foreground text-[10px]">
+                                {opt.sub}
+                            </span>
                         </button>
                     );
                 })}

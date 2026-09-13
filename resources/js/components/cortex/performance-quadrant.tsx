@@ -1,6 +1,13 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
-import { AlertTriangle, CheckCircle2, HelpCircle, AlertCircle, Shuffle, ArrowRight } from 'lucide-react';
+import {
+    AlertTriangle,
+    CheckCircle2,
+    HelpCircle,
+    AlertCircle,
+    Shuffle,
+    ArrowRight,
+} from 'lucide-react';
 
 interface QuadrantItem {
     title: string;
@@ -35,7 +42,8 @@ export function PerformanceQuadrant({
             percentage: 48.0,
             status: 'excellent',
             color: '#2FB36F',
-            description: 'Solidified medical knowledge ready for high-stakes test day.',
+            description:
+                'Solidified medical knowledge ready for high-stakes test day.',
         },
         hazardous: {
             title: 'Hazardous Blind Spot',
@@ -44,7 +52,8 @@ export function PerformanceQuadrant({
             percentage: 14.0,
             status: 'critical',
             color: '#E05252',
-            description: 'High-risk misconception triggers severe negative marking penalties!',
+            description:
+                'High-risk misconception triggers severe negative marking penalties!',
         },
         unstable: {
             title: 'Unstable / Lucky Guess',
@@ -53,7 +62,8 @@ export function PerformanceQuadrant({
             percentage: 18.0,
             status: 'warning',
             color: '#F59E0B',
-            description: 'Intuitive recall that requires spaced repetition consolidation.',
+            description:
+                'Intuitive recall that requires spaced repetition consolidation.',
         },
         gap: {
             title: 'Recognized Knowledge Gap',
@@ -62,7 +72,8 @@ export function PerformanceQuadrant({
             percentage: 20.0,
             status: 'info',
             color: '#52606D',
-            description: 'Identified weak areas requiring primary conceptual review in directory.',
+            description:
+                'Identified weak areas requiring primary conceptual review in directory.',
         },
     },
     answerSwitching = {
@@ -71,214 +82,189 @@ export function PerformanceQuadrant({
         switched_to_correct: 4,
     },
 }: PerformanceQuadrantProps) {
+    const totalClassified =
+        (quadrants.mastered?.count ?? 0) +
+        (quadrants.hazardous?.count ?? 0) +
+        (quadrants.unstable?.count ?? 0) +
+        (quadrants.gap?.count ?? 0);
+
+    const penaltyPercent =
+        answerSwitching.total_switched > 0
+            ? Math.round(
+                  (answerSwitching.switched_to_incorrect /
+                      answerSwitching.total_switched) *
+                      100,
+              )
+            : 0;
+
     return (
-        <div className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex flex-col justify-between gap-2 border-b border-border pb-4 sm:flex-row sm:items-center">
+        <div className="bg-cortex-card border-cortex-border card-glow rounded-2xl border p-6 shadow-xl">
+            <div className="mb-2 flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-bold tracking-tight text-foreground">
+                    <h3 className="text-base font-bold tracking-wide text-white">
                         PERFORMANCE VS. CONFIDENCE MATRIX
                     </h3>
-                    <p className="text-xs text-muted-foreground">
-                        Dual-metric classification identifying deadly clinical blind spots before the real exam
+                    <p className="text-xs text-slate-400">
+                        Dual-metric classification identifying deadly clinical
+                        blind spots before the real exam
                     </p>
                 </div>
-                {/* Answer-switching metric pill */}
-                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs">
-                    <Shuffle className="size-4 text-muted-foreground" />
+                <div className="rounded border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-[11px] text-slate-300">
+                    Switching Penalty:{' '}
+                    <span className="font-bold text-rose-400">
+                        {penaltyPercent}%
+                    </span>
+                </div>
+            </div>
+
+            {/* 2x2 Matrix Quad Box */}
+            <div className="my-4 grid grid-cols-2 gap-3.5">
+                {/* Quad 1: Mastered (Top Left) */}
+                <div className="flex flex-col justify-between rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3.5">
                     <div>
-                        <span className="font-semibold text-foreground">Answer Switching Penalty: </span>
-                        <span className="font-bold text-[#E05252]">
-                            {answerSwitching.total_switched > 0
-                                ? `${Math.round((answerSwitching.switched_to_incorrect / answerSwitching.total_switched) * 100)}% harmful`
-                                : '0%'}
+                        <div className="flex items-center justify-between">
+                            <span className="flex items-center text-xs font-bold tracking-wide text-emerald-400 uppercase">
+                                <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-emerald-400" />
+                                Mastered
+                            </span>
+                            <span className="font-mono text-lg font-bold text-emerald-400">
+                                {quadrants.mastered?.count ?? 0}
+                            </span>
+                        </div>
+                        <span className="font-mono text-[10px] text-emerald-300/80">
+                            High Accuracy + High Conf.
                         </span>
-                        <span className="text-[10px] text-muted-foreground ml-1">
-                            ({answerSwitching.switched_to_incorrect} of {answerSwitching.total_switched} switched to wrong)
+                        <p className="mt-2 text-xs text-slate-300">
+                            {quadrants.mastered?.description ||
+                                'Solidified clinical knowledge ready for the real exam.'}
+                        </p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-emerald-900/40 pt-2 text-[10px] text-slate-400">
+                        <span>High accuracy recall</span>
+                        <span>
+                            • {quadrants.mastered?.count ?? 0} questions
                         </span>
+                    </div>
+                </div>
+
+                {/* Quad 2: Hazardous Blind Spot (Top Right - High Danger) */}
+                <div className="flex flex-col justify-between rounded-xl border border-rose-500/40 bg-rose-950/30 p-3.5">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="flex items-center text-xs font-bold tracking-wide text-rose-400 uppercase">
+                                <AlertTriangle className="mr-1 h-3.5 w-3.5 text-rose-500" />
+                                Blind Spot
+                                <span className="py-0.2 ml-1 rounded bg-rose-600 px-1 font-mono text-[9px] font-bold text-white">
+                                    DANGER
+                                </span>
+                            </span>
+                            <span className="font-mono text-lg font-bold text-rose-400">
+                                {quadrants.hazardous?.count ?? 0}
+                            </span>
+                        </div>
+                        <span className="font-mono text-[10px] text-rose-300/80">
+                            Incorrect + High Conf.
+                        </span>
+                        <p className="mt-2 text-xs text-slate-300">
+                            {quadrants.hazardous?.description ||
+                                'Dangerous misconceptions that cause severe negative marks in INI-CET.'}
+                        </p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-rose-900/40 pt-2 text-[10px]">
+                        <span className="font-semibold text-rose-400">
+                            Priority 1 Remediation
+                        </span>
+                        <span
+                            className={
+                                quadrants.hazardous?.count > 0
+                                    ? 'font-semibold text-rose-400'
+                                    : 'text-emerald-400'
+                            }
+                        >
+                            {quadrants.hazardous?.count > 0
+                                ? `⚠ ${quadrants.hazardous.count} blind spots`
+                                : '✓ 0 blind spots'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Quad 3: Unstable / Lucky Guess (Bottom Left) */}
+                <div className="flex flex-col justify-between rounded-xl border border-amber-500/30 bg-amber-950/20 p-3.5">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="flex items-center text-xs font-bold tracking-wide text-amber-400 uppercase">
+                                <HelpCircle className="mr-1 h-3.5 w-3.5 text-amber-400" />
+                                Unstable / Guess
+                            </span>
+                            <span className="font-mono text-lg font-bold text-amber-400">
+                                {quadrants.unstable?.count ?? 0}
+                            </span>
+                        </div>
+                        <span className="font-mono text-[10px] text-amber-300/80">
+                            Correct + Low/Med Conf.
+                        </span>
+                        <p className="mt-2 text-xs text-slate-300">
+                            {quadrants.unstable?.description ||
+                                'Correctly guessed or intuitive recall that needs SRS consolidation.'}
+                        </p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-amber-900/40 pt-2 text-[10px] text-slate-400">
+                        <span>Spaced consolidation</span>
+                        <span>
+                            • {quadrants.unstable?.count ?? 0} unstable items
+                        </span>
+                    </div>
+                </div>
+
+                {/* Quad 4: Recognized Knowledge Gap (Bottom Right) */}
+                <div className="flex flex-col justify-between rounded-xl border border-slate-700/60 bg-slate-900/80 p-3.5">
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="flex items-center text-xs font-bold tracking-wide text-slate-300 uppercase">
+                                <AlertCircle className="mr-1 h-3.5 w-3.5 text-slate-400" />
+                                Knowledge Gap
+                            </span>
+                            <span className="font-mono text-lg font-bold text-slate-300">
+                                {quadrants.gap?.count ?? 0}
+                            </span>
+                        </div>
+                        <span className="font-mono text-[10px] text-slate-400">
+                            Incorrect + Low/Med Conf.
+                        </span>
+                        <p className="mt-2 text-xs text-slate-300">
+                            {quadrants.gap?.description ||
+                                'Identified weak areas requiring targeted study in curriculum.'}
+                        </p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-800 pt-2 text-[10px] text-slate-400">
+                        <span>Targeted study drill</span>
+                        <span>• {quadrants.gap?.count ?? 0} gaps detected</span>
                     </div>
                 </div>
             </div>
 
-            {/* 2x2 Quadrant Grid */}
-            <div className="grid grid-cols-1 gap-4 pt-6 md:grid-cols-2">
-                {/* Quadrant 1: Mastered */}
-                <div className="relative flex flex-col justify-between rounded-xl border border-[#2FB36F]/30 bg-[#2FB36F]/5 p-4 transition-all hover:shadow-md">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="flex size-8 items-center justify-center rounded-lg bg-[#2FB36F]/15 text-[#2FB36F]">
-                                <CheckCircle2 className="size-5" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm text-foreground">
-                                    {quadrants.mastered.title}
-                                </h4>
-                                <span className="text-[11px] text-[#2FB36F] font-medium">
-                                    {quadrants.mastered.subtitle}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-2xl font-extrabold text-[#2FB36F]">
-                                {quadrants.mastered.count}
-                            </span>
-                            <span className="text-xs text-muted-foreground block">
-                                {quadrants.mastered.percentage}%
-                            </span>
-                        </div>
+            {/* Calibration Prompt */}
+            <div className="flex items-center justify-between rounded-xl border border-blue-500/30 bg-blue-950/30 p-3.5">
+                <div className="flex items-center space-x-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-900/50 text-blue-400">
+                        <HelpCircle className="h-4 w-4" />
                     </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                        {quadrants.mastered.description}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-[#2FB36F]/20 flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">High accuracy recall</span>
-                        {quadrants.mastered.count > 0 ? (
-                            <Link
-                                href="/qbank/runner?quadrant=mastered&mode=TUTOR"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#2FB36F]/15 px-3 py-1.5 text-xs font-semibold text-[#2FB36F] hover:bg-[#2FB36F]/25 transition-colors"
-                            >
-                                <span>Review ({quadrants.mastered.count})</span>
-                                <ArrowRight className="size-3.5" />
-                            </Link>
-                        ) : (
-                            <span className="text-[11px] text-muted-foreground">0 questions</span>
-                        )}
+                    <div>
+                        <p className="text-xs font-semibold text-white">
+                            Awaiting Confidence Calibration
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                            Rate your confidence during MCQs to separate
+                            solidified mastery from blind spots.
+                        </p>
                     </div>
                 </div>
-
-                {/* Quadrant 2: Hazardous Blind Spot (DANGER ZONE) */}
-                <div className="relative flex flex-col justify-between rounded-xl border-2 border-[#E05252]/40 bg-[#E05252]/10 p-4 transition-all hover:shadow-md">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="flex size-8 items-center justify-center rounded-lg bg-[#E05252]/20 text-[#E05252]">
-                                <AlertTriangle className="size-5 animate-pulse" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm text-[#E05252] flex items-center gap-1.5">
-                                    {quadrants.hazardous.title}
-                                    <span className="rounded bg-[#E05252] px-1.5 py-0.2 text-[9px] font-bold text-white uppercase">
-                                        Danger
-                                    </span>
-                                </h4>
-                                <span className="text-[11px] text-[#E05252] font-medium">
-                                    {quadrants.hazardous.subtitle}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-2xl font-extrabold text-[#E05252]">
-                                {quadrants.hazardous.count}
-                            </span>
-                            <span className="text-xs text-muted-foreground block">
-                                {quadrants.hazardous.percentage}%
-                            </span>
-                        </div>
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                        {quadrants.hazardous.description}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-[#E05252]/20 flex items-center justify-between">
-                        <span className="text-[11px] text-[#E05252] font-semibold">Priority 1 Remediation</span>
-                        {quadrants.hazardous.count > 0 ? (
-                            <Link
-                                href="/qbank/runner?quadrant=hazardous&mode=TUTOR"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#E05252] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#E05252]/90 transition-all"
-                            >
-                                <span>Fix Blind Spots ({quadrants.hazardous.count})</span>
-                                <ArrowRight className="size-3.5" />
-                            </Link>
-                        ) : (
-                            <span className="text-[11px] text-[#2FB36F] font-semibold">✓ No blind spots detected</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Quadrant 3: Unstable / Lucky Guess */}
-                <div className="relative flex flex-col justify-between rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/5 p-4 transition-all hover:shadow-md">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="flex size-8 items-center justify-center rounded-lg bg-[#F59E0B]/15 text-[#F59E0B]">
-                                <HelpCircle className="size-5" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm text-foreground">
-                                    {quadrants.unstable.title}
-                                </h4>
-                                <span className="text-[11px] text-[#F59E0B] font-medium">
-                                    {quadrants.unstable.subtitle}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-2xl font-extrabold text-[#F59E0B]">
-                                {quadrants.unstable.count}
-                            </span>
-                            <span className="text-xs text-muted-foreground block">
-                                {quadrants.unstable.percentage}%
-                            </span>
-                        </div>
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                        {quadrants.unstable.description}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-[#F59E0B]/20 flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">Spaced consolidation</span>
-                        {quadrants.unstable.count > 0 ? (
-                            <Link
-                                href="/qbank/runner?quadrant=unstable&mode=TUTOR"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#F59E0B] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#F59E0B]/90 transition-all"
-                            >
-                                <span>Consolidate Guesses ({quadrants.unstable.count})</span>
-                                <ArrowRight className="size-3.5" />
-                            </Link>
-                        ) : (
-                            <span className="text-[11px] text-muted-foreground">0 unstable items</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Quadrant 4: Recognized Gap */}
-                <div className="relative flex flex-col justify-between rounded-xl border border-border bg-muted/20 p-4 transition-all hover:shadow-md">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                                <AlertCircle className="size-5" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm text-foreground">
-                                    {quadrants.gap.title}
-                                </h4>
-                                <span className="text-[11px] text-muted-foreground font-medium">
-                                    {quadrants.gap.subtitle}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-2xl font-extrabold text-foreground">
-                                {quadrants.gap.count}
-                            </span>
-                            <span className="text-xs text-muted-foreground block">
-                                {quadrants.gap.percentage}%
-                            </span>
-                        </div>
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                        {quadrants.gap.description}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">Targeted study drill</span>
-                        {quadrants.gap.count > 0 ? (
-                            <Link
-                                href="/qbank/runner?quadrant=gap&mode=TUTOR"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:bg-secondary/80 transition-colors"
-                            >
-                                <span>Remediate Gaps ({quadrants.gap.count})</span>
-                                <ArrowRight className="size-3.5" />
-                            </Link>
-                        ) : (
-                            <span className="text-[11px] text-muted-foreground">0 gaps detected</span>
-                        )}
-                    </div>
-                </div>
+                <Link
+                    href="/qbank/runner?mode=TUTOR"
+                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow transition hover:bg-blue-500"
+                >
+                    <span>Start Tutor Drill →</span>
+                </Link>
             </div>
         </div>
     );

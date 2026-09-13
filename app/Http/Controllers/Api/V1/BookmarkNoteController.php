@@ -48,6 +48,7 @@ class BookmarkNoteController extends Controller
 
         $validated = $request->validate([
             'question_id' => 'required|string',
+            'is_bookmarked' => 'nullable|boolean',
         ]);
 
         $record = UserNoteBookmark::firstOrCreate(
@@ -60,7 +61,11 @@ class BookmarkNoteController extends Controller
             ]
         );
 
-        $record->is_bookmarked = ! $record->is_bookmarked;
+        if ($request->has('is_bookmarked')) {
+            $record->is_bookmarked = $request->boolean('is_bookmarked');
+        } else {
+            $record->is_bookmarked = ! $record->is_bookmarked;
+        }
         $record->save();
 
         return response()->json([

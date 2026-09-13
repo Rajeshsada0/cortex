@@ -53,7 +53,7 @@ class Question extends Model
 
     public function options(): HasMany
     {
-        return $this->hasMany(QuestionOption::class);
+        return $this->hasMany(QuestionOption::class)->orderBy('option_key', 'asc');
     }
 
     public function attempts(): HasMany

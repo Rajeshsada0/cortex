@@ -14,6 +14,7 @@ final class MarkingEngine
         return match ($enumPathway) {
             ExamPathway::MECEE_PG => round($correct - (0.25 * $incorrect), 2),
             ExamPathway::INI_CET => round($correct - (0.33 * $incorrect), 2),
+            ExamPathway::NEET_PG => round((4.0 * $correct) - (1.0 * $incorrect), 2),
             ExamPathway::USMLE_STEP1 => $total > 0 ? round(($correct / $total) * 100, 1) : 0.0,
             ExamPathway::USMLE_STEP2CK => $this->calculateUsmleStep2CkScore($correct, $total),
             ExamPathway::COMBINED => round($correct - (0.25 * $incorrect), 2),

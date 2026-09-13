@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
     ChevronLeft,
@@ -23,7 +23,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClinicalImageViewer } from '@/components/cortex/clinical-image-viewer';
-import { ConfidenceSelector, ConfidenceType } from '@/components/cortex/confidence-selector';
+import {
+    ConfidenceSelector,
+    ConfidenceType,
+} from '@/components/cortex/confidence-selector';
 import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
 import { QuestionPalette } from '@/components/cortex/question-palette';
@@ -62,6 +65,8 @@ interface RunnerProps {
     session: any;
     questions: { data: QuestionData[] } | QuestionData[];
     attempts?: any[];
+    bookmarked_question_ids?: string[];
+    notes_map?: Record<string, string>;
     mode?: 'TUTOR' | 'TIMED';
 }
 
@@ -70,6 +75,8 @@ export default function MCQRunner({
     session,
     questions: rawQuestions,
     attempts = [],
+    bookmarked_question_ids = [],
+    notes_map = {},
     mode: propMode,
 }: RunnerProps) {
     const questions: QuestionData[] = Array.isArray(rawQuestions)
@@ -78,12 +85,13 @@ export default function MCQRunner({
 
     const activeMode: 'TUTOR' | 'TIMED' =
         propMode ||
-        (session?.session_type === 'TIMED_BLOCK' || session?.data?.session_type === 'TIMED_BLOCK'
+        (session?.session_type === 'TIMED_BLOCK' ||
+        session?.data?.session_type === 'TIMED_BLOCK'
             ? 'TIMED'
             : 'TUTOR');
 
     const [isBlockFinished, setIsBlockFinished] = useState<boolean>(
-        Boolean(session?.is_completed || session?.data?.is_completed)
+        Boolean(session?.is_completed || session?.data?.is_completed),
     );
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -95,14 +103,27 @@ export default function MCQRunner({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Strikethrough eliminated distractors: maps questionId -> array of option keys
-    const [eliminatedOptions, setEliminatedOptions] = useState<Record<string, string[]>>({});
+    const [eliminatedOptions, setEliminatedOptions] = useState<
+        Record<string, string[]>
+    >({});
 
     // Session state
     const [answers, setAnswers] = useState<Record<string, string>>({});
-    const [results, setResults] = useState<Record<string, { isCorrect: boolean; selected: string }>>({});
-    const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(new Set());
-    const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set([questions[0]?.id]));
-    const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<string>>(new Set());
+    const [results, setResults] = useState<
+        Record<string, { isCorrect: boolean; selected: string }>
+    >({});
+    const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(
+        new Set(),
+    );
+    const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(
+        new Set([questions[0]?.id]),
+    );
+    const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<string>>(
+        () => new Set(bookmarked_question_ids),
+    );
+    const [notesMap, setNotesMap] = useState<Record<string, string>>(
+        () => notes_map,
+    );
 
     // Personal Note modal
     const [noteContent, setNoteContent] = useState('');
@@ -113,11 +134,28 @@ export default function MCQRunner({
 
     const currentQuestion = questions[currentIndex];
 
+    // Sync note content when question changes
+    useEffect(() => {
+        if (currentQuestion) {
+            setNoteContent(notesMap[currentQuestion.id] || '');
+        }
+    }, [currentQuestion?.id, notesMap]);
+
+    const sortedOptions = useMemo(() => {
+        if (!currentQuestion?.options) return [];
+        return [...currentQuestion.options].sort((a, b) =>
+            (a.option_key || '').localeCompare(b.option_key || ''),
+        );
+    }, [currentQuestion]);
+
     // Load attempts initially
     useEffect(() => {
         if (attempts && attempts.length > 0) {
             const initialAnswers: Record<string, string> = {};
-            const initialResults: Record<string, { isCorrect: boolean; selected: string }> = {};
+            const initialResults: Record<
+                string,
+                { isCorrect: boolean; selected: string }
+            > = {};
 
             attempts.forEach((att: any) => {
                 initialAnswers[att.question_id] = att.selected_option;
@@ -177,7 +215,9 @@ export default function MCQRunner({
 
         // In TIMED mode, silently persist candidate answer attempt
         if (activeMode === 'TIMED' && currentQuestion) {
-            const isCorrect = key.toUpperCase() === currentQuestion.correct_option.toUpperCase();
+            const isCorrect =
+                key.toUpperCase() ===
+                currentQuestion.correct_option.toUpperCase();
             setResults((prev) => ({
                 ...prev,
                 [currentQuestion.id]: { isCorrect, selected: key },
@@ -188,7 +228,7 @@ export default function MCQRunner({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify({
                     question_id: currentQuestion.id,
@@ -234,33 +274,42 @@ export default function MCQRunner({
 
     // Submit Answer (in Tutor Mode)
     const handleSubmitAnswer = async () => {
-        if (!selectedOption || !currentQuestion || isSubmitted || isSubmitting) return;
+        if (!selectedOption || !currentQuestion || isSubmitted || isSubmitting)
+            return;
 
         setIsSubmitting(true);
-        const isCorrect = selectedOption.toUpperCase() === currentQuestion.correct_option.toUpperCase();
+        const isCorrect =
+            selectedOption.toUpperCase() ===
+            currentQuestion.correct_option.toUpperCase();
 
         try {
-            const res = await fetch(`/api/v1/test-sessions/${session.id || session.data?.id}/attempts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+            const res = await fetch(
+                `/api/v1/test-sessions/${session.id || session.data?.id}/attempts`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question_id: currentQuestion.id,
+                        selected_option: selectedOption,
+                        confidence: confidence,
+                        time_taken_seconds: secondsElapsed,
+                        was_switched: wasSwitched,
+                        initial_option: initialOption,
+                    }),
                 },
-                body: JSON.stringify({
-                    question_id: currentQuestion.id,
-                    selected_option: selectedOption,
-                    confidence: confidence,
-                    time_taken_seconds: secondsElapsed,
-                    was_switched: wasSwitched,
-                    initial_option: initialOption,
-                }),
-            });
+            );
 
             if (res.ok) {
                 setIsSubmitted(true);
                 setResults((prev) => ({
                     ...prev,
-                    [currentQuestion.id]: { isCorrect, selected: selectedOption },
+                    [currentQuestion.id]: {
+                        isCorrect,
+                        selected: selectedOption,
+                    },
                 }));
 
                 if (isCorrect) {
@@ -294,7 +343,7 @@ export default function MCQRunner({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify({
                     time_spent_seconds: secondsElapsed,
@@ -303,7 +352,8 @@ export default function MCQRunner({
             setIsBlockFinished(true);
             setIsSubmitted(true);
             toast.success('Practice Block Submitted!', {
-                description: 'Scorecard generated. Explanations unlocked for review.',
+                description:
+                    'Scorecard generated. Explanations unlocked for review.',
             });
         } catch (e) {
             setIsBlockFinished(true);
@@ -324,7 +374,12 @@ export default function MCQRunner({
                 handleSelectOption(key);
             } else if (['1', '2', '3', '4'].includes(key)) {
                 e.preventDefault();
-                const map: Record<string, string> = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+                const map: Record<string, string> = {
+                    '1': 'A',
+                    '2': 'B',
+                    '3': 'C',
+                    '4': 'D',
+                };
                 handleSelectOption(map[key]);
             } else if (key === 'ENTER') {
                 e.preventDefault();
@@ -342,7 +397,10 @@ export default function MCQRunner({
             } else if (key === 'M') {
                 e.preventDefault();
                 toggleMark();
-            } else if (e.key === 'ArrowRight' && currentIndex < questions.length - 1) {
+            } else if (
+                e.key === 'ArrowRight' &&
+                currentIndex < questions.length - 1
+            ) {
                 setCurrentIndex((prev) => prev + 1);
             } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
                 setCurrentIndex((prev) => prev - 1);
@@ -351,29 +409,50 @@ export default function MCQRunner({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isSubmitted, selectedOption, currentIndex, questions.length, showNoteModal, activeMode]);
+    }, [
+        isSubmitted,
+        selectedOption,
+        currentIndex,
+        questions.length,
+        showNoteModal,
+        activeMode,
+    ]);
 
     // Toggle Bookmark
     const toggleBookmark = async () => {
         if (!currentQuestion) return;
         try {
-            await fetch('/api/v1/bookmarks', {
+            const isCurrentlyBookmarked = bookmarkedQuestions.has(currentQuestion.id);
+            const res = await fetch('/api/v1/bookmarks', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ question_id: currentQuestion.id }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    question_id: currentQuestion.id,
+                    is_bookmarked: !isCurrentlyBookmarked,
+                }),
             });
 
-            setBookmarkedQuestions((prev) => {
-                const next = new Set(prev);
-                if (next.has(currentQuestion.id)) {
-                    next.delete(currentQuestion.id);
-                    toast.info('Bookmark removed');
-                } else {
-                    next.add(currentQuestion.id);
-                    toast.success('Question added to Personal Library');
-                }
-                return next;
-            });
+            if (res.ok) {
+                const data = await res.json();
+                setBookmarkedQuestions((prev) => {
+                    const next = new Set(prev);
+                    if (data.is_bookmarked) {
+                        next.add(currentQuestion.id);
+                        toast.success('Question added to Personal Library');
+                    } else {
+                        next.delete(currentQuestion.id);
+                        toast.info('Bookmark removed');
+                    }
+                    return next;
+                });
+            } else {
+                toast.error('Could not toggle bookmark');
+            }
         } catch (e) {
             toast.error('Could not toggle bookmark');
         }
@@ -383,13 +462,31 @@ export default function MCQRunner({
     const saveNote = async () => {
         if (!currentQuestion) return;
         try {
-            await fetch('/api/v1/notes', {
+            const res = await fetch('/api/v1/notes', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ question_id: currentQuestion.id, note_content: noteContent }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    question_id: currentQuestion.id,
+                    note_content: noteContent.trim() || null,
+                }),
             });
-            toast.success('Clinical note saved');
-            setShowNoteModal(false);
+
+            if (res.ok) {
+                const data = await res.json();
+                setNotesMap((prev) => ({
+                    ...prev,
+                    [currentQuestion.id]: data.note_content || '',
+                }));
+                toast.success('Clinical note saved');
+                setShowNoteModal(false);
+            } else {
+                toast.error('Could not save note');
+            }
         } catch (e) {
             toast.error('Could not save note');
         }
@@ -398,15 +495,19 @@ export default function MCQRunner({
     if (!currentQuestion) {
         return (
             <div className="flex h-[70vh] flex-col items-center justify-center p-6 text-center">
-                <div className="rounded-2xl border border-border bg-card p-8 shadow-sm max-w-md">
-                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                        <CheckCircle2 className="size-6 text-primary" />
+                <div className="border-border bg-card max-w-md rounded-2xl border p-8 shadow-sm">
+                    <div className="bg-primary/10 text-primary mx-auto mb-4 flex size-12 items-center justify-center rounded-full">
+                        <CheckCircle2 className="text-primary size-6" />
                     </div>
-                    <h2 className="text-xl font-bold">No Questions In This Queue</h2>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        {session?.data?.title ?? 'This session'} currently has no questions matching the filter. Great work maintaining your clinical accuracy!
+                    <h2 className="text-xl font-bold">
+                        No Questions In This Queue
+                    </h2>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                        {session?.data?.title ?? 'This session'} currently has
+                        no questions matching the filter. Great work maintaining
+                        your clinical accuracy!
                     </p>
-                    <div className="flex items-center justify-center gap-3 mt-6">
+                    <div className="mt-6 flex items-center justify-center gap-3">
                         <Link href="/dashboard">
                             <Button variant="outline">Dashboard</Button>
                         </Link>
@@ -421,39 +522,48 @@ export default function MCQRunner({
 
     // Score calculations when block is finished in Timed mode
     const totalAnswered = Object.keys(answers).length;
-    const correctCount = Object.values(results).filter((r) => r.isCorrect).length;
-    const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+    const correctCount = Object.values(results).filter(
+        (r) => r.isCorrect,
+    ).length;
+    const accuracy =
+        totalAnswered > 0
+            ? Math.round((correctCount / totalAnswered) * 100)
+            : 0;
 
     const currentEliminations = eliminatedOptions[currentQuestion.id] || [];
 
     // Should we show explanations for this question?
-    const showExplanation = activeMode === 'TUTOR' ? isSubmitted : isBlockFinished;
+    const showExplanation =
+        activeMode === 'TUTOR' ? isSubmitted : isBlockFinished;
 
     return (
-        <div className="flex flex-col gap-4 p-3 sm:p-5 lg:p-6 w-full min-h-[90vh]">
+        <div className="flex min-h-[90vh] w-full flex-col gap-4 p-3 sm:p-5 lg:p-6">
             <Head title={`MCQ Runner — ${currentQuestion.code}`} />
 
             {/* Runner Top Navigation Bar */}
-            <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3 shadow-sm">
+            <div className="border-border bg-card flex items-center justify-between rounded-xl border p-3 shadow-sm">
                 <div className="flex items-center gap-2">
-                    <span className="rounded bg-[#102A43] px-2.5 py-1 text-xs font-mono font-bold text-[#55BDEB]">
+                    <span className="rounded bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-[#55BDEB]">
                         {currentQuestion.code}
                     </span>
-                    <Badge variant="outline" className="text-[10px] font-mono">
-                        {activeMode === 'TIMED' ? 'Timed Exam Block' : 'Tutor Mode'}
+                    <Badge variant="outline" className="font-mono text-[10px]">
+                        {activeMode === 'TIMED'
+                            ? 'Timed Exam Block'
+                            : 'Tutor Mode'}
                     </Badge>
-                    <span className="hidden text-xs text-muted-foreground sm:inline">
-                        {currentQuestion.subject?.name} • {currentQuestion.topic?.name}
+                    <span className="text-muted-foreground hidden text-xs sm:inline">
+                        {currentQuestion.subject?.name} •{' '}
+                        {currentQuestion.topic?.name}
                     </span>
-                    <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase">
+                    <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-[10px] font-semibold uppercase">
                         {currentQuestion.difficulty}
                     </span>
                 </div>
 
                 {/* Right controls: Timer and Quick Navigation */}
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-2.5 py-1 text-xs font-mono">
-                        <Clock className="size-3.5 text-muted-foreground" />
+                    <div className="border-border bg-muted/30 flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs">
+                        <Clock className="text-muted-foreground size-3.5" />
                         <span>
                             {Math.floor(secondsElapsed / 60)}:
                             {(secondsElapsed % 60).toString().padStart(2, '0')}
@@ -474,7 +584,9 @@ export default function MCQRunner({
                     >
                         <Flag className="size-3.5" />
                         <span className="hidden sm:inline">
-                            {markedQuestions.has(currentQuestion.id) ? 'Marked' : 'Mark (M)'}
+                            {markedQuestions.has(currentQuestion.id)
+                                ? 'Marked'
+                                : 'Mark (M)'}
                         </span>
                     </Button>
 
@@ -490,7 +602,7 @@ export default function MCQRunner({
                         <ChevronLeft className="size-4" />
                     </Button>
 
-                    <span className="text-xs font-bold text-foreground">
+                    <span className="text-foreground text-xs font-bold">
                         {currentIndex + 1} / {questions.length}
                     </span>
 
@@ -512,7 +624,7 @@ export default function MCQRunner({
                             size="sm"
                             onClick={handleFinishTimedBlock}
                             disabled={isSubmitting}
-                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-8 ml-2"
+                            className="ml-2 h-8 bg-amber-600 text-xs font-bold text-white hover:bg-amber-700"
                         >
                             {isSubmitting ? 'Grading...' : 'Finish Block'}
                         </Button>
@@ -522,22 +634,29 @@ export default function MCQRunner({
 
             {/* Timed Mode Scorecard Banner (When Finished) */}
             {activeMode === 'TIMED' && isBlockFinished && (
-                <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                <div className="flex flex-col justify-between gap-4 rounded-2xl border-2 border-emerald-500/30 bg-emerald-50/50 p-5 shadow-sm sm:flex-row sm:items-center dark:bg-emerald-950/20">
                     <div className="flex items-center gap-4">
                         <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-md">
                             <Award className="size-7" />
                         </div>
                         <div>
-                            <h3 className="text-base font-black text-foreground">
-                                Block Complete — Scorecard: {correctCount} / {questions.length} ({accuracy}%)
+                            <h3 className="text-foreground text-base font-black">
+                                Block Complete — Scorecard: {correctCount} /{' '}
+                                {questions.length} ({accuracy}%)
                             </h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                Completed in {Math.round(secondsElapsed / 60)} minutes • Explanations and multi-tier rationales now unlocked below.
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                                Completed in {Math.round(secondsElapsed / 60)}{' '}
+                                minutes • Explanations and multi-tier rationales
+                                now unlocked below.
                             </p>
                         </div>
                     </div>
                     <Link href="/qbank">
-                        <Button variant="outline" size="sm" className="text-xs font-bold">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs font-bold"
+                        >
                             Back to Test Builder
                         </Button>
                     </Link>
@@ -545,19 +664,20 @@ export default function MCQRunner({
             )}
 
             {/* Split-Screen Clinical Layout */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
                 {/* LEFT COLUMN: Clinical Vignette & Image Viewer */}
                 <div className="flex flex-col gap-4 lg:col-span-7">
-                    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-sm">
-                        <div className="flex items-center justify-between border-b border-border pb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#55BDEB]">
+                    <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-5 shadow-sm sm:p-6">
+                        <div className="border-border flex items-center justify-between border-b pb-2">
+                            <span className="text-xs font-bold tracking-wider text-[#55BDEB] uppercase">
                                 Clinical Vignette
                             </span>
-                            <span className="text-[11px] text-muted-foreground">
-                                Shortcuts: A/B/C/D or 1/2/3/4 • Arrow keys navigate
+                            <span className="text-muted-foreground text-[11px]">
+                                Shortcuts: A/B/C/D or 1/2/3/4 • Arrow keys
+                                navigate
                             </span>
                         </div>
-                        <p className="text-sm sm:text-base leading-relaxed text-foreground font-normal whitespace-pre-line">
+                        <p className="text-foreground text-sm leading-relaxed font-normal whitespace-pre-line sm:text-base">
                             {currentQuestion.stem}
                         </p>
                     </div>
@@ -572,21 +692,31 @@ export default function MCQRunner({
                     )}
 
                     {/* Action Tray: Bookmark, Note, Strikethrough Hint */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
+                    <div className="border-border bg-card flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3">
                         <div className="flex items-center gap-2">
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
                                 onClick={toggleBookmark}
-                                className={`h-8 gap-1.5 text-xs ${
+                                className={`h-8 gap-1.5 text-xs font-semibold transition-colors ${
                                     bookmarkedQuestions.has(currentQuestion.id)
-                                        ? 'text-[#55BDEB]'
-                                        : 'text-muted-foreground'
+                                        ? 'border border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 hover:text-amber-400'
+                                        : 'text-muted-foreground hover:text-foreground'
                                 }`}
                             >
-                                <Bookmark className="size-3.5" />
-                                {bookmarkedQuestions.has(currentQuestion.id) ? 'Bookmarked' : 'Bookmark'}
+                                <Bookmark
+                                    className={`size-3.5 ${
+                                        bookmarkedQuestions.has(
+                                            currentQuestion.id,
+                                        )
+                                            ? 'fill-amber-500 text-amber-500'
+                                            : ''
+                                    }`}
+                                />
+                                {bookmarkedQuestions.has(currentQuestion.id)
+                                    ? 'Bookmarked'
+                                    : 'Bookmark'}
                             </Button>
 
                             <Button
@@ -594,16 +724,24 @@ export default function MCQRunner({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowNoteModal(true)}
-                                className="h-8 gap-1.5 text-xs text-muted-foreground"
+                                className={`h-8 gap-1.5 text-xs font-semibold transition-colors ${
+                                    Boolean(notesMap[currentQuestion.id])
+                                        ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 hover:text-emerald-400'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
                             >
                                 <FileText className="size-3.5" />
-                                Clinical Note
+                                {Boolean(notesMap[currentQuestion.id])
+                                    ? 'Note Added'
+                                    : 'Clinical Note'}
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                            <Strikethrough className="size-3.5 text-muted-foreground" />
-                            <span>Click cross/icon to rule out distractors</span>
+                        <div className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                            <Strikethrough className="text-muted-foreground size-3.5" />
+                            <span>
+                                Click cross/icon to rule out distractors
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -612,7 +750,7 @@ export default function MCQRunner({
                 <div className="flex flex-col gap-4 lg:col-span-5">
                     {/* Pre-Submission Confidence Rating in Tutor mode */}
                     {activeMode === 'TUTOR' && !isSubmitted && (
-                        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <div className="border-border bg-card rounded-xl border p-4 shadow-sm">
                             <ConfidenceSelector
                                 value={confidence}
                                 onChange={setConfidence}
@@ -622,40 +760,52 @@ export default function MCQRunner({
                     )}
 
                     {/* Option Choices Selector */}
-                    <div className="flex flex-col gap-2.5 rounded-2xl border border-border bg-card p-5 shadow-sm">
-                        <div className="flex items-center justify-between border-b border-border pb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    <div className="border-border bg-card flex flex-col gap-2.5 rounded-2xl border p-5 shadow-sm">
+                        <div className="border-border flex items-center justify-between border-b pb-2">
+                            <span className="text-foreground text-xs font-bold tracking-wider uppercase">
                                 Answer Choices
                             </span>
                             {showExplanation && (
                                 <span className="text-xs font-bold text-[#2FB36F]">
-                                    Correct: Option {currentQuestion.correct_option}
+                                    Correct: Option{' '}
+                                    {currentQuestion.correct_option}
                                 </span>
                             )}
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            {currentQuestion.options.map((opt) => {
-                                const isSelected = selectedOption === opt.option_key;
-                                const isEliminated = currentEliminations.includes(opt.option_key);
+                            {sortedOptions.map((opt) => {
+                                const isSelected =
+                                    selectedOption === opt.option_key;
+                                const isEliminated =
+                                    currentEliminations.includes(
+                                        opt.option_key,
+                                    );
                                 const isCorrect =
-                                    opt.option_key.toUpperCase() === currentQuestion.correct_option.toUpperCase();
+                                    opt.option_key.toUpperCase() ===
+                                    currentQuestion.correct_option.toUpperCase();
 
-                                let optionStyle = 'border-border bg-background hover:bg-muted/40 text-foreground';
-                                let badgeStyle = 'bg-muted text-muted-foreground font-bold';
+                                let optionStyle =
+                                    'border-border bg-background hover:bg-muted/40 text-foreground';
+                                let badgeStyle =
+                                    'bg-muted text-muted-foreground font-bold';
 
                                 if (showExplanation) {
                                     if (isCorrect) {
                                         optionStyle =
                                             'border-[#2FB36F] bg-[#2FB36F]/15 text-[#1e7e4c] dark:text-[#2FB36F] font-semibold ring-1 ring-[#2FB36F]';
-                                        badgeStyle = 'bg-[#2FB36F] text-white font-black shadow-xs';
+                                        badgeStyle =
+                                            'bg-[#2FB36F] text-white font-black shadow-xs';
                                     } else if (isSelected) {
                                         optionStyle =
                                             'border-[#E05252] bg-[#E05252]/15 text-[#a82828] dark:text-[#E05252] font-semibold ring-1 ring-[#E05252]';
-                                        badgeStyle = 'bg-[#E05252] text-white font-black shadow-xs';
+                                        badgeStyle =
+                                            'bg-[#E05252] text-white font-black shadow-xs';
                                     } else {
-                                        optionStyle = 'border-border/60 opacity-60 text-muted-foreground';
-                                        badgeStyle = 'bg-muted text-muted-foreground font-semibold';
+                                        optionStyle =
+                                            'border-border/60 opacity-60 text-muted-foreground';
+                                        badgeStyle =
+                                            'bg-muted text-muted-foreground font-semibold';
                                     }
                                 } else if (isSelected) {
                                     optionStyle =
@@ -670,15 +820,19 @@ export default function MCQRunner({
                                 return (
                                     <div
                                         key={opt.id || opt.option_key}
-                                        onClick={() => handleSelectOption(opt.option_key)}
-                                        className={`group relative flex items-start gap-3 rounded-xl border p-3.5 text-left text-xs transition-all cursor-pointer ${optionStyle}`}
+                                        onClick={() =>
+                                            handleSelectOption(opt.option_key)
+                                        }
+                                        className={`group relative flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-left text-xs transition-all ${optionStyle}`}
                                     >
                                         <span
                                             className={`flex size-6 shrink-0 items-center justify-center rounded-md text-xs ${badgeStyle}`}
                                         >
                                             {opt.option_key}
                                         </span>
-                                        <span className={`flex-1 leading-relaxed ${isEliminated ? 'line-through' : ''}`}>
+                                        <span
+                                            className={`flex-1 leading-relaxed ${isEliminated ? 'line-through' : ''}`}
+                                        >
                                             {opt.option_text}
                                         </span>
 
@@ -686,9 +840,16 @@ export default function MCQRunner({
                                         {!showExplanation && (
                                             <button
                                                 type="button"
-                                                onClick={(e) => toggleStrikethrough(e, opt.option_key)}
-                                                className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted/80 text-muted-foreground ${
-                                                    isEliminated ? '!opacity-100 text-rose-500 font-bold' : ''
+                                                onClick={(e) =>
+                                                    toggleStrikethrough(
+                                                        e,
+                                                        opt.option_key,
+                                                    )
+                                                }
+                                                className={`hover:bg-muted/80 text-muted-foreground rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 ${
+                                                    isEliminated
+                                                        ? 'font-bold text-rose-500 !opacity-100'
+                                                        : ''
                                                 }`}
                                                 title="Strike through this distractor"
                                             >
@@ -707,22 +868,31 @@ export default function MCQRunner({
                                     type="button"
                                     disabled={!selectedOption || isSubmitting}
                                     onClick={handleSubmitAnswer}
-                                    className="mt-3 w-full bg-[#102A43] dark:bg-[#55BDEB] text-white dark:text-neutral-950 font-bold hover:opacity-90 h-10 shadow-sm"
+                                    className="mt-3 h-10 w-full bg-[#102A43] font-bold text-white shadow-sm hover:opacity-90 dark:bg-[#55BDEB] dark:text-neutral-950"
                                 >
-                                    {isSubmitting ? 'Verifying...' : 'Submit Answer (Enter)'}
+                                    {isSubmitting
+                                        ? 'Verifying...'
+                                        : 'Submit Answer (Enter)'}
                                 </Button>
                             ) : (
                                 <div className="mt-3 flex gap-2">
                                     <Button
                                         type="button"
                                         onClick={() => {
-                                            if (currentIndex < questions.length - 1) {
-                                                setCurrentIndex((prev) => prev + 1);
+                                            if (
+                                                currentIndex <
+                                                questions.length - 1
+                                            ) {
+                                                setCurrentIndex(
+                                                    (prev) => prev + 1,
+                                                );
                                             } else {
-                                                toast.info('Completed all questions in this block!');
+                                                toast.info(
+                                                    'Completed all questions in this block!',
+                                                );
                                             }
                                         }}
-                                        className="w-full bg-[#55BDEB] text-neutral-950 font-bold hover:bg-[#55BDEB]/90 h-10"
+                                        className="h-10 w-full bg-[#55BDEB] font-bold text-neutral-950 hover:bg-[#55BDEB]/90"
                                     >
                                         Next Question →
                                     </Button>
@@ -734,7 +904,9 @@ export default function MCQRunner({
                                     type="button"
                                     variant="outline"
                                     disabled={currentIndex === 0}
-                                    onClick={() => setCurrentIndex((prev) => prev - 1)}
+                                    onClick={() =>
+                                        setCurrentIndex((prev) => prev - 1)
+                                    }
                                     className="w-1/2 text-xs font-bold"
                                 >
                                     ← Previous
@@ -742,8 +914,10 @@ export default function MCQRunner({
                                 {currentIndex < questions.length - 1 ? (
                                     <Button
                                         type="button"
-                                        onClick={() => setCurrentIndex((prev) => prev + 1)}
-                                        className="w-1/2 bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-xs"
+                                        onClick={() =>
+                                            setCurrentIndex((prev) => prev + 1)
+                                        }
+                                        className="w-1/2 bg-[#0066FF] text-xs font-bold text-white hover:bg-[#0052cc]"
                                     >
                                         Next Question →
                                     </Button>
@@ -753,7 +927,7 @@ export default function MCQRunner({
                                             type="button"
                                             onClick={handleFinishTimedBlock}
                                             disabled={isSubmitting}
-                                            className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                                            className="w-1/2 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                                         >
                                             Submit Block
                                         </Button>
@@ -777,15 +951,23 @@ export default function MCQRunner({
                     {showExplanation && (
                         <>
                             <TierBreakdown
-                                learningObjective={currentQuestion.learning_objective}
-                                foundationExplanation={currentQuestion.foundation_explanation}
-                                integrationExplanation={currentQuestion.integration_explanation}
-                                applicationExplanation={currentQuestion.application_explanation}
+                                learningObjective={
+                                    currentQuestion.learning_objective
+                                }
+                                foundationExplanation={
+                                    currentQuestion.foundation_explanation
+                                }
+                                integrationExplanation={
+                                    currentQuestion.integration_explanation
+                                }
+                                applicationExplanation={
+                                    currentQuestion.application_explanation
+                                }
                                 memoryPeg={currentQuestion.memory_peg}
                             />
 
                             <OptionRationaleTable
-                                options={currentQuestion.options}
+                                options={sortedOptions}
                                 correctOption={currentQuestion.correct_option}
                                 selectedOption={selectedOption}
                             />
@@ -797,10 +979,11 @@ export default function MCQRunner({
             {/* Clinical Note Modal */}
             {showNoteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                    <div className="flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-xl">
-                        <div className="flex items-center justify-between border-b border-border pb-2">
-                            <h3 className="font-bold text-sm text-foreground">
-                                Add Personal Clinical Note — {currentQuestion.code}
+                    <div className="border-border bg-card flex w-full max-w-lg flex-col gap-4 rounded-2xl border p-6 shadow-xl">
+                        <div className="border-border flex items-center justify-between border-b pb-2">
+                            <h3 className="text-foreground text-sm font-bold">
+                                Add Personal Clinical Note —{' '}
+                                {currentQuestion.code}
                             </h3>
                             <button
                                 type="button"
@@ -815,7 +998,7 @@ export default function MCQRunner({
                             value={noteContent}
                             onChange={(e) => setNoteContent(e.target.value)}
                             placeholder="Write your personal mnemonics, differential diagnoses, or clinical associations..."
-                            className="w-full rounded-lg border border-border bg-background p-3 text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-[#55BDEB]"
+                            className="border-border bg-background w-full rounded-lg border p-3 text-xs leading-relaxed focus:ring-1 focus:ring-[#55BDEB] focus:outline-none"
                         />
                         <div className="flex justify-end gap-2">
                             <Button
@@ -825,7 +1008,11 @@ export default function MCQRunner({
                             >
                                 Cancel
                             </Button>
-                            <Button size="sm" onClick={saveNote} className="bg-[#55BDEB] text-neutral-950 font-bold">
+                            <Button
+                                size="sm"
+                                onClick={saveNote}
+                                className="bg-[#55BDEB] font-bold text-neutral-950"
+                            >
                                 Save Note
                             </Button>
                         </div>

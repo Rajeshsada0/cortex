@@ -37,6 +37,7 @@ final class NationalRankPredictor
 
         $cohortSizes = [
             'INI_CET' => 85000,
+            'NEET_PG' => 205000,
             'MECEE_PG' => 12500,
             'USMLE_STEP1' => 95000,
             'USMLE_STEP2CK' => 45000,

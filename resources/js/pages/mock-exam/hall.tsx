@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     Clock,
@@ -9,6 +9,10 @@ import {
     ChevronLeft,
     ChevronRight,
     CheckCircle,
+    CheckCircle2,
+    XCircle,
+    Lightbulb,
+    BookOpen,
     ShieldAlert,
     ShieldCheck,
     WifiOff,
@@ -23,6 +27,7 @@ interface QuestionOptionData {
     id: string;
     option_key: string;
     option_text: string;
+    rationale?: string | null;
 }
 
 interface QuestionData {
@@ -34,6 +39,9 @@ interface QuestionData {
     difficulty: string;
     subject?: { name: string };
     options: QuestionOptionData[];
+    correct_option?: string;
+    foundation_explanation?: string | null;
+    learning_objective?: string | null;
     watermark?: any;
 }
 
@@ -44,25 +52,49 @@ interface MockHallProps {
     attempts?: any[];
 }
 
-export default function MockExamHall({ user, session, questions: rawQuestions, attempts = [] }: MockHallProps) {
+export default function MockExamHall({
+    user,
+    session,
+    questions: rawQuestions,
+    attempts = [],
+}: MockHallProps) {
     const questions: QuestionData[] = Array.isArray(rawQuestions)
         ? rawQuestions
         : (rawQuestions as any)?.data || [];
 
     const sessionId = session.id || session.data?.id;
-    const initialDuration = session.duration_seconds || session.data?.duration_seconds || 45 * 60;
+    const initialDuration =
+        session.duration_seconds || session.data?.duration_seconds || 45 * 60;
     const storageKey = `cortex_mock_session_${sessionId}`;
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
-    const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(new Set());
-    const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set([questions[0]?.id].filter(Boolean)));
+    const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(
+        new Set(),
+    );
+    const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(
+        new Set([questions[0]?.id].filter(Boolean)),
+    );
 
     // Timers
     const [secondsRemaining, setSecondsRemaining] = useState(initialDuration);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+    const [isOffline, setIsOffline] = useState(
+        typeof navigator !== 'undefined' ? !navigator.onLine : false,
+    );
+
+    // Easy-PG style Immediate-Reveal Study Mode
+    const [isStudyMode, setIsStudyMode] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('study_mode') === '1') return true;
+            if (params.get('study_mode') === '0') return false;
+        }
+        return (
+            (session.session_type || session.data?.session_type) === 'PRACTICE'
+        );
+    });
 
     // Proctoring & Blur Violation Tracking
     const [blurViolations, setBlurViolations] = useState(0);
@@ -71,6 +103,13 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const currentQuestion = questions[currentIndex];
+
+    const sortedOptions = useMemo(() => {
+        if (!currentQuestion?.options) return [];
+        return [...currentQuestion.options].sort((a, b) =>
+            (a.option_key || '').localeCompare(b.option_key || ''),
+        );
+    }, [currentQuestion]);
 
     // 1. Hydrate state from server attempts & local offline backup
     useEffect(() => {
@@ -97,27 +136,58 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     restoredCount = Object.keys(parsed.answers).length;
                 }
 
-                if (Array.isArray(parsed.markedQuestions) && parsed.markedQuestions.length > 0) {
+                if (
+                    Array.isArray(parsed.markedQuestions) &&
+                    parsed.markedQuestions.length > 0
+                ) {
                     setMarkedQuestions(new Set(parsed.markedQuestions));
                 }
 
-                if (Array.isArray(parsed.visitedQuestions) && parsed.visitedQuestions.length > 0) {
-                    setVisitedQuestions(new Set([...parsed.visitedQuestions, questions[0]?.id].filter(Boolean)));
+                if (
+                    Array.isArray(parsed.visitedQuestions) &&
+                    parsed.visitedQuestions.length > 0
+                ) {
+                    setVisitedQuestions(
+                        new Set(
+                            [
+                                ...parsed.visitedQuestions,
+                                questions[0]?.id,
+                            ].filter(Boolean),
+                        ),
+                    );
                 }
 
-                if (typeof parsed.currentIndex === 'number' && parsed.currentIndex >= 0 && parsed.currentIndex < questions.length) {
+                if (
+                    typeof parsed.currentIndex === 'number' &&
+                    parsed.currentIndex >= 0 &&
+                    parsed.currentIndex < questions.length
+                ) {
                     setCurrentIndex(parsed.currentIndex);
                 }
 
-                if (typeof parsed.secondsRemaining === 'number' && parsed.savedAt) {
-                    const drift = Math.max(0, Math.floor((Date.now() - parsed.savedAt) / 1000));
-                    const adjustedRemaining = Math.max(1, parsed.secondsRemaining - drift);
-                    const adjustedElapsed = (parsed.secondsElapsed || 0) + drift;
+                if (
+                    typeof parsed.secondsRemaining === 'number' &&
+                    parsed.savedAt
+                ) {
+                    const drift = Math.max(
+                        0,
+                        Math.floor((Date.now() - parsed.savedAt) / 1000),
+                    );
+                    const adjustedRemaining = Math.max(
+                        1,
+                        parsed.secondsRemaining - drift,
+                    );
+                    const adjustedElapsed =
+                        (parsed.secondsElapsed || 0) + drift;
                     setSecondsRemaining(adjustedRemaining);
                     setSecondsElapsed(adjustedElapsed);
                 }
 
-                if (restoredCount > 0 || (parsed.markedQuestions && parsed.markedQuestions.length > 0)) {
+                if (
+                    restoredCount > 0 ||
+                    (parsed.markedQuestions &&
+                        parsed.markedQuestions.length > 0)
+                ) {
                     toast.success('Session Auto-Recovered', {
                         description: `Restored ${restoredCount} answered questions from crash-resilient local cache.`,
                     });
@@ -145,25 +215,36 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     secondsElapsed,
                     currentIndex,
                     savedAt: Date.now(),
-                })
+                }),
             );
         } catch (e) {
             // Storage quota full or disabled
         }
-    }, [storageKey, sessionId, answers, markedQuestions, visitedQuestions, secondsRemaining, secondsElapsed, currentIndex]);
+    }, [
+        storageKey,
+        sessionId,
+        answers,
+        markedQuestions,
+        visitedQuestions,
+        secondsRemaining,
+        secondsElapsed,
+        currentIndex,
+    ]);
 
     // 3. Network status resilience listeners
     useEffect(() => {
         const handleOnline = () => {
             setIsOffline(false);
             toast.success('Network Reconnected', {
-                description: 'Examination connection re-established. Responses synced.',
+                description:
+                    'Examination connection re-established. Responses synced.',
             });
         };
         const handleOffline = () => {
             setIsOffline(true);
             toast.warning('Network Offline', {
-                description: 'Local auto-save is protecting your responses. Do not refresh.',
+                description:
+                    'Local auto-save is protecting your responses. Do not refresh.',
             });
         };
 
@@ -179,7 +260,9 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
     // Track visited question
     useEffect(() => {
         if (currentQuestion?.id) {
-            setVisitedQuestions((prev) => new Set(prev).add(currentQuestion.id));
+            setVisitedQuestions((prev) =>
+                new Set(prev).add(currentQuestion.id),
+            );
         }
     }, [currentIndex, currentQuestion?.id]);
 
@@ -206,9 +289,12 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
             setBlurViolations((prev: number) => {
                 const updated = prev + 1;
                 setShowBlurWarning(true);
-                toast.error('Proctoring Alert: Tab switch / Window blur detected!', {
-                    description: `Security violation logged (${updated} incidents). Continuous violations invalidate score.`,
-                });
+                toast.error(
+                    'Proctoring Alert: Tab switch / Window blur detected!',
+                    {
+                        description: `Security violation logged (${updated} incidents). Continuous violations invalidate score.`,
+                    },
+                );
                 return updated;
             });
         };
@@ -220,22 +306,33 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
     // Toggle Fullscreen
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+            document.documentElement
+                .requestFullscreen()
+                .then(() => setIsFullscreen(true))
+                .catch(() => {});
         } else {
-            document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+            document
+                .exitFullscreen()
+                .then(() => setIsFullscreen(false))
+                .catch(() => {});
         }
     };
 
     // Handle Option Selection
     const handleSelectOption = (key: string) => {
         if (!currentQuestion) return;
+        // In study mode, lock answer once selected (matching Easy-PG UX)
+        if (isStudyMode && answers[currentQuestion.id] !== undefined) return;
 
         setAnswers((prev) => ({ ...prev, [currentQuestion.id]: key }));
 
         // Optimistically record attempt to API
         fetch(`/api/v1/test-sessions/${sessionId}/attempts`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
             body: JSON.stringify({
                 question_id: currentQuestion.id,
                 selected_option: key,
@@ -265,13 +362,19 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
         setIsSubmitting(true);
 
         try {
-            const res = await fetch(`/api/v1/test-sessions/${sessionId}/submit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({
-                    time_spent_seconds: secondsElapsed,
-                }),
-            });
+            const res = await fetch(
+                `/api/v1/test-sessions/${sessionId}/submit`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        time_spent_seconds: secondsElapsed,
+                    }),
+                },
+            );
 
             if (res.ok) {
                 try {
@@ -300,31 +403,35 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
     };
 
     if (!currentQuestion) {
-        return <div className="p-10 text-center">Loading Examination Vignette...</div>;
+        return (
+            <div className="p-10 text-center">
+                Loading Examination Vignette...
+            </div>
+        );
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-background text-foreground select-none">
+        <div className="bg-background text-foreground flex min-h-screen flex-col select-none">
             <Head title="Grand Mock Exam Hall — Active Timed Mode" />
 
             {/* Top Bar: Exam Info, Blur Warning, Countdown Timer, and Actions */}
-            <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/95 px-4 py-3 backdrop-blur-md">
+            <header className="border-border bg-card/95 sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                    <span className="rounded bg-[#102A43] px-2.5 py-1 text-xs font-mono font-bold text-[#55BDEB]">
+                    <span className="rounded bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-[#55BDEB]">
                         GRAND MOCK MODE
                     </span>
-                    <span className="text-xs font-semibold text-foreground hidden sm:inline">
+                    <span className="text-foreground hidden text-xs font-semibold sm:inline">
                         Question {currentIndex + 1} of {questions.length}
                     </span>
 
                     {/* Auto-Save & Offline Status */}
                     {isOffline ? (
-                        <span className="hidden md:flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                        <span className="hidden items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-600 md:flex dark:text-amber-400">
                             <WifiOff className="size-3" />
                             Offline Mode (Local Cache Active)
                         </span>
                     ) : (
-                        <span className="hidden md:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 md:flex dark:text-emerald-400">
                             <ShieldCheck className="size-3 text-emerald-500" />
                             Auto-Save Protected
                         </span>
@@ -352,8 +459,27 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     )}
                 </div>
 
-                {/* Right: Fullscreen Toggle & Submit */}
+                {/* Right: Study Mode Toggle, Fullscreen & Submit */}
                 <div className="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsStudyMode(!isStudyMode)}
+                        className={`h-8 gap-1.5 text-xs font-bold ${
+                            isStudyMode
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                : 'text-muted-foreground'
+                        }`}
+                        title="Toggle Easy-PG style Instant Feedback Study Mode (reveal answer upon selection)"
+                    >
+                        <Lightbulb className="size-3.5" />
+                        <span className="hidden sm:inline">
+                            Study Mode:
+                        </span>{' '}
+                        {isStudyMode ? 'ON' : 'OFF'}
+                    </Button>
+
                     <Button
                         type="button"
                         variant="ghost"
@@ -362,14 +488,18 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                         className="h-8 w-8 p-0"
                         title="Toggle Fullscreen Mode"
                     >
-                        {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        {isFullscreen ? (
+                            <Minimize2 className="size-4" />
+                        ) : (
+                            <Maximize2 className="size-4" />
+                        )}
                     </Button>
 
                     <Button
                         type="button"
                         size="sm"
                         onClick={() => setShowConfirmSubmit(true)}
-                        className="bg-[#E05252] text-white font-bold hover:bg-[#E05252]/90 text-xs h-8"
+                        className="h-8 bg-[#E05252] text-xs font-bold text-white hover:bg-[#E05252]/90"
                     >
                         Finish Exam
                     </Button>
@@ -378,29 +508,33 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
 
             {/* Final 5-Minute Warning Banner */}
             {secondsRemaining <= 300 && secondsRemaining > 0 && (
-                <div className="flex items-center justify-between bg-[#E05252]/15 border-b border-[#E05252]/30 px-4 py-2 text-xs font-bold text-[#E05252] animate-pulse">
+                <div className="flex animate-pulse items-center justify-between border-b border-[#E05252]/30 bg-[#E05252]/15 px-4 py-2 text-xs font-bold text-[#E05252]">
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="size-4 shrink-0" />
-                        <span>FINAL 5-MINUTE WARNING: Exam will auto-submit at 00:00! Review your marked and unanswered questions in the palette now.</span>
+                        <span>
+                            FINAL 5-MINUTE WARNING: Exam will auto-submit at
+                            00:00! Review your marked and unanswered questions
+                            in the palette now.
+                        </span>
                     </div>
                 </div>
             )}
 
             {/* Main Hall Layout */}
-            <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 w-full lg:grid lg:grid-cols-12 items-start">
+            <main className="flex w-full flex-1 flex-col items-start gap-6 p-4 sm:p-6 lg:grid lg:grid-cols-12">
                 {/* Left Area: Clinical Stem & Media */}
                 <div className="flex flex-col gap-4 lg:col-span-8">
                     {/* Clinical Vignette (Anti-scraping user-select disabled) */}
-                    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-6 shadow-sm">
-                        <div className="flex items-center justify-between border-b border-border pb-2">
+                    <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-6 shadow-sm">
+                        <div className="border-border flex items-center justify-between border-b pb-2">
                             <span className="font-mono text-xs font-bold text-[#55BDEB]">
                                 {currentQuestion.code}
                             </span>
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                            <span className="text-muted-foreground text-[10px] font-bold uppercase">
                                 High-Stakes Simulation
                             </span>
                         </div>
-                        <p className="text-sm sm:text-base leading-relaxed text-foreground whitespace-pre-line select-none">
+                        <p className="text-foreground text-sm leading-relaxed whitespace-pre-line select-none sm:text-base">
                             {currentQuestion.stem}
                         </p>
                     </div>
@@ -415,40 +549,131 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     )}
 
                     {/* Answer Choices */}
-                    <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5 shadow-sm">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                            Select Single Best Answer
-                        </span>
+                    <div className="border-border bg-card flex flex-col gap-2 rounded-2xl border p-5 shadow-sm">
+                        <div className="mb-1 flex items-center justify-between">
+                            <span className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
+                                Select Single Best Answer
+                            </span>
+                            {isStudyMode && answers[currentQuestion.id] && (
+                                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    Instant Rationale Revealed
+                                </span>
+                            )}
+                        </div>
 
                         <div className="flex flex-col gap-2.5">
-                            {currentQuestion.options.map((opt) => {
-                                const isSelected = answers[currentQuestion.id] === opt.option_key;
+                            {sortedOptions.map((opt) => {
+                                const isSelected =
+                                    answers[currentQuestion.id] ===
+                                    opt.option_key;
+                                const isRevealed =
+                                    isStudyMode &&
+                                    answers[currentQuestion.id] !== undefined;
+                                const isCorrectOpt =
+                                    currentQuestion.correct_option ===
+                                    opt.option_key;
+
+                                let optionStyle =
+                                    'border-border bg-background hover:bg-muted/40 text-foreground cursor-pointer';
+                                if (isRevealed) {
+                                    if (isCorrectOpt) {
+                                        optionStyle =
+                                            'border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500 shadow-sm cursor-default';
+                                    } else if (isSelected) {
+                                        optionStyle =
+                                            'border-rose-500 bg-rose-50/90 dark:bg-rose-950/40 text-rose-950 dark:text-rose-100 ring-2 ring-rose-500 shadow-sm cursor-default';
+                                    } else {
+                                        optionStyle =
+                                            'border-border/60 bg-muted/20 text-muted-foreground opacity-75 cursor-default';
+                                    }
+                                } else if (isSelected) {
+                                    optionStyle =
+                                        'border-[#0066FF] dark:border-[#55BDEB] bg-[#EBF5FC] dark:bg-sky-950/40 text-[#0A1E34] dark:text-slate-100 font-semibold ring-1.5 ring-[#0066FF] dark:ring-[#55BDEB] shadow-xs cursor-pointer';
+                                }
 
                                 return (
-                                    <button
+                                    <div
                                         key={opt.id || opt.option_key}
-                                        type="button"
-                                        onClick={() => handleSelectOption(opt.option_key)}
-                                        className={`flex items-start gap-3 rounded-xl border p-3.5 text-left text-xs transition-all cursor-pointer ${
-                                            isSelected
-                                                ? 'border-[#0066FF] dark:border-[#55BDEB] bg-[#EBF5FC] dark:bg-sky-950/40 text-[#0A1E34] dark:text-slate-100 font-semibold ring-1.5 ring-[#0066FF] dark:ring-[#55BDEB] shadow-xs'
-                                                : 'border-border bg-background hover:bg-muted/40 text-foreground'
-                                        }`}
+                                        onClick={() =>
+                                            !isRevealed
+                                                ? handleSelectOption(
+                                                      opt.option_key,
+                                                  )
+                                                : null
+                                        }
+                                        className={`flex flex-col gap-1.5 rounded-xl border p-3.5 text-left text-xs transition-all ${optionStyle}`}
                                     >
-                                        <span
-                                            className={`flex size-6 shrink-0 items-center justify-center rounded-md font-black text-xs ${
-                                                isSelected
-                                                    ? 'bg-[#0066FF] dark:bg-[#55BDEB] text-white dark:text-neutral-950 shadow-xs'
-                                                    : 'bg-muted text-muted-foreground'
-                                            }`}
-                                        >
-                                            {opt.option_key}
-                                        </span>
-                                        <span className="flex-1 leading-relaxed">{opt.option_text}</span>
-                                    </button>
+                                        <div className="flex w-full items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span
+                                                    className={`flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-black ${
+                                                        isRevealed
+                                                            ? isCorrectOpt
+                                                                ? 'bg-emerald-600 text-white'
+                                                                : isSelected
+                                                                  ? 'bg-rose-600 text-white'
+                                                                  : 'bg-muted text-muted-foreground'
+                                                            : isSelected
+                                                              ? 'bg-[#0066FF] text-white'
+                                                              : 'bg-muted text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {opt.option_key}
+                                                </span>
+                                                <span className="leading-relaxed font-medium">
+                                                    {opt.option_text}
+                                                </span>
+                                            </div>
+
+                                            {isRevealed && (
+                                                <div className="ml-2 flex shrink-0 items-center gap-1.5 font-bold">
+                                                    {isCorrectOpt && (
+                                                        <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                                                            <CheckCircle2 className="size-4" />{' '}
+                                                            (Key Answer)
+                                                        </span>
+                                                    )}
+                                                    {isSelected &&
+                                                        !isCorrectOpt && (
+                                                            <span className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400">
+                                                                <XCircle className="size-4" />{' '}
+                                                                (Your Answer)
+                                                            </span>
+                                                        )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {isRevealed && opt.rationale && (
+                                            <div className="mt-2 border-t border-current/10 pt-2 text-[11px] leading-relaxed font-normal text-slate-700 dark:text-slate-300">
+                                                <strong className="font-semibold">
+                                                    Distractor Analysis:
+                                                </strong>{' '}
+                                                {opt.rationale}
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>
+
+                        {/* High-Yield Learning Objective Card in Study Mode */}
+                        {isStudyMode &&
+                            answers[currentQuestion.id] &&
+                            (currentQuestion.learning_objective ||
+                                currentQuestion.foundation_explanation) && (
+                                <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/80 p-4 text-xs dark:border-sky-800 dark:bg-sky-950/40">
+                                    <div className="mb-1 flex items-center gap-1.5 font-bold text-[#0066FF] dark:text-sky-400">
+                                        <Lightbulb className="size-4 text-[#0066FF] dark:text-sky-400" />
+                                        Clinical Takeaway &amp; Learning
+                                        Objective
+                                    </div>
+                                    <p className="leading-relaxed font-normal text-slate-700 dark:text-slate-300">
+                                        {currentQuestion.learning_objective ||
+                                            currentQuestion.foundation_explanation}
+                                    </p>
+                                </div>
+                            )}
                     </div>
 
                     {/* Navigation Buttons */}
@@ -476,7 +701,9 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                             }`}
                         >
                             <Flag className="size-3.5" />
-                            {markedQuestions.has(currentQuestion.id) ? 'Marked for Review' : 'Mark for Review'}
+                            {markedQuestions.has(currentQuestion.id)
+                                ? 'Marked for Review'
+                                : 'Mark for Review'}
                         </Button>
 
                         <Button
@@ -484,7 +711,7 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                             size="sm"
                             disabled={currentIndex === questions.length - 1}
                             onClick={() => setCurrentIndex((prev) => prev + 1)}
-                            className="gap-1 bg-[#102A43] dark:bg-[#55BDEB] text-white dark:text-neutral-950 font-bold text-xs"
+                            className="gap-1 bg-[#102A43] text-xs font-bold text-white dark:bg-[#55BDEB] dark:text-neutral-950"
                         >
                             Next <ChevronRight className="size-4" />
                         </Button>
@@ -503,19 +730,24 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                     />
 
                     {/* Summary Info Card */}
-                    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 text-xs">
-                        <span className="font-bold text-foreground">Examination Progress</span>
-                        <div className="flex justify-between text-muted-foreground">
+                    <div className="border-border bg-card flex flex-col gap-2 rounded-xl border p-4 text-xs">
+                        <span className="text-foreground font-bold">
+                            Examination Progress
+                        </span>
+                        <div className="text-muted-foreground flex justify-between">
                             <span>Answered:</span>
                             <span className="font-bold text-[#2FB36F]">
-                                {Object.keys(answers).length} / {questions.length}
+                                {Object.keys(answers).length} /{' '}
+                                {questions.length}
                             </span>
                         </div>
-                        <div className="flex justify-between text-muted-foreground">
+                        <div className="text-muted-foreground flex justify-between">
                             <span>Marked for Review:</span>
-                            <span className="font-bold text-indigo-500">{markedQuestions.size}</span>
+                            <span className="font-bold text-indigo-500">
+                                {markedQuestions.size}
+                            </span>
                         </div>
-                        <div className="flex justify-between text-muted-foreground">
+                        <div className="text-muted-foreground flex justify-between">
                             <span>Unanswered:</span>
                             <span className="font-bold text-amber-500">
                                 {questions.length - Object.keys(answers).length}
@@ -528,12 +760,22 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
             {/* Confirm Submission Modal */}
             {showConfirmSubmit && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                    <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-xl">
-                        <h3 className="font-bold text-base text-foreground">
+                    <div className="border-border bg-card flex w-full max-w-md flex-col gap-4 rounded-2xl border p-6 shadow-xl">
+                        <h3 className="text-foreground text-base font-bold">
                             Ready to Submit Grand Mock?
                         </h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                            You have answered <span className="font-bold text-foreground">{Object.keys(answers).length}</span> out of <span className="font-bold text-foreground">{questions.length}</span> questions. Once submitted, your answers will be graded by the Marking Engine and negative marking will be computed.
+                        <p className="text-muted-foreground text-xs leading-relaxed">
+                            You have answered{' '}
+                            <span className="text-foreground font-bold">
+                                {Object.keys(answers).length}
+                            </span>{' '}
+                            out of{' '}
+                            <span className="text-foreground font-bold">
+                                {questions.length}
+                            </span>{' '}
+                            questions. Once submitted, your answers will be
+                            graded by the Marking Engine and negative marking
+                            will be computed.
                         </p>
                         <div className="flex justify-end gap-2 pt-2">
                             <Button
@@ -547,9 +789,11 @@ export default function MockExamHall({ user, session, questions: rawQuestions, a
                                 size="sm"
                                 disabled={isSubmitting}
                                 onClick={handleFinalSubmit}
-                                className="bg-[#E05252] text-white font-bold"
+                                className="bg-[#E05252] font-bold text-white"
                             >
-                                {isSubmitting ? 'Grading...' : 'Yes, Submit & Grade'}
+                                {isSubmitting
+                                    ? 'Grading...'
+                                    : 'Yes, Submit & Grade'}
                             </Button>
                         </div>
                     </div>

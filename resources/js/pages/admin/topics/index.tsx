@@ -54,10 +54,16 @@ interface TopicsIndexProps {
     selected_subject_id: number | null;
 }
 
-export default function TopicsIndex({ topics, subjects, selected_subject_id }: TopicsIndexProps) {
+export default function TopicsIndex({
+    topics,
+    subjects,
+    selected_subject_id,
+}: TopicsIndexProps) {
     const [isTopicDialogOpen, setIsTopicDialogOpen] = useState(false);
     const [editingTopic, setEditingTopic] = useState<TopicItem | null>(null);
-    const [subjectId, setSubjectId] = useState<number>(selected_subject_id || (subjects[0]?.id ?? 1));
+    const [subjectId, setSubjectId] = useState<number>(
+        selected_subject_id || (subjects[0]?.id ?? 1),
+    );
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
     const [priority, setPriority] = useState(3);
@@ -65,8 +71,12 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
     const [errorMsg, setErrorMsg] = useState('');
 
     // Expanded topics for subtopic management
-    const [expandedTopicIds, setExpandedTopicIds] = useState<Record<number, boolean>>({});
-    const [newSubtopicName, setNewSubtopicName] = useState<Record<number, string>>({});
+    const [expandedTopicIds, setExpandedTopicIds] = useState<
+        Record<number, boolean>
+    >({});
+    const [newSubtopicName, setNewSubtopicName] = useState<
+        Record<number, string>
+    >({});
 
     const toggleExpand = (topicId: number) => {
         setExpandedTopicIds((prev) => ({ ...prev, [topicId]: !prev[topicId] }));
@@ -74,7 +84,11 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
 
     const handleSubjectFilterChange = (id: string) => {
         if (id) {
-            router.get('/admin/topics', { subject_id: id }, { preserveState: true });
+            router.get(
+                '/admin/topics',
+                { subject_id: id },
+                { preserveState: true },
+            );
         } else {
             router.get('/admin/topics', {}, { preserveState: true });
         }
@@ -108,7 +122,12 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
         if (editingTopic) {
             router.put(
                 `/admin/topics/${editingTopic.id}`,
-                { subject_id: subjectId, name, slug, high_yield_priority: priority },
+                {
+                    subject_id: subjectId,
+                    name,
+                    slug,
+                    high_yield_priority: priority,
+                },
                 {
                     onSuccess: () => {
                         setIsTopicDialogOpen(false);
@@ -118,12 +137,17 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                         setProcessing(false);
                         setErrorMsg(Object.values(errs)[0] as string);
                     },
-                }
+                },
             );
         } else {
             router.post(
                 '/admin/topics',
-                { subject_id: subjectId, name, slug, high_yield_priority: priority },
+                {
+                    subject_id: subjectId,
+                    name,
+                    slug,
+                    high_yield_priority: priority,
+                },
                 {
                     onSuccess: () => {
                         setIsTopicDialogOpen(false);
@@ -133,7 +157,7 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                         setProcessing(false);
                         setErrorMsg(Object.values(errs)[0] as string);
                     },
-                }
+                },
             );
         }
     };
@@ -155,7 +179,7 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                 onSuccess: () => {
                     setNewSubtopicName((prev) => ({ ...prev, [topicId]: '' }));
                 },
-            }
+            },
         );
     };
 
@@ -169,24 +193,32 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
         <>
             <Head title="Manage Topics & Subtopics — Cortex Admin" />
 
-            <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full">
+            <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
                     <div>
-                        <div className="inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400 mb-1">
+                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
                             <Layers className="size-4" />
-                            <span>Curriculum Classification &amp; High-Yield Priority Matrix</span>
+                            <span>
+                                Curriculum Classification &amp; High-Yield
+                                Priority Matrix
+                            </span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
                             Topics &amp; Subtopics Hierarchy
                         </h1>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            Organize high-yield chapters, calibrate priority star ratings, and map granular subtopics for adaptive testing.
+                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+                            Organize high-yield chapters, calibrate priority
+                            star ratings, and map granular subtopics for
+                            adaptive testing.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                        <Button onClick={openCreateTopicDialog} className="bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-xs gap-1.5 shadow-md">
+                    <div className="flex shrink-0 items-center gap-3">
+                        <Button
+                            onClick={openCreateTopicDialog}
+                            className="gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]"
+                        >
                             <Plus className="size-4" />
                             New Topic
                         </Button>
@@ -194,25 +226,32 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                 </div>
 
                 {/* Filter Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 shadow-xs">
+                <div className="border-border bg-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4 shadow-xs">
                     <div className="flex items-center gap-2.5">
-                        <Label htmlFor="filter-subject" className="text-xs font-bold text-muted-foreground shrink-0">
+                        <Label
+                            htmlFor="filter-subject"
+                            className="text-muted-foreground shrink-0 text-xs font-bold"
+                        >
                             Filter by Subject:
                         </Label>
                         <select
                             id="filter-subject"
                             value={selected_subject_id || ''}
-                            onChange={(e) => handleSubjectFilterChange(e.target.value)}
-                            className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground focus:border-[#0066FF] focus:outline-none"
+                            onChange={(e) =>
+                                handleSubjectFilterChange(e.target.value)
+                            }
+                            className="border-border bg-background text-foreground rounded-xl border px-3 py-1.5 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
                         >
                             <option value="">All 19 Subjects</option>
                             {subjects.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
+                                <option key={s.id} value={s.id}>
+                                    {s.name}
+                                </option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="text-xs font-bold text-muted-foreground">
+                    <div className="text-muted-foreground text-xs font-bold">
                         Showing {topics.length} topics
                     </div>
                 </div>
@@ -220,29 +259,40 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                 {/* Topics List Table */}
                 <div className="space-y-3">
                     {topics.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
-                            <Layers className="size-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                            <h3 className="text-sm font-bold text-foreground">No Topics Found</h3>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Create your first topic for this subject or clear your filter.
+                        <div className="border-border bg-card rounded-2xl border border-dashed p-12 text-center">
+                            <Layers className="text-muted-foreground mx-auto mb-3 size-10 opacity-50" />
+                            <h3 className="text-foreground text-sm font-bold">
+                                No Topics Found
+                            </h3>
+                            <p className="text-muted-foreground mt-1 text-xs">
+                                Create your first topic for this subject or
+                                clear your filter.
                             </p>
-                            <Button onClick={openCreateTopicDialog} size="sm" className="mt-4 bg-[#0066FF] text-white text-xs font-bold">
-                                <Plus className="size-3.5 mr-1" /> Add Topic
+                            <Button
+                                onClick={openCreateTopicDialog}
+                                size="sm"
+                                className="mt-4 bg-[#0066FF] text-xs font-bold text-white"
+                            >
+                                <Plus className="mr-1 size-3.5" /> Add Topic
                             </Button>
                         </div>
                     ) : (
                         topics.map((topic) => {
-                            const isExpanded = Boolean(expandedTopicIds[topic.id]);
+                            const isExpanded = Boolean(
+                                expandedTopicIds[topic.id],
+                            );
                             return (
                                 <div
                                     key={topic.id}
-                                    className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden transition-all"
+                                    className="border-border bg-card overflow-hidden rounded-2xl border shadow-xs transition-all"
                                 >
-                                    <div className="flex items-center justify-between p-4 bg-card hover:bg-muted/10">
+                                    <div className="bg-card hover:bg-muted/10 flex items-center justify-between p-4">
                                         <div className="flex items-center gap-3">
                                             <button
-                                                onClick={() => toggleExpand(topic.id)}
-                                                className="flex size-7 items-center justify-center rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted transition-colors"
+                                                onClick={() =>
+                                                    toggleExpand(topic.id)
+                                                }
+                                                className="border-border bg-muted/30 text-muted-foreground hover:bg-muted flex size-7 items-center justify-center rounded-lg border transition-colors"
                                                 title="Expand subtopics"
                                             >
                                                 {isExpanded ? (
@@ -254,36 +304,57 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
 
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-foreground text-sm">{topic.name}</span>
-                                                    <Badge variant="outline" className="text-[10px] font-mono font-medium">
+                                                    <span className="text-foreground text-sm font-bold">
+                                                        {topic.name}
+                                                    </span>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="font-mono text-[10px] font-medium"
+                                                    >
                                                         {topic.subject?.name}
                                                     </Badge>
                                                 </div>
-                                                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                                                    <span className="font-mono text-[11px]">{topic.slug}</span>
+                                                <div className="text-muted-foreground mt-0.5 flex items-center gap-3 text-xs">
+                                                    <span className="font-mono text-[11px]">
+                                                        {topic.slug}
+                                                    </span>
                                                     <span>•</span>
-                                                    <span>{topic.subtopics?.length || 0} Subtopics</span>
+                                                    <span>
+                                                        {topic.subtopics
+                                                            ?.length || 0}{' '}
+                                                        Subtopics
+                                                    </span>
                                                     <span>•</span>
-                                                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{topic.questions_count || 0} Qs</span>
+                                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                                                        {topic.questions_count ||
+                                                            0}{' '}
+                                                        Qs
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-3">
                                             {/* High Yield Priority Stars */}
-                                            <div className="flex items-center gap-0.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-full px-2.5 py-1" title={`Priority ${topic.high_yield_priority}/5`}>
+                                            <div
+                                                className="flex items-center gap-0.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 dark:border-amber-800/60 dark:bg-amber-950/40"
+                                                title={`Priority ${topic.high_yield_priority}/5`}
+                                            >
                                                 {[1, 2, 3, 4, 5].map((star) => (
                                                     <Star
                                                         key={star}
                                                         className={`size-3 ${
-                                                            star <= (topic.high_yield_priority || 3)
+                                                            star <=
+                                                            (topic.high_yield_priority ||
+                                                                3)
                                                                 ? 'fill-amber-400 text-amber-500'
                                                                 : 'text-amber-200 dark:text-neutral-700'
                                                         }`}
                                                     />
                                                 ))}
-                                                <span className="text-[10px] font-black text-amber-800 dark:text-amber-300 ml-1">
-                                                    HY-{topic.high_yield_priority}
+                                                <span className="ml-1 text-[10px] font-black text-amber-800 dark:text-amber-300">
+                                                    HY-
+                                                    {topic.high_yield_priority}
                                                 </span>
                                             </div>
 
@@ -292,18 +363,24 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                                                     size="sm"
                                                     variant="ghost"
                                                     className="h-8 px-2 text-xs font-semibold hover:text-sky-600"
-                                                    onClick={() => openEditTopicDialog(topic)}
+                                                    onClick={() =>
+                                                        openEditTopicDialog(
+                                                            topic,
+                                                        )
+                                                    }
                                                 >
-                                                    <Edit2 className="size-3.5 mr-1" />
+                                                    <Edit2 className="mr-1 size-3.5" />
                                                     Edit
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="ghost"
-                                                    className="h-8 px-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDeleteTopic(topic)}
+                                                    className="text-destructive hover:bg-destructive/10 h-8 px-2 text-xs font-semibold"
+                                                    onClick={() =>
+                                                        handleDeleteTopic(topic)
+                                                    }
                                                 >
-                                                    <Trash2 className="size-3.5 mr-1" />
+                                                    <Trash2 className="mr-1 size-3.5" />
                                                     Delete
                                                 </Button>
                                             </div>
@@ -312,64 +389,92 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
 
                                     {/* Subtopics Drawer */}
                                     {isExpanded && (
-                                        <div className="border-t border-border bg-muted/20 p-4 sm:p-5">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                        <div className="border-border bg-muted/20 border-t p-4 sm:p-5">
+                                            <div className="mb-3 flex items-center justify-between">
+                                                <span className="text-foreground flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
                                                     <Tag className="size-3.5 text-sky-500" />
-                                                    <span>Subtopics for {topic.name}</span>
+                                                    <span>
+                                                        Subtopics for{' '}
+                                                        {topic.name}
+                                                    </span>
                                                 </span>
                                             </div>
 
                                             {/* Subtopic Badges */}
-                                            <div className="flex flex-wrap gap-2 mb-4">
-                                                {topic.subtopics && topic.subtopics.length > 0 ? (
-                                                    topic.subtopics.map((sub) => (
-                                                        <div
-                                                            key={sub.id}
-                                                            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-2xs"
-                                                        >
-                                                            <span>{sub.name}</span>
-                                                            <button
-                                                                onClick={() => handleDeleteSubtopic(sub.id)}
-                                                                className="text-muted-foreground hover:text-destructive transition-colors ml-1"
-                                                                title="Delete Subtopic"
+                                            <div className="mb-4 flex flex-wrap gap-2">
+                                                {topic.subtopics &&
+                                                topic.subtopics.length > 0 ? (
+                                                    topic.subtopics.map(
+                                                        (sub) => (
+                                                            <div
+                                                                key={sub.id}
+                                                                className="border-border bg-card text-foreground inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium shadow-2xs"
                                                             >
-                                                                ×
-                                                            </button>
-                                                        </div>
-                                                    ))
+                                                                <span>
+                                                                    {sub.name}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleDeleteSubtopic(
+                                                                            sub.id,
+                                                                        )
+                                                                    }
+                                                                    className="text-muted-foreground hover:text-destructive ml-1 transition-colors"
+                                                                    title="Delete Subtopic"
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        ),
+                                                    )
                                                 ) : (
-                                                    <span className="text-xs text-muted-foreground italic">
-                                                        No subtopics yet. Add one below.
+                                                    <span className="text-muted-foreground text-xs italic">
+                                                        No subtopics yet. Add
+                                                        one below.
                                                     </span>
                                                 )}
                                             </div>
 
                                             {/* Add Subtopic Form */}
-                                            <div className="flex items-center gap-2 max-w-md">
+                                            <div className="flex max-w-md items-center gap-2">
                                                 <Input
-                                                    value={newSubtopicName[topic.id] || ''}
+                                                    value={
+                                                        newSubtopicName[
+                                                            topic.id
+                                                        ] || ''
+                                                    }
                                                     onChange={(e) =>
-                                                        setNewSubtopicName((prev) => ({
-                                                            ...prev,
-                                                            [topic.id]: e.target.value,
-                                                        }))
+                                                        setNewSubtopicName(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                [topic.id]:
+                                                                    e.target
+                                                                        .value,
+                                                            }),
+                                                        )
                                                     }
                                                     placeholder="Add granular subtopic (e.g., Aortic Dissection)..."
                                                     className="h-8 text-xs"
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') {
                                                             e.preventDefault();
-                                                            handleAddSubtopic(topic.id);
+                                                            handleAddSubtopic(
+                                                                topic.id,
+                                                            );
                                                         }
                                                     }}
                                                 />
                                                 <Button
                                                     size="sm"
-                                                    onClick={() => handleAddSubtopic(topic.id)}
-                                                    className="h-8 bg-[#0066FF] hover:bg-[#0052cc] text-white text-xs font-bold px-3 shrink-0"
+                                                    onClick={() =>
+                                                        handleAddSubtopic(
+                                                            topic.id,
+                                                        )
+                                                    }
+                                                    className="h-8 shrink-0 bg-[#0066FF] px-3 text-xs font-bold text-white hover:bg-[#0052cc]"
                                                 >
-                                                    <Plus className="size-3 mr-1" /> Add
+                                                    <Plus className="mr-1 size-3" />{' '}
+                                                    Add
                                                 </Button>
                                             </div>
                                         </div>
@@ -381,48 +486,76 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                 </div>
 
                 {/* Create / Edit Topic Dialog */}
-                <Dialog open={isTopicDialogOpen} onOpenChange={setIsTopicDialogOpen}>
+                <Dialog
+                    open={isTopicDialogOpen}
+                    onOpenChange={setIsTopicDialogOpen}
+                >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-lg font-bold">
-                                {editingTopic ? 'Edit Topic' : 'Add New Curriculum Topic'}
+                                {editingTopic
+                                    ? 'Edit Topic'
+                                    : 'Add New Curriculum Topic'}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Configure topic metadata and postgraduate high-yield weight.
+                                Configure topic metadata and postgraduate
+                                high-yield weight.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleTopicSubmit} className="space-y-4 py-2">
+                        <form
+                            onSubmit={handleTopicSubmit}
+                            className="space-y-4 py-2"
+                        >
                             {errorMsg && (
-                                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
+                                <div className="border-destructive/30 bg-destructive/10 text-destructive flex items-center gap-2 rounded-xl border p-3 text-xs">
                                     <AlertTriangle className="size-4 shrink-0" />
                                     <span>{errorMsg}</span>
                                 </div>
                             )}
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="topic-subject" className="text-xs font-bold">Parent Subject</Label>
+                                <Label
+                                    htmlFor="topic-subject"
+                                    className="text-xs font-bold"
+                                >
+                                    Parent Subject
+                                </Label>
                                 <select
                                     id="topic-subject"
                                     value={subjectId}
-                                    onChange={(e) => setSubjectId(parseInt(e.target.value))}
-                                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground focus:border-[#0066FF] focus:outline-none"
+                                    onChange={(e) =>
+                                        setSubjectId(parseInt(e.target.value))
+                                    }
+                                    className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
                                 >
                                     {subjects.map((s) => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                        <option key={s.id} value={s.id}>
+                                            {s.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="topic-name" className="text-xs font-bold">Topic Name</Label>
+                                <Label
+                                    htmlFor="topic-name"
+                                    className="text-xs font-bold"
+                                >
+                                    Topic Name
+                                </Label>
                                 <Input
                                     id="topic-name"
                                     value={name}
                                     onChange={(e) => {
                                         setName(e.target.value);
                                         if (!editingTopic) {
-                                            setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                                            setSlug(
+                                                e.target.value
+                                                    .toLowerCase()
+                                                    .replace(/[^a-z0-9]+/g, '-')
+                                                    .replace(/^-|-$/g, ''),
+                                            );
                                         }
                                     }}
                                     placeholder="e.g., Acute Coronary Syndromes"
@@ -432,19 +565,27 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="topic-slug" className="text-xs font-bold">URL Slug</Label>
+                                <Label
+                                    htmlFor="topic-slug"
+                                    className="text-xs font-bold"
+                                >
+                                    URL Slug
+                                </Label>
                                 <Input
                                     id="topic-slug"
                                     value={slug}
                                     onChange={(e) => setSlug(e.target.value)}
                                     placeholder="e.g., acute-coronary-syndromes"
                                     required
-                                    className="text-xs font-mono"
+                                    className="font-mono text-xs"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="topic-priority" className="text-xs font-bold">
+                                <Label
+                                    htmlFor="topic-priority"
+                                    className="text-xs font-bold"
+                                >
                                     High-Yield Priority (1 to 5 Stars)
                                 </Label>
                                 <div className="flex items-center gap-2">
@@ -453,13 +594,15 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                                             type="button"
                                             key={val}
                                             onClick={() => setPriority(val)}
-                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                                            className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
                                                 priority === val
-                                                    ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 shadow-xs'
+                                                    ? 'border-amber-400 bg-amber-50 text-amber-800 shadow-xs dark:bg-amber-950/60 dark:text-amber-300'
                                                     : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
                                             }`}
                                         >
-                                            <Star className={`size-3 ${priority >= val ? 'fill-amber-400 text-amber-500' : 'text-neutral-400'}`} />
+                                            <Star
+                                                className={`size-3 ${priority >= val ? 'fill-amber-400 text-amber-500' : 'text-neutral-400'}`}
+                                            />
                                             <span>{val}</span>
                                         </button>
                                     ))}
@@ -478,9 +621,11 @@ export default function TopicsIndex({ topics, subjects, selected_subject_id }: T
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="bg-[#0066FF] hover:bg-[#0052cc] text-white text-xs font-bold"
+                                    className="bg-[#0066FF] text-xs font-bold text-white hover:bg-[#0052cc]"
                                 >
-                                    {editingTopic ? 'Save Changes' : 'Create Topic'}
+                                    {editingTopic
+                                        ? 'Save Changes'
+                                        : 'Create Topic'}
                                 </Button>
                             </DialogFooter>
                         </form>

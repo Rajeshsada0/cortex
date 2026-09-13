@@ -1,9 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutGrid,
-    PlaySquare,
+    CheckCircle2,
     BookOpen,
-    GraduationCap,
+    Landmark,
     Repeat,
     Calendar,
     SlidersHorizontal,
@@ -37,7 +37,8 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Interactive MCQ Runner',
         href: '/qbank/runner',
-        icon: PlaySquare,
+        icon: CheckCircle2,
+        badge: 'Adaptive',
     },
     {
         title: 'Custom Test Builder',
@@ -52,7 +53,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Grand Mock Exam Hall',
         href: '/mock-exam',
-        icon: GraduationCap,
+        icon: Landmark,
     },
     {
         title: 'Spaced Repetition Queue',
@@ -109,22 +110,50 @@ export function AppSidebar() {
     const isAdmin = Boolean(auth?.user?.is_admin);
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+        <Sidebar
+            collapsible="icon"
+            variant="sidebar"
+            className="border-cortex-border bg-cortex-bg border-r"
+        >
+            <SidebarHeader className="border-cortex-border/40 border-b pb-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={isAdmin ? '/admin' : '/dashboard'} prefetch>
+                        <SidebarMenuButton
+                            size="lg"
+                            asChild
+                            className="hover:bg-slate-800/40"
+                        >
+                            <Link
+                                href={isAdmin ? '/admin' : '/dashboard'}
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+
+                {!isAdmin && (
+                    <div className="mt-2.5 px-1 group-data-[collapsible=icon]:hidden">
+                        <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#0a1120] p-2.5 text-xs shadow-xs">
+                            <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                                Active Track
+                            </span>
+                            <span className="rounded-md border border-cyan-500/30 bg-[#0c1e33] px-2.5 py-1 text-xs font-semibold text-cyan-400">
+                                {(auth?.user as any)?.pathway_label ||
+                                    'INI-CET (Nov 2024)'}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </SidebarHeader>
 
             <SidebarContent>
                 {isAdmin ? (
-                    <NavMain items={adminNavItems} label="Faculty & Content Admin" />
+                    <NavMain
+                        items={adminNavItems}
+                        label="Faculty & Content Admin"
+                    />
                 ) : (
                     <NavMain items={mainNavItems} label="Candidate Portal" />
                 )}

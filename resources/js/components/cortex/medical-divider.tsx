@@ -52,27 +52,31 @@ export function MedicalDivider({
     }[accentColor];
 
     return (
-        <div className={`relative flex w-full items-center justify-center py-10 sm:py-14 select-none ${className}`}>
+        <div
+            className={`relative flex w-full items-center justify-center py-10 select-none sm:py-14 ${className}`}
+        >
             {/* Ambient Center Glow */}
             <div
-                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-64 rounded-full blur-2xl pointer-events-none transition-all ${colorClasses.glow}`}
+                className={`pointer-events-none absolute top-1/2 left-1/2 h-8 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl transition-all ${colorClasses.glow}`}
             />
 
             {/* Continuous Gradient Line with Center Accent */}
-            <div className="relative w-full flex items-center">
+            <div className="relative flex w-full items-center">
                 {/* Left Line */}
                 <div
-                    className={`h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent`}
+                    className={`via-border h-px flex-1 bg-gradient-to-r from-transparent to-transparent`}
                 />
 
                 {/* Left Telemetry Crosshair */}
-                <div className={`hidden sm:flex items-center px-4 font-mono text-[10px] font-bold ${colorClasses.tick}`}>
+                <div
+                    className={`hidden items-center px-4 font-mono text-[10px] font-bold sm:flex ${colorClasses.tick}`}
+                >
                     +—·—+
                 </div>
 
                 {/* Center Modern Medical Chip */}
                 <div
-                    className={`relative z-10 mx-2 sm:mx-4 inline-flex items-center gap-2.5 rounded-full border bg-card/95 px-4 py-1.5 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md ${colorClasses.border}`}
+                    className={`bg-card/95 relative z-10 mx-2 inline-flex items-center gap-2.5 rounded-full border px-4 py-1.5 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md sm:mx-4 ${colorClasses.border}`}
                 >
                     <span className="relative flex size-2">
                         <span
@@ -99,16 +103,18 @@ export function MedicalDivider({
                         />
                     </span>
 
-                    <Icon className={`size-3.5 shrink-0 ${colorClasses.icon}`} />
+                    <Icon
+                        className={`size-3.5 shrink-0 ${colorClasses.icon}`}
+                    />
 
-                    <span className="font-mono text-[11px] font-extrabold uppercase tracking-widest text-foreground">
+                    <span className="text-foreground font-mono text-[11px] font-extrabold tracking-widest uppercase">
                         {label}
                     </span>
 
                     {subtitle && (
                         <>
-                            <span className="h-3 w-px bg-border" />
-                            <span className="hidden text-[10px] font-medium text-muted-foreground md:inline">
+                            <span className="bg-border h-3 w-px" />
+                            <span className="text-muted-foreground hidden text-[10px] font-medium md:inline">
                                 {subtitle}
                             </span>
                         </>
@@ -116,13 +122,15 @@ export function MedicalDivider({
                 </div>
 
                 {/* Right Telemetry Crosshair */}
-                <div className={`hidden sm:flex items-center px-4 font-mono text-[10px] font-bold ${colorClasses.tick}`}>
+                <div
+                    className={`hidden items-center px-4 font-mono text-[10px] font-bold sm:flex ${colorClasses.tick}`}
+                >
                     +—·—+
                 </div>
 
                 {/* Right Line */}
                 <div
-                    className={`h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent`}
+                    className={`via-border h-px flex-1 bg-gradient-to-r from-transparent to-transparent`}
                 />
             </div>
         </div>

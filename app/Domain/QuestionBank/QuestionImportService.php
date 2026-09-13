@@ -216,7 +216,9 @@ class QuestionImportService
                     ]);
 
                     // Insert Options (A, B, C, D)
-                    foreach ($validation['options'] as $opt) {
+                    $sortedOptions = $validation['options'];
+                    usort($sortedOptions, fn ($a, $b) => strcmp($a['option_key'] ?? '', $b['option_key'] ?? ''));
+                    foreach ($sortedOptions as $opt) {
                         QuestionOption::create([
                             'question_id' => $question->id,
                             'option_key' => $opt['option_key'],

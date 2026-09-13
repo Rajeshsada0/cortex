@@ -85,7 +85,9 @@ export default function QuestionsIndex({
     const [status, setStatus] = useState(filters.status || 'all');
 
     // Quick Preview Modal
-    const [previewQuestion, setPreviewQuestion] = useState<QuestionItem | null>(null);
+    const [previewQuestion, setPreviewQuestion] = useState<QuestionItem | null>(
+        null,
+    );
 
     const selectedSubject = subjects.find((s) => s.id === Number(subjectId));
     const availableTopics = selectedSubject ? selectedSubject.topics : [];
@@ -113,7 +115,11 @@ export default function QuestionsIndex({
     };
 
     const handleToggleActive = (id: string) => {
-        router.post(`/admin/questions/${id}/toggle-active`, {}, { preserveScroll: true });
+        router.post(
+            `/admin/questions/${id}/toggle-active`,
+            {},
+            { preserveScroll: true },
+        );
     };
 
     const handleDelete = (q: QuestionItem) => {
@@ -126,31 +132,35 @@ export default function QuestionsIndex({
         <>
             <Head title="MCQ Question Bank — Cortex Admin" />
 
-            <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full">
+            <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
                     <div>
-                        <div className="inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400 mb-1">
+                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
                             <HelpCircle className="size-4" />
                             <span>Postgraduate Clinical Vignette Q-Bank</span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
                             MCQ Question Bank Management
                         </h1>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            Review, calibrate, and author clinical vignettes with multi-tiered diagnostic rationales.
+                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+                            Review, calibrate, and author clinical vignettes
+                            with multi-tiered diagnostic rationales.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex shrink-0 items-center gap-3">
                         <Link href="/admin/questions/import">
-                            <Button variant="outline" className="border-border text-xs font-bold gap-1.5 shadow-xs hover:border-[#0066FF] hover:text-[#0066FF]">
+                            <Button
+                                variant="outline"
+                                className="border-border gap-1.5 text-xs font-bold shadow-xs hover:border-[#0066FF] hover:text-[#0066FF]"
+                            >
                                 <Upload className="size-4 text-[#0066FF]" />
                                 Bulk Import
                             </Button>
                         </Link>
                         <Link href="/admin/questions/create">
-                            <Button className="bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-xs gap-1.5 shadow-md">
+                            <Button className="gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]">
                                 <Plus className="size-4" />
                                 New Clinical MCQ
                             </Button>
@@ -161,7 +171,13 @@ export default function QuestionsIndex({
                 {/* KPI Status Badges */}
                 <div className="flex flex-wrap items-center gap-3">
                     <button
-                        onClick={() => { setStatus('all'); router.get('/admin/questions', { ...filters, status: 'all' }); }}
+                        onClick={() => {
+                            setStatus('all');
+                            router.get('/admin/questions', {
+                                ...filters,
+                                status: 'all',
+                            });
+                        }}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
                             status === 'all'
                                 ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] dark:bg-blue-950/50'
@@ -169,11 +185,22 @@ export default function QuestionsIndex({
                         }`}
                     >
                         <span>All Questions</span>
-                        <Badge variant="secondary" className="text-[10px] font-mono h-5 px-1.5">{stats.total}</Badge>
+                        <Badge
+                            variant="secondary"
+                            className="h-5 px-1.5 font-mono text-[10px]"
+                        >
+                            {stats.total}
+                        </Badge>
                     </button>
 
                     <button
-                        onClick={() => { setStatus('active'); router.get('/admin/questions', { ...filters, status: 'active' }); }}
+                        onClick={() => {
+                            setStatus('active');
+                            router.get('/admin/questions', {
+                                ...filters,
+                                status: 'active',
+                            });
+                        }}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
                             status === 'active'
                                 ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
@@ -182,11 +209,22 @@ export default function QuestionsIndex({
                     >
                         <span className="size-2 rounded-full bg-emerald-500" />
                         <span>Active Published</span>
-                        <Badge variant="secondary" className="text-[10px] font-mono h-5 px-1.5">{stats.active}</Badge>
+                        <Badge
+                            variant="secondary"
+                            className="h-5 px-1.5 font-mono text-[10px]"
+                        >
+                            {stats.active}
+                        </Badge>
                     </button>
 
                     <button
-                        onClick={() => { setStatus('draft'); router.get('/admin/questions', { ...filters, status: 'draft' }); }}
+                        onClick={() => {
+                            setStatus('draft');
+                            router.get('/admin/questions', {
+                                ...filters,
+                                status: 'draft',
+                            });
+                        }}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
                             status === 'draft'
                                 ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
@@ -195,23 +233,31 @@ export default function QuestionsIndex({
                     >
                         <span className="size-2 rounded-full bg-amber-500" />
                         <span>Drafts</span>
-                        <Badge variant="secondary" className="text-[10px] font-mono h-5 px-1.5">{stats.draft}</Badge>
+                        <Badge
+                            variant="secondary"
+                            className="h-5 px-1.5 font-mono text-[10px]"
+                        >
+                            {stats.draft}
+                        </Badge>
                     </button>
                 </div>
 
                 {/* Filter Controls Card */}
-                <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                <div className="border-border bg-card space-y-4 rounded-2xl border p-4 shadow-xs sm:p-5">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
                         {/* Search Input */}
                         <div className="lg:col-span-2">
                             <div className="relative">
-                                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                                <Search className="text-muted-foreground absolute top-2.5 left-3 size-4" />
                                 <Input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Search question code, stem text..."
                                     className="pl-9 text-xs"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' &&
+                                        handleApplyFilters()
+                                    }
                                 />
                             </div>
                         </div>
@@ -224,11 +270,13 @@ export default function QuestionsIndex({
                                     setSubjectId(e.target.value);
                                     setTopicId('');
                                 }}
-                                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground focus:border-[#0066FF] focus:outline-none"
+                                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
                             >
                                 <option value="">All Subjects</option>
                                 {subjects.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                    <option key={s.id} value={s.id}>
+                                        {s.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -238,12 +286,16 @@ export default function QuestionsIndex({
                             <select
                                 value={topicId}
                                 onChange={(e) => setTopicId(e.target.value)}
-                                disabled={!subjectId || availableTopics.length === 0}
-                                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground focus:border-[#0066FF] focus:outline-none disabled:opacity-50"
+                                disabled={
+                                    !subjectId || availableTopics.length === 0
+                                }
+                                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none disabled:opacity-50"
                             >
                                 <option value="">All Topics</option>
                                 {availableTopics.map((t) => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                    <option key={t.id} value={t.id}>
+                                        {t.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -253,7 +305,7 @@ export default function QuestionsIndex({
                             <select
                                 value={difficulty}
                                 onChange={(e) => setDifficulty(e.target.value)}
-                                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground focus:border-[#0066FF] focus:outline-none"
+                                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
                             >
                                 <option value="ALL">All Difficulties</option>
                                 <option value="EASY">EASY</option>
@@ -267,21 +319,29 @@ export default function QuestionsIndex({
                             <select
                                 value={exam}
                                 onChange={(e) => setExam(e.target.value)}
-                                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground focus:border-[#0066FF] focus:outline-none"
+                                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
                             >
                                 <option value="ALL">All Pathways</option>
                                 <option value="MECEE_PG">Nepal MECEE-PG</option>
                                 <option value="INI_CET">India INI-CET</option>
-                                <option value="USMLE_STEP1">USMLE Step 1</option>
-                                <option value="USMLE_STEP2CK">USMLE Step 2 CK</option>
+                                <option value="USMLE_STEP1">
+                                    USMLE Step 1
+                                </option>
+                                <option value="USMLE_STEP2CK">
+                                    USMLE Step 2 CK
+                                </option>
                                 <option value="COMBINED">Combined Track</option>
                             </select>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-border/60 pt-3">
-                        <div className="text-xs text-muted-foreground font-medium">
-                            Found <span className="font-bold text-foreground">{questions.total}</span> questions
+                    <div className="border-border/60 flex items-center justify-between border-t pt-3">
+                        <div className="text-muted-foreground text-xs font-medium">
+                            Found{' '}
+                            <span className="text-foreground font-bold">
+                                {questions.total}
+                            </span>{' '}
+                            questions
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -296,7 +356,7 @@ export default function QuestionsIndex({
                             <Button
                                 size="sm"
                                 onClick={handleApplyFilters}
-                                className="h-8 bg-[#0066FF] hover:bg-[#0052cc] text-white text-xs font-bold px-4"
+                                className="h-8 bg-[#0066FF] px-4 text-xs font-bold text-white hover:bg-[#0052cc]"
                             >
                                 Apply Filters
                             </Button>
@@ -305,112 +365,165 @@ export default function QuestionsIndex({
                 </div>
 
                 {/* Questions Table */}
-                <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+                <div className="border-border bg-card overflow-hidden rounded-2xl border shadow-xs">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <thead className="bg-muted/40 border-border text-muted-foreground border-b text-[11px] font-bold tracking-wider uppercase">
                                 <tr>
-                                    <th className="py-3 px-4 w-32">Code</th>
-                                    <th className="py-3 px-4 w-44">Subject / Topic</th>
-                                    <th className="py-3 px-4 min-w-[280px]">Clinical Vignette Stem</th>
-                                    <th className="py-3 px-4 text-center w-20">Key</th>
-                                    <th className="py-3 px-4 text-center w-24">Difficulty</th>
-                                    <th className="py-3 px-4 w-40">Relevant Pathways</th>
-                                    <th className="py-3 px-4 text-center w-24">Status</th>
-                                    <th className="py-3 px-4 text-right w-28">Actions</th>
+                                    <th className="w-32 px-4 py-3">Code</th>
+                                    <th className="w-44 px-4 py-3">
+                                        Subject / Topic
+                                    </th>
+                                    <th className="min-w-[280px] px-4 py-3">
+                                        Clinical Vignette Stem
+                                    </th>
+                                    <th className="w-20 px-4 py-3 text-center">
+                                        Key
+                                    </th>
+                                    <th className="w-24 px-4 py-3 text-center">
+                                        Difficulty
+                                    </th>
+                                    <th className="w-40 px-4 py-3">
+                                        Relevant Pathways
+                                    </th>
+                                    <th className="w-24 px-4 py-3 text-center">
+                                        Status
+                                    </th>
+                                    <th className="w-28 px-4 py-3 text-right">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-border divide-y">
                                 {questions.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="py-12 text-center text-muted-foreground">
-                                            <FileText className="size-8 mx-auto mb-2 opacity-50" />
-                                            <div className="font-bold text-foreground">No questions match your filter</div>
-                                            <div className="text-xs mt-1">Try resetting filters or author a new question.</div>
+                                        <td
+                                            colSpan={8}
+                                            className="text-muted-foreground py-12 text-center"
+                                        >
+                                            <FileText className="mx-auto mb-2 size-8 opacity-50" />
+                                            <div className="text-foreground font-bold">
+                                                No questions match your filter
+                                            </div>
+                                            <div className="mt-1 text-xs">
+                                                Try resetting filters or author
+                                                a new question.
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     questions.data.map((q) => (
-                                        <tr key={q.id} className="hover:bg-muted/20 transition-colors">
-                                            <td className="py-3.5 px-4 font-mono font-bold text-sky-600 dark:text-sky-400">
+                                        <tr
+                                            key={q.id}
+                                            className="hover:bg-muted/20 transition-colors"
+                                        >
+                                            <td className="px-4 py-3.5 font-mono font-bold text-sky-600 dark:text-sky-400">
                                                 {q.code}
                                             </td>
 
-                                            <td className="py-3.5 px-4">
-                                                <div className="font-bold text-foreground text-xs">{q.subject?.name}</div>
-                                                <div className="text-[11px] text-muted-foreground truncate max-w-[160px]" title={q.topic?.name}>
+                                            <td className="px-4 py-3.5">
+                                                <div className="text-foreground text-xs font-bold">
+                                                    {q.subject?.name}
+                                                </div>
+                                                <div
+                                                    className="text-muted-foreground max-w-[160px] truncate text-[11px]"
+                                                    title={q.topic?.name}
+                                                >
                                                     {q.topic?.name}
                                                 </div>
                                             </td>
 
-                                            <td className="py-3.5 px-4">
-                                                <div className="line-clamp-2 text-xs text-foreground/90 font-normal leading-relaxed" title={q.stem}>
+                                            <td className="px-4 py-3.5">
+                                                <div
+                                                    className="text-foreground/90 line-clamp-2 text-xs leading-relaxed font-normal"
+                                                    title={q.stem}
+                                                >
                                                     {q.stem}
                                                 </div>
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
-                                                <span className="inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/70 font-black text-xs text-emerald-800 dark:text-emerald-300">
+                                            <td className="px-4 py-3.5 text-center">
+                                                <span className="inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
                                                     {q.correct_option}
                                                 </span>
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
+                                            <td className="px-4 py-3.5 text-center">
                                                 <Badge
                                                     variant="outline"
                                                     className={`text-[10px] font-extrabold ${
                                                         q.difficulty === 'EASY'
-                                                            ? 'border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40'
-                                                            : q.difficulty === 'MEDIUM'
-                                                            ? 'border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40'
-                                                            : 'border-amber-300 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40'
+                                                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                            : q.difficulty ===
+                                                                'MEDIUM'
+                                                              ? 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                                                              : 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
                                                     }`}
                                                 >
                                                     {q.difficulty}
                                                 </Badge>
                                             </td>
 
-                                            <td className="py-3.5 px-4">
-                                                <div className="flex flex-wrap gap-1 max-w-[160px]">
-                                                    {q.relevant_exams?.map((re) => (
-                                                        <span
-                                                            key={re.exam}
-                                                            className="rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground"
-                                                        >
-                                                            {re.exam.replace('_', '-')}
-                                                        </span>
-                                                    ))}
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex max-w-[160px] flex-wrap gap-1">
+                                                    {q.relevant_exams?.map(
+                                                        (re) => (
+                                                            <span
+                                                                key={re.exam}
+                                                                className="border-border bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 text-[9px] font-bold"
+                                                            >
+                                                                {re.exam.replace(
+                                                                    '_',
+                                                                    '-',
+                                                                )}
+                                                            </span>
+                                                        ),
+                                                    )}
                                                 </div>
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-center">
+                                            <td className="px-4 py-3.5 text-center">
                                                 <button
-                                                    onClick={() => handleToggleActive(q.id)}
+                                                    onClick={() =>
+                                                        handleToggleActive(q.id)
+                                                    }
                                                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-all ${
                                                         q.is_active
-                                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:opacity-80'
-                                                            : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 hover:opacity-80'
+                                                            ? 'bg-emerald-100 text-emerald-800 hover:opacity-80 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                            : 'bg-neutral-100 text-neutral-600 hover:opacity-80 dark:bg-neutral-800 dark:text-neutral-400'
                                                     }`}
                                                     title="Click to toggle Active/Draft"
                                                 >
-                                                    <span className={`size-1.5 rounded-full ${q.is_active ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
-                                                    <span>{q.is_active ? 'Active' : 'Draft'}</span>
+                                                    <span
+                                                        className={`size-1.5 rounded-full ${q.is_active ? 'bg-emerald-500' : 'bg-neutral-400'}`}
+                                                    />
+                                                    <span>
+                                                        {q.is_active
+                                                            ? 'Active'
+                                                            : 'Draft'}
+                                                    </span>
                                                 </button>
                                             </td>
 
-                                            <td className="py-3.5 px-4 text-right">
+                                            <td className="px-4 py-3.5 text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                                                        onClick={() => setPreviewQuestion(q)}
+                                                        className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+                                                        onClick={() =>
+                                                            setPreviewQuestion(
+                                                                q,
+                                                            )
+                                                        }
                                                         title="Quick Preview"
                                                     >
                                                         <Eye className="size-3.5" />
                                                     </Button>
 
-                                                    <Link href={`/admin/questions/${q.id}/edit`}>
+                                                    <Link
+                                                        href={`/admin/questions/${q.id}/edit`}
+                                                    >
                                                         <Button
                                                             size="sm"
                                                             variant="ghost"
@@ -424,8 +537,10 @@ export default function QuestionsIndex({
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                                                        onClick={() => handleDelete(q)}
+                                                        className="text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                                                        onClick={() =>
+                                                            handleDelete(q)
+                                                        }
                                                         title="Delete Question"
                                                     >
                                                         <Trash2 className="size-3.5" />
@@ -441,10 +556,16 @@ export default function QuestionsIndex({
 
                     {/* Pagination Links */}
                     {questions.links.length > 3 && (
-                        <div className="flex items-center justify-between p-4 border-t border-border bg-muted/10 text-xs">
+                        <div className="border-border bg-muted/10 flex items-center justify-between border-t p-4 text-xs">
                             <div className="text-muted-foreground">
-                                Page <span className="font-bold text-foreground">{questions.current_page}</span> of{' '}
-                                <span className="font-bold text-foreground">{questions.last_page}</span>
+                                Page{' '}
+                                <span className="text-foreground font-bold">
+                                    {questions.current_page}
+                                </span>{' '}
+                                of{' '}
+                                <span className="text-foreground font-bold">
+                                    {questions.last_page}
+                                </span>
                             </div>
 
                             <div className="flex items-center gap-1">
@@ -453,14 +574,16 @@ export default function QuestionsIndex({
                                         key={idx}
                                         href={link.url || '#'}
                                         preserveState
-                                        className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all ${
+                                        className={`rounded-lg border px-3 py-1 text-xs font-semibold transition-all ${
                                             link.active
                                                 ? 'border-[#0066FF] bg-[#0066FF] text-white'
                                                 : link.url
-                                                ? 'border-border bg-card text-foreground hover:bg-muted'
-                                                : 'border-transparent text-muted-foreground cursor-not-allowed'
+                                                  ? 'border-border bg-card text-foreground hover:bg-muted'
+                                                  : 'text-muted-foreground cursor-not-allowed border-transparent'
                                         }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ))}
                             </div>
@@ -469,55 +592,70 @@ export default function QuestionsIndex({
                 </div>
 
                 {/* Quick Preview Modal */}
-                <Dialog open={Boolean(previewQuestion)} onOpenChange={(open) => !open && setPreviewQuestion(null)}>
-                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <Dialog
+                    open={Boolean(previewQuestion)}
+                    onOpenChange={(open) => !open && setPreviewQuestion(null)}
+                >
+                    <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
                         {previewQuestion && (
                             <>
                                 <DialogHeader>
-                                    <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
+                                    <div className="border-border flex items-center justify-between gap-2 border-b pb-3">
                                         <div>
                                             <span className="font-mono text-xs font-bold text-sky-600 dark:text-sky-400">
                                                 {previewQuestion.code}
                                             </span>
-                                            <DialogTitle className="text-base font-bold mt-1">
-                                                {previewQuestion.subject?.name} · {previewQuestion.topic?.name}
+                                            <DialogTitle className="mt-1 text-base font-bold">
+                                                {previewQuestion.subject?.name}{' '}
+                                                · {previewQuestion.topic?.name}
                                             </DialogTitle>
                                         </div>
-                                        <Badge variant="outline" className="text-xs font-bold">
+                                        <Badge
+                                            variant="outline"
+                                            className="text-xs font-bold"
+                                        >
                                             {previewQuestion.difficulty}
                                         </Badge>
                                     </div>
                                 </DialogHeader>
 
                                 <div className="space-y-4 py-2">
-                                    <div className="rounded-xl border border-border bg-muted/20 p-4 text-xs sm:text-sm leading-relaxed text-foreground">
+                                    <div className="border-border bg-muted/20 text-foreground rounded-xl border p-4 text-xs leading-relaxed sm:text-sm">
                                         {previewQuestion.stem}
                                     </div>
 
                                     {/* Options */}
                                     <div className="space-y-2">
-                                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                        <div className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
                                             Options
                                         </div>
-                                        {previewQuestion.options?.map((opt) => (
+                                        {[...(previewQuestion.options || [])]
+                                            .sort((a, b) =>
+                                                (a.option_key || '').localeCompare(b.option_key || '')
+                                            )
+                                            .map((opt) => (
                                             <div
                                                 key={opt.id}
                                                 className={`flex items-start gap-3 rounded-xl border p-3 text-xs transition-all ${
-                                                    opt.option_key === previewQuestion.correct_option
-                                                        ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 font-semibold'
+                                                    opt.option_key ===
+                                                    previewQuestion.correct_option
+                                                        ? 'border-emerald-500 bg-emerald-50/70 font-semibold text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200'
                                                         : 'border-border bg-card text-foreground'
                                                 }`}
                                             >
                                                 <span
                                                     className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                                        opt.option_key === previewQuestion.correct_option
+                                                        opt.option_key ===
+                                                        previewQuestion.correct_option
                                                             ? 'bg-emerald-500 text-white'
                                                             : 'bg-muted text-muted-foreground'
                                                     }`}
                                                 >
                                                     {opt.option_key}
                                                 </span>
-                                                <span className="pt-0.5 leading-relaxed">{opt.option_text}</span>
+                                                <span className="pt-0.5 leading-relaxed">
+                                                    {opt.option_text}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>

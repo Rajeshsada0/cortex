@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { ChevronDown, Check, ShieldAlert, Sparkles, GraduationCap } from 'lucide-react';
+import {
+    ChevronDown,
+    Check,
+    ShieldAlert,
+    Sparkles,
+    GraduationCap,
+} from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,7 +16,13 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export interface PathwayOption {
-    id: 'MECEE_PG' | 'INI_CET' | 'USMLE_STEP1' | 'USMLE_STEP2CK' | 'COMBINED';
+    id:
+        | 'MECEE_PG'
+        | 'INI_CET'
+        | 'NEET_PG'
+        | 'USMLE_STEP1'
+        | 'USMLE_STEP2CK'
+        | 'COMBINED';
     name: string;
     region: string;
     marking: string;
@@ -20,12 +32,22 @@ export interface PathwayOption {
 
 const PATHWAYS: PathwayOption[] = [
     {
+        id: 'NEET_PG',
+        name: 'NEET-PG (2026)',
+        region: 'India',
+        marking: '+4.0 / -1.0',
+        penalty: 'National (-1.0)',
+        badgeColor:
+            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    },
+    {
         id: 'INI_CET',
         name: 'INI-CET (AIIMS/PGI)',
         region: 'India',
         marking: '+1.0 / -0.33',
         penalty: 'Severe (-0.33)',
-        badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+        badgeColor:
+            'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
     },
     {
         id: 'MECEE_PG',
@@ -33,7 +55,8 @@ const PATHWAYS: PathwayOption[] = [
         region: 'Nepal',
         marking: '+1.0 / -0.25',
         penalty: 'Standard (-0.25)',
-        badgeColor: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+        badgeColor:
+            'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
     },
     {
         id: 'USMLE_STEP1',
@@ -41,7 +64,8 @@ const PATHWAYS: PathwayOption[] = [
         region: 'USA',
         marking: 'Pass / Fail',
         penalty: 'No Negative',
-        badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        badgeColor:
+            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
     },
     {
         id: 'USMLE_STEP2CK',
@@ -49,7 +73,8 @@ const PATHWAYS: PathwayOption[] = [
         region: 'USA',
         marking: 'Scaled 1–300',
         penalty: 'No Negative',
-        badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+        badgeColor:
+            'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
     },
     {
         id: 'COMBINED',
@@ -57,7 +82,8 @@ const PATHWAYS: PathwayOption[] = [
         region: 'Global',
         marking: '+1.0 / -0.25',
         penalty: 'Standard (-0.25)',
-        badgeColor: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
+        badgeColor:
+            'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
     },
 ];
 
@@ -66,8 +92,13 @@ interface PathwaySelectorProps {
     onPathwayChange?: (newPathway: string) => void;
 }
 
-export function PathwaySelector({ currentPathway, onPathwayChange }: PathwaySelectorProps) {
-    const [activeId, setActiveId] = useState<string>(currentPathway || 'INI_CET');
+export function PathwaySelector({
+    currentPathway,
+    onPathwayChange,
+}: PathwaySelectorProps) {
+    const [activeId, setActiveId] = useState<string>(
+        currentPathway || 'INI_CET',
+    );
     const [isUpdating, setIsUpdating] = useState(false);
 
     const active = PATHWAYS.find((p) => p.id === activeId) || PATHWAYS[0];
@@ -82,7 +113,7 @@ export function PathwaySelector({ currentPathway, onPathwayChange }: PathwaySele
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify({ active_pathway: pathwayId }),
             });
@@ -111,21 +142,23 @@ export function PathwaySelector({ currentPathway, onPathwayChange }: PathwaySele
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-2 border-[#55BDEB]/30 bg-background/80 px-3 hover:border-[#55BDEB] hover:bg-[#55BDEB]/5"
+                    className="h-9 gap-2.5 rounded-xl border border-slate-700/80 bg-[#0d1627] px-3.5 text-xs text-slate-200 hover:border-slate-600 hover:bg-[#121f36]"
                     disabled={isUpdating}
                 >
-                    <GraduationCap className="size-4 text-[#55BDEB]" />
+                    <span className="size-2 rounded-full bg-emerald-400 shadow-xs ring-2 shadow-emerald-400 ring-emerald-500/20" />
                     <div className="flex items-center gap-1.5 text-left text-xs">
-                        <span className="font-semibold text-foreground">{active.name}</span>
-                        <span className="hidden rounded px-1.5 py-0.2 text-[10px] font-medium sm:inline-block border border-border">
+                        <span className="font-semibold text-white">
+                            {active.name}
+                        </span>
+                        <span className="hidden rounded border border-slate-700 bg-slate-800/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-300 sm:inline-block">
                             {active.marking}
                         </span>
                     </div>
-                    <ChevronDown className="size-3.5 opacity-60" />
+                    <ChevronDown className="size-3.5 text-slate-400" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-2">
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                <div className="text-muted-foreground px-2 py-1.5 text-xs font-semibold">
                     SWITCH EXAM PATHWAY
                 </div>
                 {PATHWAYS.map((p) => {
@@ -136,22 +169,26 @@ export function PathwaySelector({ currentPathway, onPathwayChange }: PathwaySele
                             onClick={() => handleSelect(p.id)}
                             className={`flex cursor-pointer items-start justify-between rounded-lg p-2.5 transition-colors ${
                                 isSelected
-                                    ? 'bg-[#55BDEB]/10 font-medium text-foreground'
+                                    ? 'text-foreground bg-[#55BDEB]/10 font-medium'
                                     : 'hover:bg-muted'
                             }`}
                         >
                             <div className="flex flex-col gap-0.5">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold">{p.name}</span>
-                                    <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                                    <span className="text-xs font-semibold">
+                                        {p.name}
+                                    </span>
+                                    <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[9px] tracking-wider uppercase">
                                         {p.region}
                                     </span>
                                 </div>
-                                <span className="text-[11px] text-muted-foreground">
+                                <span className="text-muted-foreground text-[11px]">
                                     Rules: {p.marking} ({p.penalty})
                                 </span>
                             </div>
-                            {isSelected && <Check className="size-4 text-[#55BDEB] shrink-0 mt-0.5" />}
+                            {isSelected && (
+                                <Check className="mt-0.5 size-4 shrink-0 text-[#55BDEB]" />
+                            )}
                         </DropdownMenuItem>
                     );
                 })}

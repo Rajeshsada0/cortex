@@ -13,12 +13,24 @@ use App\Http\Controllers\Web\MockExamWebController;
 use App\Http\Controllers\Web\QBankWebController;
 use App\Http\Controllers\Web\SpacedRepetitionWebController;
 use App\Http\Controllers\Web\StudyPlannerWebController;
+use App\Http\Controllers\Web\GuestPracticeWebController;
+use App\Http\Controllers\Web\ExamReportDownloadController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Welcome landing page
 Route::inertia('/', 'welcome')->name('home');
+
+// Easy-PG Inspired Public Zero-Login Practice Features
+Route::get('/choose', [GuestPracticeWebController::class, 'choose'])->name('choose');
+Route::get('/subjects', [GuestPracticeWebController::class, 'subjects'])->name('public.subjects.index');
+Route::get('/subjects/{slug}', [GuestPracticeWebController::class, 'subjectDetail'])->name('public.subjects.show');
+Route::get('/about-medai', [GuestPracticeWebController::class, 'aboutMedAi'])->name('about-medai');
+Route::match(['get', 'post'], '/practice/guest-launch', [GuestPracticeWebController::class, 'launchGuestPractice'])->name('practice.guest-launch');
+
+// Standalone Printable / Downloadable Exam Report Scorecard
+Route::get('/download/{id}', [ExamReportDownloadController::class, 'download'])->name('exam.download');
 
 // Quick 1-click demo login helper for Dr. Cortex
 Route::get('/demo-login', function () {
@@ -97,6 +109,36 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // User Directory & Role Assignment
     Route::get('/users', [AdminUserWebController::class, 'index'])->name('users.index');
     Route::post('/users/{user}/toggle-admin', [AdminUserWebController::class, 'toggleAdmin'])->name('users.toggle-admin');
+
+    // 1-Click Storage Link Generator for Live Deployments
+    Route::get('/storage-link', function () {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('storage:link');
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            return response()->json([
+                'success' => true,
+                'message' => 'Storage symlink created successfully (public/storage -> storage/app/public)',
+                'output' => trim($output),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    })->name('storage-link');
 });
 
+// Fallback asset server for live environments where symlink() is missing or disabled
+Route::get('/storage/{path}', function (string $path) {
+    $fullPath = storage_path('app/public/'.$path);
+    if (! file_exists($fullPath) || is_dir($fullPath)) {
+        abort(404);
+    }
+    return response()->file($fullPath, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.*')->name('storage.fallback');
+
 require __DIR__.'/settings.php';
+

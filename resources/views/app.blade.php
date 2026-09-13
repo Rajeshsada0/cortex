@@ -1,43 +1,35 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark" @class(['dark' => ($appearance ?? 'dark') !== 'light'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Enforce clinical dark theme --}}
         <script>
             (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
-
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
-                }
+                document.documentElement.classList.add('dark');
+                document.documentElement.style.colorScheme = 'dark';
+                try {
+                    localStorage.setItem('appearance', 'dark');
+                } catch (e) {}
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- Inline style to set the HTML background color based on clinical theme --}}
         <style>
-            html {
-                background-color: oklch(1 0 0);
+            html, body {
+                background-color: #070b14 !important;
+                color: #f1f5f9;
             }
-
-            html.dark {
-                background-color: oklch(0.145 0 0);
+            html.dark, body.dark {
+                background-color: #070b14 !important;
+                color: #f1f5f9;
             }
         </style>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-        {{-- Preload McQueen Header & Inter Body Fonts --}}
-        <link rel="preload" href="/fonts/mcqueen/mcqueen-bold.woff2" as="font" type="font/woff2" crossorigin>
-        <link rel="preload" href="/fonts/mcqueen/mcqueen-medium.woff2" as="font" type="font/woff2" crossorigin>
-        <link rel="preload" href="/fonts/inter/inter-400.woff2" as="font" type="font/woff2" crossorigin>
-        <link rel="preload" href="/fonts/inter/inter-500.woff2" as="font" type="font/woff2" crossorigin>
 
         @fonts
 
@@ -47,7 +39,7 @@
             <title>{{ config('app.name', 'Laravel') }}</title>
         </x-inertia::head>
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased bg-[#070b14] text-slate-100">
         <x-inertia::app />
     </body>
 </html>

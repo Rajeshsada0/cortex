@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,11 +31,11 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                            className="group h-auto rounded-xl border border-slate-800/80 bg-[#0a1120] p-2 text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white data-[state=open]:bg-slate-800/80"
                             data-test="sidebar-menu-button"
                         >
                             <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <Settings className="ml-auto size-4 text-slate-500 transition-colors group-hover:text-slate-300" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

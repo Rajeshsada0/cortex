@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { Flame, Calendar, CheckCircle2, TrendingUp, Zap, Award, ArrowRight, ShieldAlert } from 'lucide-react';
+import {
+    Flame,
+    Calendar,
+    CheckCircle2,
+    TrendingUp,
+    Zap,
+    Award,
+    ArrowRight,
+    ShieldAlert,
+    Sliders,
+    Save,
+    BarChart3,
+    Eye,
+    Target,
+    Clock,
+    Sparkles,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export interface StudyDayData {
     date: string;
@@ -31,9 +48,13 @@ export interface StudyStreakData {
 
 interface StudyStreakHeatmapProps {
     streakData?: StudyStreakData;
+    onTargetUpdated?: (newTarget: number) => void;
 }
 
-export function StudyStreakHeatmap({ streakData }: StudyStreakHeatmapProps) {
+export function StudyStreakHeatmap({
+    streakData,
+    onTargetUpdated,
+}: StudyStreakHeatmapProps) {
     if (!streakData) {
         return null;
     }
@@ -43,236 +64,291 @@ export function StudyStreakHeatmap({ streakData }: StudyStreakHeatmapProps) {
         longest_streak,
         total_30d_attempts,
         active_days_30d,
-        target_met_days,
-        target_completion_rate,
-        daily_target,
+        daily_target: initialDailyTarget,
         today_attempts,
-        days,
+        days: initialDays,
     } = streakData;
 
+    // Interactive States
+    const [dailyTarget, setDailyTarget] = useState<number>(
+        initialDailyTarget || 50,
+    );
+    const [selectedDay, setSelectedDay] = useState<StudyDayData | null>(
+        initialDays.find((d) => d.is_today) ||
+            initialDays[initialDays.length - 1] ||
+            null,
+    );
     const [hoveredDay, setHoveredDay] = useState<StudyDayData | null>(null);
+    const [colorMode, setColorMode] = useState<'volume' | 'accuracy'>('volume');
+    const [isSavingTarget, setIsSavingTarget] = useState(false);
 
-    const getIntensityClass = (level: number, isToday: boolean) => {
-        const ring = isToday ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-card' : '';
+    // Dynamic calculations based on active daily target
+    const targetMetDays = initialDays.filter(
+        (d) => d.attempts_count >= dailyTarget,
+    ).length;
+    const targetCompletionRate =
+        active_days_30d > 0
+            ? Math.round((targetMetDays / 30) * 1000) / 10
+            : 0.0;
+    const targetMetToday = today_attempts >= dailyTarget;
+    const remainingToday = Math.max(0, dailyTarget - today_attempts);
 
-        switch (level) {
-            case 4:
-                return `bg-[#55BDEB] border-[#55BDEB] text-slate-950 font-bold shadow-sm shadow-[#55BDEB]/30 ${ring}`;
-            case 3:
-                return `bg-[#2FB36F] border-[#2FB36F] text-white font-semibold shadow-sm ${ring}`;
-            case 2:
-                return `bg-emerald-600/70 border-emerald-500/70 text-white ${ring}`;
-            case 1:
-                return `bg-emerald-900/40 border-emerald-700/50 text-emerald-300 ${ring}`;
-            case 0:
-            default:
-                return `bg-muted/30 border-border/40 text-muted-foreground/60 hover:border-border ${ring}`;
+    // Save Daily Target to Backend User Profile
+    const handleSaveTarget = async (targetValue: number) => {
+        setIsSavingTarget(true);
+        try {
+            const res = await fetch('/api/v1/users/me', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ daily_mcq_target: targetValue }),
+            });
+
+            if (res.ok) {
+                toast.success(`Daily goal updated to ${targetValue} MCQs/day`, {
+                    description:
+                        'Streak engine and consistency metrics recalculated.',
+                });
+                if (onTargetUpdated) {
+                    onTargetUpdated(targetValue);
+                }
+            } else {
+                toast.error('Could not save daily target to server');
+            }
+        } catch (e) {
+            toast.error('Network error saving daily target');
+        } finally {
+            setIsSavingTarget(false);
         }
     };
 
-    const targetMetToday = today_attempts >= daily_target;
-    const remainingToday = Math.max(0, daily_target - today_attempts);
+    // Calculate dynamic intensity class
+    const getIntensityClass = (day: StudyDayData) => {
+        const isSelected = selectedDay?.date === day.date;
+        const ring = isSelected
+            ? 'ring-2 ring-[#55BDEB] ring-offset-2 ring-offset-card scale-105 z-10'
+            : day.is_today
+              ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-card'
+              : '';
+
+        if (colorMode === 'accuracy') {
+            if (day.attempts_count === 0) {
+                return `bg-muted/20 border-border/30 text-muted-foreground/50 ${ring}`;
+            }
+            if (day.accuracy >= 80) {
+                return `bg-[#2FB36F] border-[#2FB36F] text-white font-bold shadow-xs ${ring}`;
+            }
+            if (day.accuracy >= 65) {
+                return `bg-[#55BDEB] border-[#55BDEB] text-slate-950 font-bold shadow-xs ${ring}`;
+            }
+            if (day.accuracy >= 50) {
+                return `bg-amber-500 border-amber-500 text-slate-950 font-bold shadow-xs ${ring}`;
+            }
+            return `bg-[#E05252] border-[#E05252] text-white font-semibold shadow-xs ${ring}`;
+        }
+
+        // Volume Mode: relative to active daily target
+        const count = day.attempts_count;
+        if (count === 0) {
+            return `bg-muted/30 border-border/40 text-muted-foreground/60 hover:border-border ${ring}`;
+        }
+        if (count >= dailyTarget) {
+            return `bg-[#55BDEB] border-[#55BDEB] text-slate-950 font-bold shadow-sm shadow-[#55BDEB]/30 ${ring}`;
+        }
+        if (count >= dailyTarget * 0.7) {
+            return `bg-[#2FB36F] border-[#2FB36F] text-white font-semibold shadow-sm ${ring}`;
+        }
+        if (count >= dailyTarget * 0.4) {
+            return `bg-emerald-600/70 border-emerald-500/70 text-white ${ring}`;
+        }
+        return `bg-emerald-900/40 border-emerald-700/50 text-emerald-300 ${ring}`;
+    };
+
+    const targetPresets = [30, 50, 80, 100, 120, 150];
+    const displayDay = hoveredDay || selectedDay;
 
     return (
-        <div className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
-            {/* Header */}
-            <div className="flex flex-col justify-between gap-4 border-b border-border pb-4 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 text-orange-500">
-                        <Flame className="size-5 fill-orange-500 animate-pulse" />
+        <div className="bg-cortex-card border-cortex-border card-glow rounded-2xl border p-6 shadow-xl">
+            {/* Streak Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-600 to-orange-500 text-white shadow-lg shadow-orange-900/30">
+                        <Flame className="h-6 w-6 fill-current" />
                     </div>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold tracking-tight text-foreground sm:text-lg">
-                                DAILY STUDY STREAK & 30-DAY ACTIVITY
-                            </h3>
-                            <Badge
-                                variant="outline"
-                                className="border-orange-500/30 bg-orange-500/10 text-orange-500 text-[11px] font-bold"
-                            >
-                                🔥 {current_streak} {current_streak === 1 ? 'Day' : 'Days'} Streak
-                            </Badge>
+                        <div className="flex items-center space-x-2">
+                            <h4 className="text-base font-bold text-white">
+                                DAILY STUDY STREAK
+                            </h4>
+                            <span className="rounded border border-orange-800 bg-orange-950 px-2 py-0.5 text-xs font-bold text-orange-400">
+                                {current_streak}{' '}
+                                {current_streak === 1 ? 'Day' : 'Days'} Streak
+                            </span>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            Consistent deliberate retrieval practice builds Board exam automaticity and long-term retention.
+                        <p className="text-xs text-slate-400">
+                            Consistent deliberate retrieval practice builds
+                            board exam automaticity.
                         </p>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                    <Link href="/qbank/runner">
-                        <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs font-semibold">
-                            <Zap className="size-3.5 text-amber-500" />
-                            Extend Streak
-                        </Button>
-                    </Link>
-                </div>
+                <Link
+                    href="/qbank/runner"
+                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                >
+                    Extend Streak
+                </Link>
             </div>
 
-            {/* Quick Metrics Strip */}
-            <div className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-4">
-                <div className="flex flex-col rounded-xl border border-border/60 bg-muted/15 p-3">
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            {/* Streak Stat Grid */}
+            <div className="my-4 grid grid-cols-4 gap-2 text-center">
+                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
+                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
                         Active Streak
                     </span>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                        <span className="text-2xl font-extrabold text-orange-500">{current_streak}</span>
-                        <span className="text-xs text-muted-foreground">days</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">
-                        {current_streak > 0 ? 'Streak is active' : 'Start streak today'}
+                    <span className="font-mono text-lg font-bold text-white">
+                        {current_streak}
+                    </span>
+                    <span className="block text-[10px] font-medium text-amber-400">
+                        {today_attempts > 0 ? '• Active' : '• Action Needed'}
                     </span>
                 </div>
-
-                <div className="flex flex-col rounded-xl border border-border/60 bg-muted/15 p-3">
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
+                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
                         Personal Best
                     </span>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                        <span className="text-2xl font-extrabold text-[#55BDEB]">{longest_streak}</span>
-                        <span className="text-xs text-muted-foreground">days</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">
-                        All-time longest streak
+                    <span className="font-mono text-lg font-bold text-white">
+                        {longest_streak}
+                    </span>
+                    <span className="block text-[10px] text-slate-400">
+                        Days Longest
                     </span>
                 </div>
-
-                <div className="flex flex-col rounded-xl border border-border/60 bg-muted/15 p-3">
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
+                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
                         30-Day Volume
                     </span>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                        <span className="text-2xl font-extrabold text-[#2FB36F]">{total_30d_attempts}</span>
-                        <span className="text-xs text-muted-foreground">MCQs</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">
-                        Across {active_days_30d} active study days
+                    <span className="font-mono text-lg font-bold text-white">
+                        {total_30d_attempts}
+                    </span>
+                    <span className="block text-[10px] text-slate-400">
+                        MCQs Total
                     </span>
                 </div>
-
-                <div className="flex flex-col rounded-xl border border-border/60 bg-muted/15 p-3">
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                        Target Consistency
+                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
+                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
+                        Consistency
                     </span>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                        <span className="text-2xl font-extrabold text-foreground">{target_completion_rate}%</span>
-                        <span className="text-xs text-muted-foreground">met</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground mt-0.5">
-                        {target_met_days} / 30 days hit target
+                    <span className="font-mono text-lg font-bold text-white">
+                        {targetCompletionRate}%
+                    </span>
+                    <span className="block text-[10px] text-slate-400">
+                        {targetMetDays} / 30 Target Days
                     </span>
                 </div>
             </div>
 
-            {/* 30-Day Punchcard Heatmap */}
-            <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/10 p-4">
-                <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="size-4 text-muted-foreground" />
-                        <span className="text-xs font-semibold text-foreground">
-                            30-Day Practice Activity Punchcard
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span>Less</span>
-                        <span className="size-3 rounded-sm bg-muted/40 border border-border/40" />
-                        <span className="size-3 rounded-sm bg-emerald-900/50 border border-emerald-700/50" />
-                        <span className="size-3 rounded-sm bg-emerald-600/70 border border-emerald-500/70" />
-                        <span className="size-3 rounded-sm bg-[#2FB36F] border border-[#2FB36F]" />
-                        <span className="size-3 rounded-sm bg-[#55BDEB] border border-[#55BDEB]" />
-                        <span>More</span>
-                    </div>
-                </div>
-
-                {/* Heatmap Grid */}
-                <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-15 lg:grid-cols-30 gap-1.5 pt-2">
-                    {days.map((day) => (
-                        <div
-                            key={day.date}
-                            onMouseEnter={() => setHoveredDay(day)}
-                            onMouseLeave={() => setHoveredDay(null)}
-                            className={`group relative flex h-14 flex-col items-center justify-center rounded-lg border p-1 transition-all cursor-pointer hover:scale-105 ${getIntensityClass(
-                                day.intensity_level,
-                                day.is_today
-                            )}`}
+            {/* Target Selector Bar */}
+            <div className="flex items-center justify-between border-t border-b border-slate-800/80 py-2 text-xs">
+                <span className="text-slate-400">Set Daily MCQ Target:</span>
+                <div className="flex items-center space-x-1.5 font-mono">
+                    {targetPresets.map((preset) => (
+                        <button
+                            key={preset}
+                            type="button"
+                            onClick={() => {
+                                setDailyTarget(preset);
+                                void handleSaveTarget(preset);
+                            }}
+                            className={`cursor-pointer rounded px-2.5 py-1 text-xs transition ${
+                                dailyTarget === preset
+                                    ? 'bg-cyan-600 font-bold text-white shadow'
+                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                            }`}
                         >
-                            <span className="text-[9px] font-medium opacity-75">
-                                {day.day_name.charAt(0)}
-                            </span>
-                            <span className="text-xs font-bold leading-none">
-                                {day.day_number}
-                            </span>
-                            <span className="mt-0.5 text-[9px] font-semibold leading-none truncate max-w-full">
-                                {day.attempts_count > 0 ? `${day.attempts_count}` : '-'}
-                            </span>
-
-                            {/* Indicator for target met */}
-                            {day.target_met && (
-                                <span className="absolute top-1 right-1 size-1 rounded-full bg-white" />
-                            )}
-                        </div>
+                            {preset}
+                        </button>
                     ))}
                 </div>
-
-                {/* Hover / Detail Status Strip */}
-                <div className="mt-2 min-h-6 flex items-center justify-between rounded-lg bg-card/60 px-3 py-1.5 text-xs border border-border/40">
-                    {hoveredDay ? (
-                        <div className="flex flex-wrap items-center gap-3">
-                            <span className="font-semibold text-foreground">
-                                📅 {hoveredDay.day_name}, {hoveredDay.month_name} {hoveredDay.day_number} ({hoveredDay.date})
-                            </span>
-                            <span className="text-muted-foreground">
-                                Solved: <strong className="text-foreground">{hoveredDay.attempts_count} MCQs</strong>
-                            </span>
-                            {hoveredDay.attempts_count > 0 && (
-                                <span className="text-muted-foreground">
-                                    Accuracy: <strong className="text-[#2FB36F]">{hoveredDay.accuracy}%</strong> ({hoveredDay.correct_count} correct)
-                                </span>
-                            )}
-                            <span className="text-muted-foreground">
-                                Target: {hoveredDay.target_met ? (
-                                    <span className="font-bold text-[#2FB36F]">✓ Target Met ({daily_target})</span>
-                                ) : (
-                                    <span className="text-muted-foreground">{hoveredDay.attempts_count}/{daily_target} MCQs</span>
-                                )}
-                            </span>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <span>Hover over any calendar cell to view daily MCQ count, accuracy, and quota completion.</span>
-                        </div>
-                    )}
-                </div>
             </div>
 
-            {/* Motivational Banner / Call to Action */}
-            <div className="mt-4 flex flex-col items-start justify-between gap-3 rounded-xl border border-border/70 bg-gradient-to-r from-muted/30 to-muted/10 p-4 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-3">
-                    {targetMetToday ? (
-                        <CheckCircle2 className="size-5 text-[#2FB36F] shrink-0" />
-                    ) : today_attempts > 0 ? (
-                        <TrendingUp className="size-5 text-amber-500 shrink-0" />
-                    ) : (
-                        <Flame className="size-5 text-orange-500 shrink-0" />
-                    )}
-                    <div>
-                        <p className="text-xs font-semibold text-foreground">
-                            {targetMetToday
-                                ? `🎉 Daily target achieved! You've completed ${today_attempts} MCQs today.`
-                                : today_attempts > 0
-                                ? `⚡ Active practice today: ${today_attempts}/${daily_target} MCQs solved. Solve ${remainingToday} more to hit full daily target!`
-                                : `⏳ No MCQs attempted yet today. Complete at least 1 question to keep your ${current_streak}-day streak alive!`}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                            Daily Target: {daily_target} MCQs | Today's Solved: {today_attempts} MCQs
-                        </p>
+            {/* 30-Day Activity Punchcard Grid */}
+            <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between text-[11px] font-medium text-slate-400">
+                    <span>30-Day Practice Activity Punchcard</span>
+                    <div className="flex items-center space-x-1.5">
+                        <span className="text-[10px] text-slate-500">
+                            Inactive
+                        </span>
+                        <span className="h-2.5 w-2.5 rounded-sm border border-slate-700 bg-slate-800"></span>
+                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-900"></span>
+                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-600"></span>
+                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-400"></span>
+                        <span className="text-[10px] text-slate-400">
+                            ≥{dailyTarget} MCQs
+                        </span>
                     </div>
                 </div>
 
+                {/* 30 Days Mini Grid (6 cols sm:grid-cols-10 gap-1.5 text-center) */}
+                <div className="grid grid-cols-6 gap-1.5 text-center sm:grid-cols-10">
+                    {initialDays.map((day) => {
+                        const isDayTargetMet =
+                            day.attempts_count >= dailyTarget;
+                        const isToday = day.is_today;
+
+                        let cellClass =
+                            'bg-slate-900/60 border border-slate-800/80 text-slate-500';
+                        if (isToday) {
+                            cellClass =
+                                'bg-cyan-950/60 border-2 border-cyan-400 text-cyan-300 font-bold shadow-sm ring-2 ring-cyan-500/20';
+                        } else if (isDayTargetMet) {
+                            cellClass = 'bg-cyan-500 text-slate-950 font-bold';
+                        } else if (day.attempts_count >= dailyTarget * 0.5) {
+                            cellClass = 'bg-cyan-600 text-white font-semibold';
+                        } else if (day.attempts_count > 0) {
+                            cellClass = 'bg-cyan-900 text-cyan-300 font-medium';
+                        }
+
+                        return (
+                            <div
+                                key={day.date}
+                                onClick={() => setSelectedDay(day)}
+                                className={`cursor-pointer rounded p-1.5 font-mono text-[10px] transition hover:scale-105 ${cellClass}`}
+                                title={`${day.date}: ${day.attempts_count} MCQs (${day.accuracy}%)`}
+                            >
+                                {day.day_number}
+                                {isToday && (
+                                    <span className="block font-sans text-[8px] text-cyan-400 uppercase">
+                                        Today
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Streak Callout Action */}
+            <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-4">
+                <div className="flex items-center space-x-2 text-xs text-slate-300">
+                    <span
+                        className={`h-2 w-2 rounded-full ${today_attempts > 0 ? 'bg-emerald-400' : 'bg-amber-400'}`}
+                    ></span>
+                    <span>
+                        {today_attempts > 0
+                            ? `Great job! You solved ${today_attempts} MCQs today. Streak is active!`
+                            : 'No MCQs attempted yet today. Complete 1 question to activate your streak!'}
+                    </span>
+                </div>
                 <Link href="/qbank/runner">
-                    <Button size="sm" className="h-8 bg-[#55BDEB] text-neutral-950 font-bold hover:bg-[#55BDEB]/90 gap-1.5 text-xs">
-                        Start Session <ArrowRight className="size-3.5" />
-                    </Button>
+                    <button
+                        type="button"
+                        className="cursor-pointer rounded-lg bg-amber-500 px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow transition hover:bg-amber-400"
+                    >
+                        Solve Now
+                    </button>
                 </Link>
             </div>
         </div>

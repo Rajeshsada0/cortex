@@ -6,6 +6,7 @@ enum ExamPathway: string
 {
     case MECEE_PG = 'MECEE_PG';
     case INI_CET = 'INI_CET';
+    case NEET_PG = 'NEET_PG';
     case USMLE_STEP1 = 'USMLE_STEP1';
     case USMLE_STEP2CK = 'USMLE_STEP2CK';
     case COMBINED = 'COMBINED';
@@ -15,6 +16,7 @@ enum ExamPathway: string
         return match ($this) {
             self::MECEE_PG => 'Nepal: MECEE-PG',
             self::INI_CET => 'India: INI-CET',
+            self::NEET_PG => 'India: NEET-PG (2026)',
             self::USMLE_STEP1 => 'USA: USMLE Step 1',
             self::USMLE_STEP2CK => 'USA: USMLE Step 2 CK',
             self::COMBINED => 'Combined Track (Global)',
@@ -26,6 +28,7 @@ enum ExamPathway: string
         return match ($this) {
             self::MECEE_PG => 200,
             self::INI_CET => 200,
+            self::NEET_PG => 180,
             self::USMLE_STEP1 => 280,
             self::USMLE_STEP2CK => 318,
             self::COMBINED => 200,
@@ -37,6 +40,7 @@ enum ExamPathway: string
         return match ($this) {
             self::MECEE_PG => 180,
             self::INI_CET => 180,
+            self::NEET_PG => 210, // 3.5 hours
             self::USMLE_STEP1 => 420, // 7 blocks x 60 min
             self::USMLE_STEP2CK => 480, // 8 blocks x 60 min
             self::COMBINED => 180,
@@ -46,8 +50,9 @@ enum ExamPathway: string
     public function markingRules(): string
     {
         return match ($this) {
-            self::MECEE_PG => '+1.0 Correct / -0.25 Incorrect',
+            self::MECEE_PG => '+1.0 Correct / -0.25 Incorrect (200 Marks)',
             self::INI_CET => '+1.0 Correct / -0.33 Incorrect',
+            self::NEET_PG => '+4.0 Correct / -1.0 Incorrect (720 Marks)',
             self::USMLE_STEP1 => 'Pass / Fail (No negative marking)',
             self::USMLE_STEP2CK => '3-Digit Scaled Score (1-300)',
             self::COMBINED => '+1.0 Correct / -0.25 Incorrect',
@@ -59,9 +64,26 @@ enum ExamPathway: string
         return match ($this) {
             self::MECEE_PG => 0.25,
             self::INI_CET => 0.33,
+            self::NEET_PG => 1.0,
             self::USMLE_STEP1 => 0.0,
             self::USMLE_STEP2CK => 0.0,
             self::COMBINED => 0.25,
+        };
+    }
+
+    public function pointsPerCorrect(): float
+    {
+        return match ($this) {
+            self::NEET_PG => 4.0,
+            default => 1.0,
+        };
+    }
+
+    public function maxScore(int $totalQuestions): float
+    {
+        return match ($this) {
+            self::NEET_PG => (float) ($totalQuestions * 4),
+            default => (float) $totalQuestions,
         };
     }
 

@@ -26,7 +26,9 @@ export function QuestionPalette({
     visitedQuestions,
     onSelectQuestion,
 }: QuestionPaletteProps) {
-    const [filter, setFilter] = useState<'all' | 'answered' | 'unanswered' | 'marked'>('all');
+    const [filter, setFilter] = useState<
+        'all' | 'answered' | 'unanswered' | 'marked'
+    >('all');
 
     const answeredCount = Object.keys(answers).length;
     const markedCount = markedQuestions.size;
@@ -43,18 +45,18 @@ export function QuestionPalette({
         });
 
     return (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+        <div className="border-border bg-card flex flex-col gap-3 rounded-xl border p-4 shadow-sm">
+            <div className="border-border flex items-center justify-between border-b pb-2">
+                <span className="text-foreground text-xs font-bold tracking-wider uppercase">
                     Question Palette ({totalCount} Qs)
                 </span>
-                <span className="text-[11px] font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-[11px] font-medium">
                     {answeredCount}/{totalCount} Answered
                 </span>
             </div>
 
             {/* Filter Selector Tabs */}
-            <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-0.5 text-[10px]">
+            <div className="border-border bg-muted/40 flex items-center gap-1 rounded-lg border p-0.5 text-[10px]">
                 <button
                     type="button"
                     onClick={() => setFilter('all')}
@@ -102,7 +104,7 @@ export function QuestionPalette({
             </div>
 
             {/* Status Legend */}
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-muted-foreground border-b border-border pb-3">
+            <div className="text-muted-foreground border-border grid grid-cols-2 gap-2 border-b pb-3 text-[10px]">
                 <div className="flex items-center gap-1.5">
                     <span className="size-2.5 rounded-sm bg-[#2FB36F]" />
                     <span>Answered ({answeredCount})</span>
@@ -116,28 +118,31 @@ export function QuestionPalette({
                     <span>Unanswered ({unansweredCount})</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-sm bg-muted border border-border" />
+                    <span className="bg-muted border-border size-2.5 rounded-sm border" />
                     <span>Not Visited</span>
                 </div>
             </div>
 
             {/* Questions Grid Matrix */}
-            <div className="grid grid-cols-5 gap-1.5 max-h-56 overflow-y-auto pr-1">
+            <div className="grid max-h-56 grid-cols-5 gap-1.5 overflow-y-auto pr-1">
                 {filteredQuestions.map(({ q, idx }) => {
                     const isCurrent = idx === currentIndex;
                     const isAnswered = Boolean(answers[q.id]);
                     const isMarked = markedQuestions.has(q.id);
                     const isVisited = visitedQuestions.has(q.id);
 
-                    let bgClass = 'bg-muted/50 text-muted-foreground border-border';
+                    let bgClass =
+                        'bg-muted/50 text-muted-foreground border-border';
                     if (isAnswered && isMarked) {
-                        bgClass = 'bg-[#2FB36F] text-white ring-2 ring-indigo-500 font-bold';
+                        bgClass =
+                            'bg-[#2FB36F] text-white ring-2 ring-indigo-500 font-bold';
                     } else if (isAnswered) {
                         bgClass = 'bg-[#2FB36F] text-white font-bold';
                     } else if (isMarked) {
                         bgClass = 'bg-indigo-600 text-white font-bold';
                     } else if (isVisited) {
-                        bgClass = 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40';
+                        bgClass =
+                            'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40';
                     }
 
                     return (
@@ -145,9 +150,9 @@ export function QuestionPalette({
                             key={q.id}
                             type="button"
                             onClick={() => onSelectQuestion(idx)}
-                            className={`relative flex h-8 items-center justify-center rounded-md border text-xs transition-all cursor-pointer ${bgClass} ${
+                            className={`relative flex h-8 cursor-pointer items-center justify-center rounded-md border text-xs transition-all ${bgClass} ${
                                 isCurrent
-                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-105 shadow-sm'
+                                    ? 'ring-primary ring-offset-background scale-105 shadow-sm ring-2 ring-offset-2'
                                     : 'hover:opacity-85'
                             }`}
                         >

@@ -11,6 +11,7 @@ use App\Models\Question;
 use App\Models\Subject;
 use App\Models\TestSession;
 use App\Models\User;
+use App\Models\UserNoteBookmark;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -94,7 +95,14 @@ class QBankWebController extends Controller
             $limit = max(1, min(100, (int) $request->query('limit', 10)));
 
             $questionIds = null;
-            if ($quadrant) {
+            $singleQuestionId = $request->query('question_id');
+            if ($singleQuestionId) {
+                $questionIds = [(string) $singleQuestionId];
+                $limit = 1;
+            } elseif ($rawQuestionIds = $request->query('question_ids')) {
+                $questionIds = is_array($rawQuestionIds) ? $rawQuestionIds : explode(',', (string) $rawQuestionIds);
+                $limit = count($questionIds);
+            } elseif ($quadrant) {
                 $status = strtoupper((string) $quadrant);
                 $questionIds = $this->performanceQuadrantService->getQuadrantQuestionIds($user, $quadrant);
             }
@@ -120,7 +128,11 @@ class QBankWebController extends Controller
                 'UNSTABLE', 'LUCKY_GUESS' => 'Lucky Guess & Unstable Remediation ('.$pathway.')',
                 'GAP' => 'Knowledge Gap Remediation ('.$pathway.')',
                 'MASTERED' => 'Mastered Concepts Revision ('.$pathway.')',
-                default => ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')',
+                default => strtoupper((string) $status) === 'BOOKMARKED'
+                    ? 'Bookmarked Clinical Vignettes Practice ('.$pathway.')'
+                    : ($singleQuestionId
+                        ? 'Targeted Clinical Vignette Review ('.$pathway.')'
+                        : ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')'),
             };
 
             $result = $this->testSessionService->createSession(
@@ -140,11 +152,28 @@ class QBankWebController extends Controller
             $questions = $result['questions'];
         }
 
+        $questionIdsList = $questions->pluck('id')->filter()->toArray();
+
+        $bookmarkedQuestionIds = UserNoteBookmark::where('user_id', $user?->id ?? 0)
+            ->where('is_bookmarked', true)
+            ->whereIn('question_id', $questionIdsList)
+            ->pluck('question_id')
+            ->toArray();
+
+        $notesMap = UserNoteBookmark::where('user_id', $user?->id ?? 0)
+            ->whereNotNull('note_content')
+            ->where('note_content', '!=', '')
+            ->whereIn('question_id', $questionIdsList)
+            ->pluck('note_content', 'question_id')
+            ->toArray();
+
         return Inertia::render('qbank/runner', [
             'user' => $user,
             'session' => new TestSessionResource($session),
             'questions' => QuestionResource::collection($questions),
             'attempts' => $session->attempts ?? [],
+            'bookmarked_question_ids' => $bookmarkedQuestionIds,
+            'notes_map' => $notesMap,
             'mode' => $session->session_type === 'TIMED_BLOCK' ? 'TIMED' : 'TUTOR',
         ]);
     }

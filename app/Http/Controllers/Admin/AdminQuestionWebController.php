@@ -110,9 +110,34 @@ class AdminQuestionWebController extends Controller
 
     public function uploadImage(Request $request): JsonResponse
     {
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,webp,svg|max:10240',
+        // Check if PHP dropped the file due to upload_max_filesize limit
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_INI_SIZE) {
+            $maxPhpSize = ini_get('upload_max_filesize') ?: '2M';
+
+            return response()->json([
+                'success' => false,
+                'message' => "The uploaded image exceeds the server upload limit ({$maxPhpSize}). Please upload an image under {$maxPhpSize}.",
+            ], 422);
+        }
+
+        if (! $request->hasFile('image')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No image file was received by the server. Please check the file format and size.',
+            ], 422);
+        }
+
+        $validator = validator($request->all(), [
+            'image' => 'required|file|mimes:jpeg,png,jpg,webp,svg,gif,bmp,jfif,avif|max:10240',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first('image') ?: 'Invalid image file provided.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         $path = $request->file('image')->store('questions', 'public');
         $url = Storage::url($path);

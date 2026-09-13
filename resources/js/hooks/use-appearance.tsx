@@ -31,14 +31,14 @@ const setCookie = (name: string, value: string, days = 365): void => {
 
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
-        return 'system';
+        return 'dark';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'system';
+    return (localStorage.getItem('appearance') as Appearance) || 'dark';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || (appearance === 'system' && prefersDark());
+    return appearance !== 'light';
 };
 
 const applyTheme = (appearance: Appearance): void => {

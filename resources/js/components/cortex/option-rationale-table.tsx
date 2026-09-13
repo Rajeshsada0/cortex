@@ -19,16 +19,26 @@ export function OptionRationaleTable({
     correctOption,
     selectedOption,
 }: OptionRationaleTableProps) {
+    const sortedOptions = [...(options || [])].sort((a, b) =>
+        (a.option_key || '').localeCompare(b.option_key || '')
+    );
+
     return (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                Option-by-Option Rationale Table ("Why choices are correct / wrong")
+        <div className="border-border bg-card flex flex-col gap-3 rounded-xl border p-5 shadow-sm">
+            <h4 className="text-foreground text-xs font-bold tracking-wider uppercase">
+                Option-by-Option Rationale Table ("Why choices are correct /
+                wrong")
             </h4>
 
-            <div className="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border">
-                {options.map((opt) => {
-                    const isCorrect = opt.option_key.toUpperCase() === correctOption.toUpperCase();
-                    const isUserChoice = selectedOption && opt.option_key.toUpperCase() === selectedOption.toUpperCase();
+            <div className="divide-border border-border flex flex-col divide-y overflow-hidden rounded-lg border">
+                {sortedOptions.map((opt) => {
+                    const isCorrect =
+                        opt.option_key.toUpperCase() ===
+                        correctOption.toUpperCase();
+                    const isUserChoice =
+                        selectedOption &&
+                        opt.option_key.toUpperCase() ===
+                            selectedOption.toUpperCase();
 
                     return (
                         <div
@@ -44,7 +54,7 @@ export function OptionRationaleTable({
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <span
-                                        className={`flex size-6 items-center justify-center rounded-md font-bold text-xs ${
+                                        className={`flex size-6 items-center justify-center rounded-md text-xs font-bold ${
                                             isCorrect
                                                 ? 'bg-[#2FB36F] text-white'
                                                 : isUserChoice
@@ -54,7 +64,7 @@ export function OptionRationaleTable({
                                     >
                                         {opt.option_key}
                                     </span>
-                                    <span className="font-semibold text-foreground">
+                                    <span className="text-foreground font-semibold">
                                         {opt.option_text}
                                     </span>
                                 </div>
@@ -69,13 +79,13 @@ export function OptionRationaleTable({
                                             <Check className="size-3" /> Correct
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                        <span className="bg-muted text-muted-foreground flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium">
                                             <X className="size-3" /> Incorrect
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <p className="text-xs leading-relaxed text-muted-foreground pl-8">
+                            <p className="text-muted-foreground pl-8 text-xs leading-relaxed">
                                 {opt.rationale}
                             </p>
                         </div>

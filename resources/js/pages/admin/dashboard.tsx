@@ -71,43 +71,58 @@ export default function AdminDashboard({
     recent_questions,
 }: AdminDashboardProps) {
     const totalQuestions = kpis.total_questions || 1;
-    const easyPct = Math.round(((difficulty_breakdown.EASY || 0) / totalQuestions) * 100);
-    const medPct = Math.round(((difficulty_breakdown.MEDIUM || 0) / totalQuestions) * 100);
-    const hardPct = Math.round(((difficulty_breakdown.HARD || 0) / totalQuestions) * 100);
+    const easyPct = Math.round(
+        ((difficulty_breakdown.EASY || 0) / totalQuestions) * 100,
+    );
+    const medPct = Math.round(
+        ((difficulty_breakdown.MEDIUM || 0) / totalQuestions) * 100,
+    );
+    const hardPct = Math.round(
+        ((difficulty_breakdown.HARD || 0) / totalQuestions) * 100,
+    );
 
     const handleToggleActive = (id: string) => {
-        router.post(`/admin/questions/${id}/toggle-active`, {}, { preserveScroll: true });
+        router.post(
+            `/admin/questions/${id}/toggle-active`,
+            {},
+            { preserveScroll: true },
+        );
     };
 
     return (
         <>
             <Head title="Faculty Admin Console — Cortex Medical" />
 
-            <div className="flex flex-col gap-8 p-4 sm:p-6 lg:p-8 w-full max-w-full">
+            <div className="flex w-full max-w-full flex-col gap-8 p-4 sm:p-6 lg:p-8">
                 {/* Header Banner */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
                     <div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/60 px-3 py-1 text-xs font-bold text-sky-700 dark:text-sky-300 mb-2">
+                        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
                             <Activity className="size-3.5 text-sky-600 dark:text-sky-400" />
                             <span>Faculty Medical Administration Suite</span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
                             Cortex Content &amp; Curriculum Admin
                         </h1>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            Author clinical vignette questions, calibrate 3-tier rationales, organize 19-subject curriculum, and audit candidate testing intelligence.
+                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+                            Author clinical vignette questions, calibrate 3-tier
+                            rationales, organize 19-subject curriculum, and
+                            audit candidate testing intelligence.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex shrink-0 items-center gap-3">
                         <Link href="/admin/questions/create">
-                            <Button className="bg-[#0066FF] hover:bg-[#0052cc] text-white font-bold text-xs gap-1.5 shadow-md">
+                            <Button className="gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]">
                                 <Plus className="size-4" />
                                 New Clinical MCQ
                             </Button>
                         </Link>
                         <Link href="/admin/subjects">
-                            <Button variant="outline" className="text-xs font-bold gap-1.5 border-border">
+                            <Button
+                                variant="outline"
+                                className="border-border gap-1.5 text-xs font-bold"
+                            >
                                 <BookOpen className="size-3.5 text-sky-500" />
                                 Manage Subjects
                             </Button>
@@ -116,100 +131,128 @@ export default function AdminDashboard({
                 </div>
 
                 {/* 6 Metric KPI Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
                     {/* KPI 1: Questions */}
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between">
+                    <div className="border-border bg-card flex flex-col justify-between rounded-2xl border p-4 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total MCQs</span>
-                            <div className="flex size-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#0066FF]">
+                            <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
+                                Total MCQs
+                            </span>
+                            <div className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-[#0066FF] dark:bg-blue-950/50">
                                 <HelpCircle className="size-4" />
                             </div>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-foreground">{kpis.total_questions}</div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{kpis.active_questions} active</span>
+                            <div className="text-foreground text-2xl font-black">
+                                {kpis.total_questions}
+                            </div>
+                            <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[10px]">
+                                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                    {kpis.active_questions} active
+                                </span>
                                 <span>•</span>
-                                <span className="font-semibold text-amber-600 dark:text-amber-400">{kpis.draft_questions} draft</span>
+                                <span className="font-semibold text-amber-600 dark:text-amber-400">
+                                    {kpis.draft_questions} draft
+                                </span>
                             </div>
                         </div>
                     </div>
 
                     {/* KPI 2: Subjects */}
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between">
+                    <div className="border-border bg-card flex flex-col justify-between rounded-2xl border p-4 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Subjects</span>
-                            <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600">
+                            <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
+                                Subjects
+                            </span>
+                            <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50">
                                 <BookOpen className="size-4" />
                             </div>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-foreground">{kpis.total_subjects}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                            <div className="text-foreground text-2xl font-black">
+                                {kpis.total_subjects}
+                            </div>
+                            <div className="text-muted-foreground mt-0.5 text-[10px] font-medium">
                                 Full 19-Subject Blueprint
                             </div>
                         </div>
                     </div>
 
                     {/* KPI 3: Topics */}
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between">
+                    <div className="border-border bg-card flex flex-col justify-between rounded-2xl border p-4 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Topics</span>
-                            <div className="flex size-7 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/50 text-sky-600">
+                            <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
+                                Topics
+                            </span>
+                            <div className="flex size-7 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/50">
                                 <Layers className="size-4" />
                             </div>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-foreground">{kpis.total_topics}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                            <div className="text-foreground text-2xl font-black">
+                                {kpis.total_topics}
+                            </div>
+                            <div className="text-muted-foreground mt-0.5 text-[10px] font-medium">
                                 {kpis.total_subtopics} Subtopics mapped
                             </div>
                         </div>
                     </div>
 
                     {/* KPI 4: Candidates */}
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between">
+                    <div className="border-border bg-card flex flex-col justify-between rounded-2xl border p-4 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Candidates</span>
-                            <div className="flex size-7 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600">
+                            <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
+                                Candidates
+                            </span>
+                            <div className="flex size-7 items-center justify-center rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-950/50">
                                 <Users className="size-4" />
                             </div>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-foreground">{kpis.total_users}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                            <div className="text-foreground text-2xl font-black">
+                                {kpis.total_users}
+                            </div>
+                            <div className="text-muted-foreground mt-0.5 text-[10px] font-medium">
                                 Registered Doctors
                             </div>
                         </div>
                     </div>
 
                     {/* KPI 5: Attempts */}
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between">
+                    <div className="border-border bg-card flex flex-col justify-between rounded-2xl border p-4 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">MCQ Attempts</span>
-                            <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600">
+                            <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
+                                MCQ Attempts
+                            </span>
+                            <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50">
                                 <CheckCircle2 className="size-4" />
                             </div>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-foreground">{kpis.total_attempts}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                            <div className="text-foreground text-2xl font-black">
+                                {kpis.total_attempts}
+                            </div>
+                            <div className="text-muted-foreground mt-0.5 text-[10px] font-medium">
                                 Clinical responses logged
                             </div>
                         </div>
                     </div>
 
                     {/* KPI 6: Mock Sessions */}
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex flex-col justify-between">
+                    <div className="border-border bg-card flex flex-col justify-between rounded-2xl border p-4 shadow-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Mock Exams</span>
-                            <div className="flex size-7 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600">
+                            <span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
+                                Mock Exams
+                            </span>
+                            <div className="flex size-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/50">
                                 <Award className="size-4" />
                             </div>
                         </div>
                         <div className="mt-2">
-                            <div className="text-2xl font-black text-foreground">{kpis.total_sessions}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                            <div className="text-foreground text-2xl font-black">
+                                {kpis.total_sessions}
+                            </div>
+                            <div className="text-muted-foreground mt-0.5 text-[10px] font-medium">
                                 Full-length simulations
                             </div>
                         </div>
@@ -217,34 +260,57 @@ export default function AdminDashboard({
                 </div>
 
                 {/* Middle Two Columns: Difficulty Calibration & Pathway Distribution */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     {/* Left 6 Columns: Difficulty Calibration */}
-                    <div className="lg:col-span-6 rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-xs">
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="border-border bg-card rounded-2xl border p-5 shadow-xs sm:p-6 lg:col-span-6">
+                        <div className="mb-4 flex items-center justify-between">
                             <div>
-                                <h2 className="text-sm font-bold text-foreground">Difficulty Calibration</h2>
-                                <p className="text-xs text-muted-foreground">Distribution across clinical vignette tiers</p>
+                                <h2 className="text-foreground text-sm font-bold">
+                                    Difficulty Calibration
+                                </h2>
+                                <p className="text-muted-foreground text-xs">
+                                    Distribution across clinical vignette tiers
+                                </p>
                             </div>
-                            <Badge variant="outline" className="text-[10px] font-bold">
+                            <Badge
+                                variant="outline"
+                                className="text-[10px] font-bold"
+                            >
                                 {kpis.total_questions} Questions
                             </Badge>
                         </div>
 
                         {/* Visual Progress Bar */}
-                        <div className="h-3.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800 flex">
-                            <div style={{ width: `${easyPct}%` }} className="bg-emerald-500 transition-all" title={`EASY: ${easyPct}%`} />
-                            <div style={{ width: `${medPct}%` }} className="bg-blue-500 transition-all" title={`MEDIUM: ${medPct}%`} />
-                            <div style={{ width: `${hardPct}%` }} className="bg-amber-500 transition-all" title={`HARD: ${hardPct}%`} />
+                        <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
+                            <div
+                                style={{ width: `${easyPct}%` }}
+                                className="bg-emerald-500 transition-all"
+                                title={`EASY: ${easyPct}%`}
+                            />
+                            <div
+                                style={{ width: `${medPct}%` }}
+                                className="bg-blue-500 transition-all"
+                                title={`MEDIUM: ${medPct}%`}
+                            />
+                            <div
+                                style={{ width: `${hardPct}%` }}
+                                className="bg-amber-500 transition-all"
+                                title={`HARD: ${hardPct}%`}
+                            />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border/60 text-center">
+                        <div className="border-border/60 mt-6 grid grid-cols-3 gap-4 border-t pt-4 text-center">
                             <div className="flex flex-col items-center">
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                     <span className="size-2 rounded-full bg-emerald-500" />
                                     <span>EASY</span>
                                 </div>
-                                <span className="text-lg font-black text-foreground mt-1">{difficulty_breakdown.EASY || 0}</span>
-                                <span className="text-[10px] text-muted-foreground">{easyPct}%</span>
+                                <span className="text-foreground mt-1 text-lg font-black">
+                                    {difficulty_breakdown.EASY || 0}
+                                </span>
+                                <span className="text-muted-foreground text-[10px]">
+                                    {easyPct}%
+                                </span>
                             </div>
 
                             <div className="flex flex-col items-center">
@@ -252,8 +318,12 @@ export default function AdminDashboard({
                                     <span className="size-2 rounded-full bg-blue-500" />
                                     <span>MEDIUM</span>
                                 </div>
-                                <span className="text-lg font-black text-foreground mt-1">{difficulty_breakdown.MEDIUM || 0}</span>
-                                <span className="text-[10px] text-muted-foreground">{medPct}%</span>
+                                <span className="text-foreground mt-1 text-lg font-black">
+                                    {difficulty_breakdown.MEDIUM || 0}
+                                </span>
+                                <span className="text-muted-foreground text-[10px]">
+                                    {medPct}%
+                                </span>
                             </div>
 
                             <div className="flex flex-col items-center">
@@ -261,41 +331,89 @@ export default function AdminDashboard({
                                     <span className="size-2 rounded-full bg-amber-500" />
                                     <span>HARD</span>
                                 </div>
-                                <span className="text-lg font-black text-foreground mt-1">{difficulty_breakdown.HARD || 0}</span>
-                                <span className="text-[10px] text-muted-foreground">{hardPct}%</span>
+                                <span className="text-foreground mt-1 text-lg font-black">
+                                    {difficulty_breakdown.HARD || 0}
+                                </span>
+                                <span className="text-muted-foreground text-[10px]">
+                                    {hardPct}%
+                                </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Right 6 Columns: Pathway Coverage */}
-                    <div className="lg:col-span-6 rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-xs">
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="border-border bg-card rounded-2xl border p-5 shadow-xs sm:p-6 lg:col-span-6">
+                        <div className="mb-4 flex items-center justify-between">
                             <div>
-                                <h2 className="text-sm font-bold text-foreground">Postgraduate Pathway Mapping</h2>
-                                <p className="text-xs text-muted-foreground">Questions tagged per entrance board</p>
+                                <h2 className="text-foreground text-sm font-bold">
+                                    Postgraduate Pathway Mapping
+                                </h2>
+                                <p className="text-muted-foreground text-xs">
+                                    Questions tagged per entrance board
+                                </p>
                             </div>
-                            <Link href="/admin/pathways" className="text-xs text-[#0066FF] font-bold hover:underline">
+                            <Link
+                                href="/admin/pathways"
+                                className="text-xs font-bold text-[#0066FF] hover:underline"
+                            >
                                 View Details →
                             </Link>
                         </div>
 
                         <div className="space-y-3">
                             {[
-                                { key: 'MECEE_PG', name: 'Nepal MECEE-PG (MD/MS)', count: pathway_breakdown.MECEE_PG || 0, color: 'bg-emerald-500' },
-                                { key: 'INI_CET', name: 'India INI-CET (AIIMS/PGI)', count: pathway_breakdown.INI_CET || 0, color: 'bg-blue-500' },
-                                { key: 'USMLE_STEP1', name: 'USA USMLE Step 1', count: pathway_breakdown.USMLE_STEP1 || 0, color: 'bg-indigo-500' },
-                                { key: 'USMLE_STEP2CK', name: 'USA USMLE Step 2 CK', count: pathway_breakdown.USMLE_STEP2CK || 0, color: 'bg-purple-500' },
-                                { key: 'COMBINED', name: 'Global Combined Track', count: pathway_breakdown.COMBINED || 0, color: 'bg-sky-500' },
+                                {
+                                    key: 'MECEE_PG',
+                                    name: 'Nepal MECEE-PG (MD/MS)',
+                                    count: pathway_breakdown.MECEE_PG || 0,
+                                    color: 'bg-emerald-500',
+                                },
+                                {
+                                    key: 'INI_CET',
+                                    name: 'India INI-CET (AIIMS/PGI)',
+                                    count: pathway_breakdown.INI_CET || 0,
+                                    color: 'bg-blue-500',
+                                },
+                                {
+                                    key: 'USMLE_STEP1',
+                                    name: 'USA USMLE Step 1',
+                                    count: pathway_breakdown.USMLE_STEP1 || 0,
+                                    color: 'bg-indigo-500',
+                                },
+                                {
+                                    key: 'USMLE_STEP2CK',
+                                    name: 'USA USMLE Step 2 CK',
+                                    count: pathway_breakdown.USMLE_STEP2CK || 0,
+                                    color: 'bg-purple-500',
+                                },
+                                {
+                                    key: 'COMBINED',
+                                    name: 'Global Combined Track',
+                                    count: pathway_breakdown.COMBINED || 0,
+                                    color: 'bg-sky-500',
+                                },
                             ].map((p) => {
-                                const pct = Math.min(100, Math.round((p.count / (totalQuestions || 1)) * 100));
+                                const pct = Math.min(
+                                    100,
+                                    Math.round(
+                                        (p.count / (totalQuestions || 1)) * 100,
+                                    ),
+                                );
                                 return (
                                     <div key={p.key} className="space-y-1">
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="font-semibold text-foreground">{p.name}</span>
-                                            <span className="font-bold text-muted-foreground">{p.count} Qs ({pct}%)</span>
+                                            <span className="text-foreground font-semibold">
+                                                {p.name}
+                                            </span>
+                                            <span className="text-muted-foreground font-bold">
+                                                {p.count} Qs ({pct}%)
+                                            </span>
                                         </div>
                                         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-800">
-                                            <div style={{ width: `${pct}%` }} className={`h-full ${p.color} transition-all`} />
+                                            <div
+                                                style={{ width: `${pct}%` }}
+                                                className={`h-full ${p.color} transition-all`}
+                                            />
                                         </div>
                                     </div>
                                 );
@@ -305,15 +423,24 @@ export default function AdminDashboard({
                 </div>
 
                 {/* Recent Questions Table */}
-                <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
-                    <div className="flex items-center justify-between p-5 border-b border-border bg-muted/20">
+                <div className="border-border bg-card overflow-hidden rounded-2xl border shadow-xs">
+                    <div className="border-border bg-muted/20 flex items-center justify-between border-b p-5">
                         <div>
-                            <h2 className="text-sm font-bold text-foreground">Recent Clinical Vignette MCQs</h2>
-                            <p className="text-xs text-muted-foreground">Recently authored questions across the curriculum</p>
+                            <h2 className="text-foreground text-sm font-bold">
+                                Recent Clinical Vignette MCQs
+                            </h2>
+                            <p className="text-muted-foreground text-xs">
+                                Recently authored questions across the
+                                curriculum
+                            </p>
                         </div>
                         <div className="flex items-center gap-2">
                             <Link href="/admin/questions">
-                                <Button variant="outline" size="sm" className="text-xs font-bold gap-1">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-1 text-xs font-bold"
+                                >
                                     <span>Browse All Questions</span>
                                     <ArrowRight className="size-3.5" />
                                 </Button>
@@ -323,61 +450,92 @@ export default function AdminDashboard({
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <thead className="bg-muted/40 border-border text-muted-foreground border-b text-[11px] font-bold tracking-wider uppercase">
                                 <tr>
-                                    <th className="py-3 px-4">Code</th>
-                                    <th className="py-3 px-4">Subject &amp; Topic</th>
-                                    <th className="py-3 px-4">Clinical Stem Preview</th>
-                                    <th className="py-3 px-4">Difficulty</th>
-                                    <th className="py-3 px-4">Status</th>
-                                    <th className="py-3 px-4 text-right">Actions</th>
+                                    <th className="px-4 py-3">Code</th>
+                                    <th className="px-4 py-3">
+                                        Subject &amp; Topic
+                                    </th>
+                                    <th className="px-4 py-3">
+                                        Clinical Stem Preview
+                                    </th>
+                                    <th className="px-4 py-3">Difficulty</th>
+                                    <th className="px-4 py-3">Status</th>
+                                    <th className="px-4 py-3 text-right">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-border divide-y">
                                 {recent_questions.map((q) => (
-                                    <tr key={q.id} className="hover:bg-muted/20 transition-colors">
-                                        <td className="py-3.5 px-4 font-mono font-bold text-sky-600 dark:text-sky-400">
+                                    <tr
+                                        key={q.id}
+                                        className="hover:bg-muted/20 transition-colors"
+                                    >
+                                        <td className="px-4 py-3.5 font-mono font-bold text-sky-600 dark:text-sky-400">
                                             {q.code}
                                         </td>
-                                        <td className="py-3.5 px-4">
-                                            <div className="font-semibold text-foreground">{q.subject?.name}</div>
-                                            <div className="text-[11px] text-muted-foreground">{q.topic?.name}</div>
+                                        <td className="px-4 py-3.5">
+                                            <div className="text-foreground font-semibold">
+                                                {q.subject?.name}
+                                            </div>
+                                            <div className="text-muted-foreground text-[11px]">
+                                                {q.topic?.name}
+                                            </div>
                                         </td>
-                                        <td className="py-3.5 px-4 max-w-md truncate text-muted-foreground" title={q.stem}>
+                                        <td
+                                            className="text-muted-foreground max-w-md truncate px-4 py-3.5"
+                                            title={q.stem}
+                                        >
                                             {q.stem}
                                         </td>
-                                        <td className="py-3.5 px-4">
+                                        <td className="px-4 py-3.5">
                                             <Badge
                                                 variant="outline"
                                                 className={`text-[10px] font-extrabold ${
                                                     q.difficulty === 'EASY'
-                                                        ? 'border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40'
-                                                        : q.difficulty === 'MEDIUM'
-                                                        ? 'border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40'
-                                                        : 'border-amber-300 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40'
+                                                        ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                        : q.difficulty ===
+                                                            'MEDIUM'
+                                                          ? 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                                                          : 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
                                                 }`}
                                             >
                                                 {q.difficulty}
                                             </Badge>
                                         </td>
-                                        <td className="py-3.5 px-4">
+                                        <td className="px-4 py-3.5">
                                             <button
-                                                onClick={() => handleToggleActive(q.id)}
+                                                onClick={() =>
+                                                    handleToggleActive(q.id)
+                                                }
                                                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-all ${
                                                     q.is_active
-                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:opacity-80'
-                                                        : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 hover:opacity-80'
+                                                        ? 'bg-emerald-100 text-emerald-800 hover:opacity-80 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                        : 'bg-neutral-100 text-neutral-600 hover:opacity-80 dark:bg-neutral-800 dark:text-neutral-400'
                                                 }`}
                                                 title="Click to toggle Active/Draft"
                                             >
-                                                <span className={`size-1.5 rounded-full ${q.is_active ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
-                                                <span>{q.is_active ? 'Active' : 'Draft'}</span>
+                                                <span
+                                                    className={`size-1.5 rounded-full ${q.is_active ? 'bg-emerald-500' : 'bg-neutral-400'}`}
+                                                />
+                                                <span>
+                                                    {q.is_active
+                                                        ? 'Active'
+                                                        : 'Draft'}
+                                                </span>
                                             </button>
                                         </td>
-                                        <td className="py-3.5 px-4 text-right">
+                                        <td className="px-4 py-3.5 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Link href={`/admin/questions/${q.id}/edit`}>
-                                                    <Button size="sm" variant="outline" className="h-7 text-[11px] font-semibold px-2.5">
+                                                <Link
+                                                    href={`/admin/questions/${q.id}/edit`}
+                                                >
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 px-2.5 text-[11px] font-semibold"
+                                                    >
                                                         Edit
                                                     </Button>
                                                 </Link>
@@ -391,44 +549,68 @@ export default function AdminDashboard({
                 </div>
 
                 {/* Quick Management Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Link href="/admin/questions" className="group rounded-2xl border border-border bg-card p-5 hover:border-[#0066FF]/60 hover:shadow-md transition-all">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#0066FF] mb-3 group-hover:scale-110 transition-transform">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Link
+                        href="/admin/questions"
+                        className="group border-border bg-card rounded-2xl border p-5 transition-all hover:border-[#0066FF]/60 hover:shadow-md"
+                    >
+                        <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-blue-50 text-[#0066FF] transition-transform group-hover:scale-110 dark:bg-blue-950/60">
                             <HelpCircle className="size-5" />
                         </div>
-                        <h3 className="text-sm font-bold text-foreground">MCQ Question Bank</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Browse, filter, and author high-yield questions with 3-tier clinical explanations.
+                        <h3 className="text-foreground text-sm font-bold">
+                            MCQ Question Bank
+                        </h3>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                            Browse, filter, and author high-yield questions with
+                            3-tier clinical explanations.
                         </p>
                     </Link>
 
-                    <Link href="/admin/subjects" className="group rounded-2xl border border-border bg-card p-5 hover:border-indigo-500/60 hover:shadow-md transition-all">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 mb-3 group-hover:scale-110 transition-transform">
+                    <Link
+                        href="/admin/subjects"
+                        className="group border-border bg-card rounded-2xl border p-5 transition-all hover:border-indigo-500/60 hover:shadow-md"
+                    >
+                        <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition-transform group-hover:scale-110 dark:bg-indigo-950/60">
                             <BookOpen className="size-5" />
                         </div>
-                        <h3 className="text-sm font-bold text-foreground">19-Subject Curriculum</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Manage order indices, icons, and subject metadata across basic and clinical sciences.
+                        <h3 className="text-foreground text-sm font-bold">
+                            19-Subject Curriculum
+                        </h3>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                            Manage order indices, icons, and subject metadata
+                            across basic and clinical sciences.
                         </p>
                     </Link>
 
-                    <Link href="/admin/topics" className="group rounded-2xl border border-border bg-card p-5 hover:border-sky-500/60 hover:shadow-md transition-all">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 mb-3 group-hover:scale-110 transition-transform">
+                    <Link
+                        href="/admin/topics"
+                        className="group border-border bg-card rounded-2xl border p-5 transition-all hover:border-sky-500/60 hover:shadow-md"
+                    >
+                        <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 transition-transform group-hover:scale-110 dark:bg-sky-950/60">
                             <Layers className="size-5" />
                         </div>
-                        <h3 className="text-sm font-bold text-foreground">Topics &amp; Subtopics</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Organize high-yield priority ratings (1-5 stars) and subtopic hierarchies.
+                        <h3 className="text-foreground text-sm font-bold">
+                            Topics &amp; Subtopics
+                        </h3>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                            Organize high-yield priority ratings (1-5 stars) and
+                            subtopic hierarchies.
                         </p>
                     </Link>
 
-                    <Link href="/admin/users" className="group rounded-2xl border border-border bg-card p-5 hover:border-purple-500/60 hover:shadow-md transition-all">
-                        <div className="flex size-10 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 mb-3 group-hover:scale-110 transition-transform">
+                    <Link
+                        href="/admin/users"
+                        className="group border-border bg-card rounded-2xl border p-5 transition-all hover:border-purple-500/60 hover:shadow-md"
+                    >
+                        <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 transition-transform group-hover:scale-110 dark:bg-purple-950/60">
                             <Users className="size-5" />
                         </div>
-                        <h3 className="text-sm font-bold text-foreground">Candidate Directory</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Monitor registered candidates, active pathways, and toggle administrator roles.
+                        <h3 className="text-foreground text-sm font-bold">
+                            Candidate Directory
+                        </h3>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                            Monitor registered candidates, active pathways, and
+                            toggle administrator roles.
                         </p>
                     </Link>
                 </div>

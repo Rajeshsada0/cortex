@@ -8,6 +8,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Home } from 'lucide-react';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function Breadcrumbs({
@@ -19,7 +20,20 @@ export function Breadcrumbs({
         <>
             {breadcrumbs.length > 0 && (
                 <Breadcrumb>
-                    <BreadcrumbList>
+                    <BreadcrumbList className="text-xs sm:text-sm">
+                        <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                                <Link
+                                    href="/dashboard"
+                                    className="flex items-center text-slate-400 transition-colors hover:text-white"
+                                >
+                                    <Home className="size-3.5" />
+                                </Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator className="text-slate-600">
+                            <span>/</span>
+                        </BreadcrumbSeparator>
                         {breadcrumbs.map((item, index) => {
                             const isLast = index === breadcrumbs.length - 1;
 
@@ -27,18 +41,25 @@ export function Breadcrumbs({
                                 <Fragment key={index}>
                                     <BreadcrumbItem>
                                         {isLast ? (
-                                            <BreadcrumbPage>
+                                            <BreadcrumbPage className="font-semibold text-white">
                                                 {item.title}
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={item.href}>
+                                                <Link
+                                                    href={item.href}
+                                                    className="text-slate-400 transition-colors hover:text-white"
+                                                >
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>
                                         )}
                                     </BreadcrumbItem>
-                                    {!isLast && <BreadcrumbSeparator />}
+                                    {!isLast && (
+                                        <BreadcrumbSeparator className="text-slate-600">
+                                            <span>/</span>
+                                        </BreadcrumbSeparator>
+                                    )}
                                 </Fragment>
                             );
                         })}

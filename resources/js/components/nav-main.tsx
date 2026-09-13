@@ -9,27 +9,64 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
-export function NavMain({ items, label = 'Platform' }: { items: NavItem[]; label?: string }) {
+export function NavMain({
+    items,
+    label = 'Platform',
+}: {
+    items: NavItem[];
+    label?: string;
+}) {
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
-        <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>{label}</SidebarGroupLabel>
-            <SidebarMenu>
-                {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={isCurrentUrl(item.href)}
-                            tooltip={{ children: item.title }}
-                        >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
+        <SidebarGroup className="px-2 py-1">
+            <SidebarGroupLabel className="mb-1 px-2.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                {label}
+            </SidebarGroupLabel>
+            <SidebarMenu className="gap-1">
+                {items.map((item) => {
+                    const active = isCurrentUrl(item.href);
+                    return (
+                        <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={active}
+                                tooltip={{ children: item.title }}
+                                className={`group h-10 rounded-xl px-3 transition-colors ${
+                                    active
+                                        ? 'border border-cyan-500/35 bg-[#0e2238] font-semibold text-cyan-300 shadow-xs hover:bg-[#0e2238] hover:text-cyan-300'
+                                        : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
+                                }`}
+                            >
+                                <Link
+                                    href={item.href}
+                                    prefetch
+                                    className="flex w-full items-center justify-between"
+                                >
+                                    <div className="flex items-center gap-3 truncate">
+                                        {item.icon && (
+                                            <item.icon
+                                                className={`size-4.5 shrink-0 transition-colors ${
+                                                    active
+                                                        ? 'text-cyan-400'
+                                                        : 'text-slate-500 group-hover:text-slate-300'
+                                                }`}
+                                            />
+                                        )}
+                                        <span className="truncate text-xs font-medium">
+                                            {item.title}
+                                        </span>
+                                    </div>
+                                    {item.badge && (
+                                        <span className="ml-auto rounded-md border border-cyan-500/30 bg-[#0c1e33] px-2 py-0.5 text-[10px] font-semibold text-cyan-400">
+                                            {item.badge}
+                                        </span>
+                                    )}
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    );
+                })}
             </SidebarMenu>
         </SidebarGroup>
     );

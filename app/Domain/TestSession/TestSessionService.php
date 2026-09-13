@@ -37,11 +37,14 @@ final class TestSessionService
         $pathway = $examPathway ?? $user->active_pathway ?? 'INI_CET';
 
         $query = Question::query()
-            ->where('is_active', true)
-            ->forExam($pathway);
+            ->where('is_active', true);
 
         if (! empty($questionIds)) {
             $query->whereIn('id', $questionIds);
+        } elseif ($status && strtoupper($status) === 'BOOKMARKED') {
+            // Include user's bookmarked questions across their curriculum
+        } else {
+            $query->forExam($pathway);
         }
 
         if (! empty($subjectId)) {

@@ -134,7 +134,8 @@ class MockExamWebController extends Controller
             $sIncorrect = $subjAttempts->where('is_correct', false)->count();
             $sUnanswered = max(0, $qGroup->count() - $subjAttempts->count());
             $sPenalty = round($sIncorrect * $penaltyRate, 2);
-            $sNetScore = round($sCorrect - $sPenalty, 2);
+            $sCorrectPoints = $sCorrect * $pathway->pointsPerCorrect();
+            $sNetScore = round($sCorrectPoints - $sPenalty, 2);
             $sAccuracy = $subjAttempts->count() > 0 ? round(($sCorrect / $subjAttempts->count()) * 100, 1) : 0;
 
             $subjectBreakdown[] = [
@@ -151,8 +152,9 @@ class MockExamWebController extends Controller
         }
 
         $rankPredictor = app(NationalRankPredictor::class);
-        $mockScorePercentage = $session->total_questions > 0
-            ? max(0, ($session->score_obtained / $session->total_questions) * 100)
+        $maxPossibleScore = $pathway->maxScore($session->total_questions);
+        $mockScorePercentage = $maxPossibleScore > 0
+            ? max(0, min(100, ($session->score_obtained / $maxPossibleScore) * 100))
             : 0;
         $rankPrediction = $rankPredictor->predict($user, (float) $mockScorePercentage);
 
@@ -165,6 +167,7 @@ class MockExamWebController extends Controller
             'stats' => [
                 'score' => (float) $session->score_obtained,
                 'total' => $session->total_questions,
+                'maxMarks' => $maxPossibleScore,
                 'correct' => $correct,
                 'incorrect' => $incorrect,
                 'unanswered' => $unanswered,
