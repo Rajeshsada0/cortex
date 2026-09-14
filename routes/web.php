@@ -131,8 +131,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 // Fallback asset server for live environments where symlink() is missing or disabled
 Route::get('/storage/{path}', function (string $path) {
-    $fullPath = storage_path('app/public/'.$path);
-    if (! file_exists($fullPath) || is_dir($fullPath)) {
+    $basePath = realpath(storage_path('app/public'));
+    $fullPath = realpath(storage_path('app/public/'.$path));
+    if (! $basePath || ! $fullPath || ! str_starts_with($fullPath, $basePath) || is_dir($fullPath)) {
         abort(404);
     }
     return response()->file($fullPath, [

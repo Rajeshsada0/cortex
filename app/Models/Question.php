@@ -36,6 +36,29 @@ class Question extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Normalize image URL for production and live deployment environments.
+     */
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        // Strip localhost / 127.0.0.1 domain if database was exported from local development
+        if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(/storage/.*)$#i', $value, $matches)) {
+            return $matches[1];
+        }
+
+        // If it starts with /storage or external URL, return as is
+        if (str_starts_with($value, '/storage') || str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        // If it was stored as relative storage path (e.g. "questions/uuid.jpg")
+        return '/storage/'.ltrim($value, '/');
+    }
+
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);

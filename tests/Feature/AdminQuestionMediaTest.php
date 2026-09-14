@@ -101,4 +101,33 @@ class AdminQuestionMediaTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['image']);
     }
+
+    public function test_storage_fallback_route_serves_existing_file(): void
+    {
+        Storage::disk('public')->put('test_clinical_scan.jpg', 'dummy-image-bytes');
+
+        $response = $this->get('/storage/test_clinical_scan.jpg');
+        $response->assertOk();
+    }
+
+    public function test_storage_fallback_route_returns_404_for_missing_file(): void
+    {
+        $response = $this->get('/storage/non_existent_clinical_scan.jpg');
+        $response->assertNotFound();
+    }
+
+    public function test_storage_fallback_route_blocks_directory_traversal(): void
+    {
+        $response = $this->get('/storage/../phpunit.xml');
+        $response->assertNotFound();
+    }
+
+    public function test_admin_can_invoke_storage_link_route(): void
+    {
+        $admin = User::where('email', 'dr.cortex@example.com')->first();
+
+        $response = $this->actingAs($admin)->get(route('admin.storage-link'));
+        $response->assertOk()
+            ->assertJsonPath('success', true);
+    }
 }

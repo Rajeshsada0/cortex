@@ -9,6 +9,8 @@ import {
     Shield,
     SunMedium,
     Contrast,
+    ImageOff,
+    Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -47,6 +49,28 @@ export function ClinicalImageViewer({
     const [contrast, setContrast] = useState(100); // 50 to 200%
     const [isInverted, setIsInverted] = useState(false);
     const [showControls, setShowControls] = useState(false);
+
+    // Image loading and fallback resilience
+    const [imageError, setImageError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const resolvedImageUrl = React.useMemo(() => {
+        if (!imageUrl) return '';
+        // If image URL is pointing to localhost / 127.0.0.1 from local database dump
+        if (/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//i.test(imageUrl)) {
+            return imageUrl.replace(/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//i, '/');
+        }
+        // If image URL is stored as raw storage relative path (e.g. "questions/abc.jpg")
+        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/')) {
+            return `/storage/${imageUrl}`;
+        }
+        return imageUrl;
+    }, [imageUrl]);
+
+    useEffect(() => {
+        setImageError(false);
+        setIsLoading(true);
+    }, [resolvedImageUrl]);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -200,24 +224,52 @@ export function ClinicalImageViewer({
                 className="relative flex max-h-[460px] min-h-[260px] w-full cursor-grab items-center justify-center overflow-hidden bg-neutral-950 p-2 select-none active:cursor-grabbing"
             >
                 {/* Clinical Image with CSS Filters */}
-                <div
-                    style={{
-                        transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                        filter: `brightness(${brightness}%) contrast(${contrast}%) ${
-                            isInverted ? 'invert(1)' : ''
-                        }`,
-                        transition: isDragging
-                            ? 'none'
-                            : 'transform 0.1s ease-out',
-                    }}
-                    className="relative flex max-w-full items-center justify-center"
-                >
-                    <img
-                        src={imageUrl}
-                        alt={alt}
-                        className="pointer-events-none max-h-[380px] w-auto rounded object-contain"
-                    />
-                </div>
+                {imageError ? (
+                    <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-white/60">
+                        <div className="rounded-full bg-red-500/10 p-3 text-red-400 border border-red-500/20">
+                            <ImageOff className="size-6" />
+                        </div>
+                        <span className="font-mono text-xs font-semibold text-white/80">
+                            Diagnostic Asset Not Accessible
+                        </span>
+                        <span className="max-w-xs text-[11px] text-white/50">
+                            Image file not found on server or storage link not generated.
+                        </span>
+                    </div>
+                ) : (
+                    <>
+                        {isLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/70 backdrop-blur-xs z-10">
+                                <Loader2 className="size-6 animate-spin text-[#55BDEB]" />
+                            </div>
+                        )}
+                        <div
+                            style={{
+                                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                filter: `brightness(${brightness}%) contrast(${contrast}%) ${
+                                    isInverted ? 'invert(1)' : ''
+                                }`,
+                                transition: isDragging
+                                    ? 'none'
+                                    : 'transform 0.1s ease-out',
+                            }}
+                            className="relative flex max-w-full items-center justify-center"
+                        >
+                            <img
+                                src={resolvedImageUrl}
+                                alt={alt}
+                                onLoad={() => setIsLoading(false)}
+                                onError={() => {
+                                    setIsLoading(false);
+                                    setImageError(true);
+                                }}
+                                className={`pointer-events-none max-h-[380px] w-auto rounded object-contain transition-opacity duration-200 ${
+                                    isLoading ? 'opacity-0' : 'opacity-100'
+                                }`}
+                            />
+                        </div>
+                    </>
+                )}
 
                 {/* Anti-Scraping Dynamic Watermark Overlay */}
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden opacity-25">
