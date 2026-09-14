@@ -36,6 +36,17 @@ class Question extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Question $question) {
+            $question->options()->delete();
+            $question->relevantExams()->delete();
+            $question->bookmarks()->delete();
+            $question->srsQueue()->delete();
+            $question->attempts()->delete();
+        });
+    }
+
     /**
      * Normalize image URL for production and live deployment environments.
      */

@@ -17,11 +17,12 @@ class SpacedRepetitionWebController extends Controller
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
         $queue = SpacedRepetitionQueue::where('user_id', $user->id)
-            ->with(['question.subject', 'question.topic', 'question.options'])
+            ->whereHas('question')
+            ->with(['question.subject', 'question.topic', 'question.options', 'question.relevantExams'])
             ->orderBy('next_review_due')
             ->get();
 
-        $dueCards = $queue->filter(fn ($item) => ! $item->next_review_due || $item->next_review_due <= now())->values();
+        $dueCards = $queue->filter(fn ($item) => $item->question && (! $item->next_review_due || $item->next_review_due <= now()))->values();
 
         return Inertia::render('spaced-repetition/index', [
             'user' => $user,

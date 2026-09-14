@@ -28,22 +28,23 @@ class SpacedRepetitionController extends Controller
         $now = Carbon::now();
 
         $dueQuery = SpacedRepetitionQueue::where('user_id', $userId)
+            ->whereHas('question')
             ->where(function ($q) use ($now) {
                 $q->whereNull('next_review_due')
                     ->orWhere('next_review_due', '<=', $now);
             })
-            ->with(['question.subject', 'question.topic', 'question.options']);
+            ->with(['question.subject', 'question.topic', 'question.options', 'question.relevantExams']);
 
-        $dueItems = $dueQuery->get();
-        $totalInQueue = SpacedRepetitionQueue::where('user_id', $userId)->count();
+        $dueItems = $dueQuery->get()->filter(fn ($i) => $i->question)->values();
+        $totalInQueue = SpacedRepetitionQueue::where('user_id', $userId)->whereHas('question')->count();
 
         // Count per stage (0..4)
         $stageCounts = [
-            0 => SpacedRepetitionQueue::where('user_id', $userId)->where('repetition_stage', 0)->count(),
-            1 => SpacedRepetitionQueue::where('user_id', $userId)->where('repetition_stage', 1)->count(),
-            2 => SpacedRepetitionQueue::where('user_id', $userId)->where('repetition_stage', 2)->count(),
-            3 => SpacedRepetitionQueue::where('user_id', $userId)->where('repetition_stage', 3)->count(),
-            4 => SpacedRepetitionQueue::where('user_id', $userId)->where('repetition_stage', '>=', 4)->count(),
+            0 => SpacedRepetitionQueue::where('user_id', $userId)->whereHas('question')->where('repetition_stage', 0)->count(),
+            1 => SpacedRepetitionQueue::where('user_id', $userId)->whereHas('question')->where('repetition_stage', 1)->count(),
+            2 => SpacedRepetitionQueue::where('user_id', $userId)->whereHas('question')->where('repetition_stage', 2)->count(),
+            3 => SpacedRepetitionQueue::where('user_id', $userId)->whereHas('question')->where('repetition_stage', 3)->count(),
+            4 => SpacedRepetitionQueue::where('user_id', $userId)->whereHas('question')->where('repetition_stage', '>=', 4)->count(),
         ];
 
         return response()->json([

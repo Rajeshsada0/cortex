@@ -72,6 +72,7 @@ class DashboardWebController extends Controller
 
         // 4. Spaced repetition queue summary
         $dueCardsCount = SpacedRepetitionQueue::where('user_id', $user->id)
+            ->whereHas('question')
             ->where(function ($q) {
                 $q->whereNull('next_review_due')->orWhere('next_review_due', '<=', now());
             })

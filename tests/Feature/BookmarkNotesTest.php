@@ -118,4 +118,35 @@ class BookmarkNotesTest extends TestCase
         $response = $this->get(route('bookmarks.index'));
         $response->assertRedirect('/login');
     }
+
+    public function test_candidate_can_view_spaced_repetition_page(): void
+    {
+        $candidate = User::factory()->create(['is_admin' => false]);
+        $question = Question::first();
+
+        \App\Models\SpacedRepetitionQueue::create([
+            'user_id' => $candidate->id,
+            'question_id' => $question->id,
+            'repetition_stage' => 1,
+            'interval_days' => 1,
+            'consecutive_correct' => 1,
+            'next_review_due' => now()->subHour(),
+        ]);
+
+        $response = $this->actingAs($candidate)->get(route('spaced-repetition.index'));
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('spaced-repetition/index')
+            ->has('dueCards', 1)
+            ->where('dueCount', 1)
+            ->where('totalInQueue', 1)
+        );
+    }
+
+    public function test_question_resource_handles_null_safely(): void
+    {
+        $resource = new \App\Http\Resources\V1\QuestionResource(null);
+        $array = $resource->toArray(request());
+        $this->assertSame([], $array);
+    }
 }
