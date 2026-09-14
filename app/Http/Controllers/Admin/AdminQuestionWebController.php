@@ -58,7 +58,7 @@ class AdminQuestionWebController extends Controller
 
         if ($exam && $exam !== 'ALL') {
             $query->whereHas('relevantExams', function ($q) use ($exam) {
-                $q->where('exam', $exam)->orWhere('exam', 'COMBINED');
+                $q->where('exam', $exam);
             });
         }
 

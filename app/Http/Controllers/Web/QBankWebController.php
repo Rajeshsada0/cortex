@@ -61,7 +61,7 @@ class QBankWebController extends Controller
                 'hazardous' => $hazardousQuestions,
                 'unstable' => $unstableQuestions,
             ],
-            'totalQuestions' => Question::count(),
+            'totalQuestions' => $totalPathwayQuestions,
         ]);
     }
 

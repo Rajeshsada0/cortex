@@ -80,7 +80,7 @@ final class TestSessionService
         /** @var Collection<int, Question> $questions */
         $questions = $query->inRandomOrder()->limit($limit)->get();
 
-        // If not enough questions found for strict filters and status is ALL, fallback
+        // If not enough questions found for strict filters and status is ALL, fallback within this pathway
         if ($questions->isEmpty() && empty($questionIds) && (! $status || strtoupper($status) === 'ALL')) {
             $questions = Question::query()
                 ->where('is_active', true)
@@ -88,14 +88,6 @@ final class TestSessionService
                 ->inRandomOrder()
                 ->limit($limit)
                 ->get();
-
-            if ($questions->isEmpty()) {
-                $questions = Question::query()
-                    ->where('is_active', true)
-                    ->inRandomOrder()
-                    ->limit($limit)
-                    ->get();
-            }
         }
 
         $totalQuestions = $questions->count();
@@ -168,17 +160,6 @@ final class TestSessionService
             $selectedQuestionIds = $selectedQuestionIds->merge($filler);
         }
 
-        // If still needed (e.g. limited total seeded pool in local demo), fill from any active questions
-        $stillNeeded = $targetQuestions - $selectedQuestionIds->count();
-        if ($stillNeeded > 0) {
-            $genericFiller = Question::where('is_active', true)
-                ->whereNotIn('id', $selectedQuestionIds)
-                ->inRandomOrder()
-                ->limit($stillNeeded)
-                ->pluck('id');
-
-            $selectedQuestionIds = $selectedQuestionIds->merge($genericFiller);
-        }
 
         $finalQuestionIds = $selectedQuestionIds->unique()->slice(0, $targetQuestions)->values();
 

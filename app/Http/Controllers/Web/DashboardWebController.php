@@ -32,6 +32,8 @@ class DashboardWebController extends Controller
     {
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
+        $pathway = $user->active_pathway ?? 'INI_CET';
+
         // 1. Readiness score calculation
         $readiness = $this->readinessCalculator->calculate($user);
 
@@ -39,17 +41,20 @@ class DashboardWebController extends Controller
         $quadrants = $this->quadrantService->getQuadrantBreakdown($user);
 
         // 3. Subject progress overview
-        $subjects = Subject::withCount(['questions', 'topics'])
+        $subjects = Subject::withCount([
+            'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),
+            'topics',
+        ])
             ->orderBy('order_index')
             ->get()
-            ->map(function ($s) use ($user) {
+            ->map(function ($s) use ($user, $pathway) {
                 $attempted = QuestionAttempt::where('user_id', $user->id)
-                    ->whereHas('question', fn ($q) => $q->where('subject_id', $s->id))
+                    ->whereHas('question', fn ($q) => $q->where('subject_id', $s->id)->where('is_active', true)->forExam($pathway))
                     ->distinct('question_id')
                     ->count('question_id');
 
                 $correct = QuestionAttempt::where('user_id', $user->id)
-                    ->whereHas('question', fn ($q) => $q->where('subject_id', $s->id))
+                    ->whereHas('question', fn ($q) => $q->where('subject_id', $s->id)->where('is_active', true)->forExam($pathway))
                     ->where('is_correct', true)
                     ->count();
 
@@ -131,9 +136,10 @@ class DashboardWebController extends Controller
             'recentSessions' => $recentSessions,
             'grandMocksCount' => $grandMocksCount,
             'completedSessionsCount' => $completedSessionsCount,
-            'avgScorePercent' => $avgScorePercent,
-            'totalQuestions' => Question::count(),
-            'totalAttempts' => QuestionAttempt::where('user_id', $user->id)->count(),
+            'totalQuestions' => Question::where('is_active', true)->forExam($pathway)->count(),
+            'totalAttempts' => QuestionAttempt::where('user_id', $user->id)
+                ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
+                ->count(),
         ]);
     }
 }

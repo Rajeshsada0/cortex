@@ -80,13 +80,17 @@ final class ReadinessScoreCalculator
             return 0.20;
         }
 
+        $pathway = $user->active_pathway ?? 'INI_CET';
+
         $coveredSubjects = QuestionAttempt::where('user_id', $user->id)
+            ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
             ->join('questions', 'question_attempts.question_id', '=', 'questions.id')
             ->distinct('questions.subject_id')
             ->count('questions.subject_id');
 
-        $totalQuestions = Question::count();
+        $totalQuestions = Question::where('is_active', true)->forExam($pathway)->count();
         $attemptedQuestions = QuestionAttempt::where('user_id', $user->id)
+            ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
             ->distinct('question_id')
             ->count('question_id');
 

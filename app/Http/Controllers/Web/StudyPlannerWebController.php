@@ -20,8 +20,12 @@ class StudyPlannerWebController extends Controller
         $targetDate = $user?->target_exam_date ? Carbon::parse($user->target_exam_date) : Carbon::now()->addMonths(4);
         $daysRemaining = round(max(1, Carbon::now()->diffInDays($targetDate, false)), 2);
 
-        $totalQuestions = Question::count();
-        $attempted = QuestionAttempt::where('user_id', $user?->id ?? 0)->distinct('question_id')->count('question_id');
+        $pathway = $user?->active_pathway ?? 'INI_CET';
+        $totalQuestions = Question::where('is_active', true)->forExam($pathway)->count();
+        $attempted = QuestionAttempt::where('user_id', $user?->id ?? 0)
+            ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
+            ->distinct('question_id')
+            ->count('question_id');
         $remaining = max(0, $totalQuestions - $attempted);
 
         return Inertia::render('planner/index', [

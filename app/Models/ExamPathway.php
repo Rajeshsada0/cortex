@@ -49,11 +49,11 @@ class ExamPathway extends Model
     public function getAvailableQuestionsCount(): int
     {
         if ($this->code === 'COMBINED') {
-            return Question::count();
+            return Question::where('is_active', true)->count();
         }
 
-        return QuestionExamRelevance::whereIn('exam', [$this->code, 'COMBINED'])
-            ->distinct('question_id')
-            ->count('question_id');
+        return Question::where('is_active', true)
+            ->forExam($this->code)
+            ->count();
     }
 }

@@ -187,9 +187,19 @@ export default function QuestionForm({
     const [memoryPeg, setMemoryPeg] = useState(question?.memory_peg || '');
 
     // Pathways
-    const initialExams = question?.relevant_exams
-        ? question.relevant_exams.map((re) => re.exam)
-        : ['MECEE_PG', 'INI_CET', 'COMBINED'];
+    const initialExams = React.useMemo(() => {
+        if (question?.relevant_exams && question.relevant_exams.length > 0) {
+            return question.relevant_exams.map((re) => re.exam);
+        }
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const examParam = urlParams.get('exam');
+            if (examParam && examParam !== 'ALL') {
+                return [examParam];
+            }
+        }
+        return [];
+    }, [question]);
     const [relevantExams, setRelevantExams] = useState<string[]>(initialExams);
 
     // Status
@@ -353,6 +363,13 @@ export default function QuestionForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (relevantExams.length === 0) {
+            setErrors({
+                relevant_exams: 'Please select at least one relevant exam pathway.',
+            });
+            toast.error('Please select at least one relevant exam pathway.');
+            return;
+        }
         setProcessing(true);
         setErrors({});
 
@@ -644,9 +661,16 @@ export default function QuestionForm({
 
                     {/* Relevant Exams */}
                     <div className="border-border/60 space-y-1.5 border-t pt-2">
-                        <Label className="text-xs font-bold">
-                            Relevant Exam Pathways
-                        </Label>
+                        <div className="flex items-center justify-between">
+                            <Label className="text-xs font-bold">
+                                Relevant Exam Pathways
+                            </Label>
+                            {relevantExams.length === 0 && (
+                                <span className="text-[11px] font-medium text-amber-500">
+                                    Required: select at least 1 pathway
+                                </span>
+                            )}
+                        </div>
                         <div className="flex flex-wrap gap-2">
                             {examOptions.map((ep) => {
                                 const selected = relevantExams.includes(ep.key);
@@ -673,6 +697,11 @@ export default function QuestionForm({
                                 );
                             })}
                         </div>
+                        {errors.relevant_exams && (
+                            <p className="text-destructive mt-1 text-xs font-semibold">
+                                {errors.relevant_exams}
+                            </p>
+                        )}
                     </div>
                 </div>
 

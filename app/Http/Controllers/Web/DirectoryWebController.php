@@ -16,13 +16,18 @@ class DirectoryWebController extends Controller
     {
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
+        $pathway = $user?->active_pathway ?? 'INI_CET';
+
         $subjects = Subject::with(['topics.subtopics'])
-            ->withCount(['questions', 'topics'])
+            ->withCount([
+                'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),
+                'topics',
+            ])
             ->orderBy('order_index')
             ->get()
-            ->map(function ($subject) use ($user) {
+            ->map(function ($subject) use ($user, $pathway) {
                 $attempts = QuestionAttempt::where('user_id', $user->id)
-                    ->whereHas('question', fn ($q) => $q->where('subject_id', $subject->id))
+                    ->whereHas('question', fn ($q) => $q->where('subject_id', $subject->id)->where('is_active', true)->forExam($pathway))
                     ->get();
 
                 $attemptedCount = $attempts->unique('question_id')->count();
@@ -46,7 +51,7 @@ class DirectoryWebController extends Controller
                         'slug' => $topic->slug,
                         'priority' => $topic->high_yield_priority,
                         'subtopics' => $topic->subtopics->pluck('name'),
-                        'questions_count' => $topic->questions()->count(),
+                        'questions_count' => $topic->questions()->where('is_active', true)->forExam($pathway)->count(),
                     ]),
                 ];
             });
