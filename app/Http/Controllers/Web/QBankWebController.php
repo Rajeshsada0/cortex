@@ -92,7 +92,7 @@ class QBankWebController extends Controller
             $status = $request->query('status', 'ALL');
             $quadrant = $request->query('quadrant');
             $difficulty = $request->query('difficulty', 'ALL');
-            $limit = max(1, min(100, (int) $request->query('limit', 10)));
+            $limit = max(1, min(1000, (int) $request->query('limit', 10)));
 
             $questionIds = null;
             $singleQuestionId = $request->query('question_id');

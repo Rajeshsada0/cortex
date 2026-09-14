@@ -18,6 +18,7 @@ import {
     ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 interface TopicData {
@@ -81,7 +82,22 @@ export default function QBankIndex({
     const [difficulty, setDifficulty] = useState<string>('ALL');
 
     // Question Count
-    const [questionCount, setQuestionCount] = useState<number>(10);
+    const [questionCount, setQuestionCount] = useState<number>(20);
+    const [customCountInput, setCustomCountInput] = useState<string>('20');
+    const questionPresets = [10, 25, 50, 100, 200, 500];
+
+    const handleSelectPreset = (num: number) => {
+        setQuestionCount(num);
+        setCustomCountInput(num.toString());
+    };
+
+    const handleCustomCountChange = (val: string) => {
+        setCustomCountInput(val);
+        const parsed = parseInt(val, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+            setQuestionCount(Math.min(parsed, 1000));
+        }
+    };
 
     const toggleSubject = (id: number) => {
         setSelectedSubjectIds((prev) =>
@@ -584,22 +600,27 @@ export default function QBankIndex({
 
                 {/* Question Count */}
                 <div className="space-y-3">
-                    <div className="flex items-center gap-2.5">
-                        <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
-                            5
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex size-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-black text-slate-950">
+                                5
+                            </span>
+                            <h2 className="text-sm font-black tracking-wider text-slate-900 uppercase dark:text-white">
+                                Number of Questions
+                            </h2>
+                        </div>
+                        <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-bold text-cyan-700 dark:text-cyan-400">
+                            {questionCount} MCQs Selected
                         </span>
-                        <h2 className="text-sm font-black tracking-wider text-slate-900 uppercase dark:text-white">
-                            Number of Questions
-                        </h2>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-2">
-                        {[5, 10, 20, 40, 50].map((num) => (
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        {questionPresets.map((num) => (
                             <button
                                 key={num}
                                 type="button"
-                                onClick={() => setQuestionCount(num)}
-                                className={`cursor-pointer rounded-xl px-3 py-2.5 text-center text-xs font-bold transition-all ${
+                                onClick={() => handleSelectPreset(num)}
+                                className={`cursor-pointer rounded-xl px-2.5 py-2.5 text-center text-xs font-bold transition-all ${
                                     questionCount === num
                                         ? 'border-2 border-cyan-500 bg-cyan-500 font-black text-slate-950 shadow-md shadow-cyan-500/25'
                                         : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-cortex-border dark:bg-cortex-card dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-cortex-hover dark:hover:text-white'
@@ -608,6 +629,30 @@ export default function QBankIndex({
                                 {num} Qs
                             </button>
                         ))}
+                    </div>
+
+                    {/* Custom Question Count Input */}
+                    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-cortex-border dark:bg-slate-900/50">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            Custom Amount:
+                        </span>
+                        <div className="relative flex-1 max-w-xs">
+                            <Input
+                                type="number"
+                                min={1}
+                                max={1000}
+                                placeholder="Enter custom amount (e.g. 100, 200, 500)"
+                                value={customCountInput}
+                                onChange={(e) => handleCustomCountChange(e.target.value)}
+                                className="h-8 border-slate-300 bg-white pr-14 text-xs font-bold text-slate-900 shadow-xs focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            />
+                            <span className="absolute top-1/2 right-3 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                                MCQs
+                            </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">
+                            (Enter any number between 1 and 1,000)
+                        </span>
                     </div>
                 </div>
             </div>

@@ -62,13 +62,13 @@
 
 @theme {
     --font-sans:
-        'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
         Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 
     --font-heading:
-        'McQueen', 'McQueen Display Trial', -apple-system, BlinkMacSystemFont,
-        'Segoe UI', Roboto, sans-serif;
+        'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Helvetica, Arial, sans-serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -230,6 +230,7 @@
 @layer base {
     * {
         @apply border-border;
+        font-family: var(--font-sans);
     }
 
     body {
@@ -237,7 +238,7 @@
         font-family: var(--font-sans);
     }
 
-    /* Paragraphs, descriptions, UI copy, buttons and inputs strictly use Inter font */
+    /* Paragraphs, descriptions, UI copy, buttons and inputs strictly use Noto Sans font */
     p,
     span,
     label,
@@ -254,7 +255,7 @@
         font-family: var(--font-sans);
     }
 
-    /* All headers across the entire project strictly use McQueen font */
+    /* All headers across the entire project strictly use Noto Sans font */
     h1,
     h2,
     h3,
@@ -265,7 +266,7 @@
     [data-slot='card-title'],
     [data-font='heading'] {
         font-family: var(--font-heading);
-        letter-spacing: -0.022em;
+        letter-spacing: -0.015em;
     }
 }
 

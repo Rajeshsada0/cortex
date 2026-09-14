@@ -35,7 +35,7 @@ class TestSessionController extends Controller
             'subject_id' => 'nullable|integer',
             'topic_id' => 'nullable|integer',
             'difficulty' => 'nullable|string|in:EASY,MEDIUM,HARD',
-            'limit' => 'nullable|integer|min:1|max:200',
+            'limit' => 'nullable|integer|min:1|max:1000',
             'duration_minutes' => 'nullable|integer|min:1|max:480',
         ]);
 
