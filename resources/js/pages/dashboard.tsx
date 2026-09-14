@@ -229,30 +229,36 @@ export default function Dashboard({
             <Head title="Cortex Med - Clinical Readiness & Dashboard" />
 
             {/* Welcome Banner Sub-bar */}
-            <div className="border-cortex-border card-glow relative overflow-hidden rounded-2xl border bg-gradient-to-r from-slate-900 via-blue-950/40 to-slate-900 p-6 shadow-xl">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/50 to-cyan-50/70 p-6 shadow-sm dark:border-cortex-border dark:bg-gradient-to-r dark:from-slate-900 dark:via-blue-950/40 dark:to-slate-900 dark:shadow-xl">
+                {/* Decorative blurred medical glow */}
+                <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/10" />
+                <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/10" />
+
+                <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <div className="mb-1.5 flex items-center space-x-2">
-                            <span className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
-                                <span className="mr-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400"></span>
+                            <span className="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-300">
+                                <span className="mr-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-600 dark:bg-cyan-400"></span>
                                 {user.pathway_label ||
                                     'India: INI-CET Nov Track'}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                 Target Exam:{' '}
-                                {user.target_exam_date || 'Date not set'}
+                                <span className="text-slate-700 dark:text-slate-300">
+                                    {user.target_exam_date || 'Date not set'}
+                                </span>
                                 {user.days_until_exam !== null &&
                                     user.days_until_exam !== undefined && (
-                                        <span className="ml-1 font-medium text-cyan-400">
+                                        <span className="ml-1 font-semibold text-cyan-700 dark:text-cyan-400">
                                             ({user.days_until_exam} days to go)
                                         </span>
                                     )}
                             </span>
                         </div>
-                        <h2 className="text-2xl font-extrabold tracking-tight text-white">
+                        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                             Welcome, {user.name}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <p className="mt-1 max-w-2xl text-sm font-normal text-slate-600 dark:text-slate-400">
                             Dual-metric clinical analytics, high-yield spaced
                             repetition queues, and sub-second vignette delivery.
                         </p>
@@ -262,17 +268,17 @@ export default function Dashboard({
                         <button
                             type="button"
                             onClick={() => setIsSettingDate(!isSettingDate)}
-                            className="flex cursor-pointer items-center space-x-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-700"
+                            className="flex cursor-pointer items-center space-x-1.5 rounded-xl border border-slate-200 bg-white/90 px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs backdrop-blur-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
                         >
-                            <Calendar className="h-4 w-4 text-slate-400" />
+                            <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-400" />
                             <span>Set Exam Date</span>
                         </button>
                         <a href="#readiness-section">
                             <button
                                 type="button"
-                                className="flex cursor-pointer items-center space-x-1.5 rounded-lg border border-cyan-500/30 bg-cyan-600/20 px-3.5 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-600/30"
+                                className="flex cursor-pointer items-center space-x-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-800 shadow-xs transition hover:border-cyan-500/60 hover:bg-cyan-500/20 dark:border-cyan-500/30 dark:bg-cyan-600/20 dark:text-cyan-300 dark:hover:bg-cyan-600/30"
                             >
-                                <Sliders className="h-4 w-4 text-cyan-400" />
+                                <Sliders className="h-4 w-4 text-cyan-700 dark:text-cyan-400" />
                                 <span>What-If Simulator</span>
                             </button>
                         </a>
@@ -281,21 +287,21 @@ export default function Dashboard({
 
                 {/* Inline Exam Date Picker Dropdown */}
                 {isSettingDate && (
-                    <div className="relative z-10 mt-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-slate-700 bg-slate-900/90 p-3">
-                        <span className="text-xs font-semibold text-white">
+                    <div className="relative z-10 mt-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-slate-200 bg-white/95 p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-900/95">
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white">
                             Target Exam Date:
                         </span>
                         <Input
                             type="date"
                             value={targetDateInput}
                             onChange={(e) => setTargetDateInput(e.target.value)}
-                            className="h-8 w-44 border-slate-600 bg-slate-800 text-xs text-white"
+                            className="h-8 w-44 border-slate-300 bg-slate-50 text-xs text-slate-900 [color-scheme:light] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:[color-scheme:dark]"
                         />
                         <Button
                             size="sm"
                             onClick={handleSaveDate}
                             disabled={isSavingDate}
-                            className="h-8 bg-cyan-500 text-xs font-bold text-slate-950 hover:bg-cyan-400"
+                            className="h-8 bg-cyan-600 text-xs font-bold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
                         >
                             {isSavingDate ? 'Saving...' : 'Save Date'}
                         </Button>
@@ -303,7 +309,7 @@ export default function Dashboard({
                             variant="ghost"
                             size="sm"
                             onClick={() => setIsSettingDate(false)}
-                            className="h-8 text-xs text-slate-400 hover:text-white"
+                            className="h-8 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                         >
                             Cancel
                         </Button>

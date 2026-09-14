@@ -142,19 +142,19 @@ export function PathwaySelector({
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-2.5 rounded-xl border border-slate-700/80 bg-[#0d1627] px-3.5 text-xs text-slate-200 hover:border-slate-600 hover:bg-[#121f36]"
+                    className="h-9 gap-2.5 rounded-xl border border-border bg-card px-3.5 text-xs text-foreground shadow-xs hover:border-slate-300 hover:bg-muted/80 dark:border-slate-700/80 dark:bg-[#0d1627] dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-[#121f36]"
                     disabled={isUpdating}
                 >
-                    <span className="size-2 rounded-full bg-emerald-400 shadow-xs ring-2 shadow-emerald-400 ring-emerald-500/20" />
+                    <span className="size-2 rounded-full bg-emerald-500 shadow-xs ring-2 shadow-emerald-500/50 ring-emerald-500/20 dark:bg-emerald-400" />
                     <div className="flex items-center gap-1.5 text-left text-xs">
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-foreground dark:text-white">
                             {active.name}
                         </span>
-                        <span className="hidden rounded border border-slate-700 bg-slate-800/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-300 sm:inline-block">
+                        <span className="hidden rounded border border-border bg-muted/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 sm:inline-block">
                             {active.marking}
                         </span>
                     </div>
-                    <ChevronDown className="size-3.5 text-slate-400" />
+                    <ChevronDown className="size-3.5 text-muted-foreground" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-2">
