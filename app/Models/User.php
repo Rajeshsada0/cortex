@@ -65,6 +65,16 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
+    protected $appends = [
+        'pathway_label',
+    ];
+
+    public function getPathwayLabelAttribute(): string
+    {
+        $pathwayEnum = \App\Domain\Scoring\ExamPathway::tryFrom($this->active_pathway ?? 'INI_CET') ?? \App\Domain\Scoring\ExamPathway::INI_CET;
+        return $pathwayEnum->label();
+    }
+
     public function testSessions(): HasMany
     {
         return $this->hasMany(TestSession::class);

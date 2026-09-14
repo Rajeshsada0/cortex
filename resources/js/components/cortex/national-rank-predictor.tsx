@@ -361,29 +361,26 @@ export function NationalRankPredictor({
             {/* Header */}
             <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                    <h3 className="text-base font-bold tracking-wide text-foreground dark:text-white">
-                        NATIONAL COHORT RANK &amp; PERCENTILE
+                    <h3 className="text-base font-bold tracking-tight text-foreground dark:text-white">
+                        Cohort Rank &amp; Percentile
                     </h3>
-                    <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 font-mono text-[10px] text-blue-700 uppercase dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
-                        AI Calibrated
-                    </span>
                     {isSimulating && (
-                        <span className="animate-pulse rounded border border-amber-800 bg-amber-950 px-2 py-0.5 font-mono text-[10px] text-amber-300 uppercase">
+                        <span className="animate-pulse rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-600 uppercase dark:text-amber-400">
                             Simulating
                         </span>
                     )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5">
                     <button
                         type="button"
                         onClick={() => setIsSimulating(!isSimulating)}
-                        className="flex cursor-pointer items-center space-x-1 text-xs text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
+                        className="flex cursor-pointer items-center space-x-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:border-slate-300 hover:text-foreground dark:hover:border-slate-700"
                     >
                         <Sliders className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                         <span>
                             {isSimulating
-                                ? 'Exit Simulation'
-                                : 'Simulate Score'}
+                                ? 'Exit'
+                                : 'Simulate'}
                         </span>
                     </button>
                     {isSimulating && (
@@ -393,7 +390,7 @@ export function NationalRankPredictor({
                                 setSimulatedScore(prediction.readiness_score);
                                 setIsSimulating(false);
                             }}
-                            className="rounded border border-border bg-muted p-1 text-xs text-muted-foreground hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-white"
+                            className="rounded-lg border border-border bg-card p-1 text-xs text-muted-foreground transition hover:border-slate-300 hover:text-foreground dark:hover:border-slate-700"
                             title="Reset to real score"
                         >
                             <RotateCcw className="h-3.5 w-3.5" />

@@ -2,20 +2,17 @@ import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
     PlaySquare,
-    GraduationCap,
     Repeat,
     Calendar,
     ArrowRight,
     CheckCircle2,
-    Clock,
     Target,
     BookOpen,
-    Layers,
-    Sparkles,
     Bookmark,
     Award,
     Search,
     Sliders,
+    Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +27,12 @@ import {
     StudyStreakHeatmap,
     StudyStreakData,
 } from '@/components/cortex/study-streak-heatmap';
-import { PathwaySelector } from '@/components/cortex/pathway-selector';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface DashboardProps {
     user: {
@@ -163,8 +165,6 @@ export default function Dashboard({
     ): {
         phase: 'Pre-Clinical' | 'Para-Clinical' | 'Clinical';
         category: 'PRE' | 'PARA' | 'CLINICAL';
-        color: string;
-        badgeBg: string;
     } => {
         const lower = name.toLowerCase();
         if (
@@ -175,9 +175,6 @@ export default function Dashboard({
             return {
                 phase: 'Pre-Clinical',
                 category: 'PRE',
-                color: 'text-emerald-500',
-                badgeBg:
-                    'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
             };
         }
         if (
@@ -189,15 +186,11 @@ export default function Dashboard({
             return {
                 phase: 'Para-Clinical',
                 category: 'PARA',
-                color: 'text-amber-500',
-                badgeBg: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
             };
         }
         return {
             phase: 'Clinical',
             category: 'CLINICAL',
-            color: 'text-[#55BDEB]',
-            badgeBg: 'bg-[#55BDEB]/10 text-[#55BDEB] border-[#55BDEB]/20',
         };
     };
 
@@ -224,515 +217,583 @@ export default function Dashboard({
               )
             : 0;
 
+    const dailyProgressPct = Math.min(
+        100,
+        Math.round(
+            ((studyStreak?.today_attempts ?? 0) /
+                (user.daily_mcq_target || 100)) *
+                100,
+        ),
+    );
+
+    const overallQBankPct =
+        totalQuestions > 0
+            ? Math.min(100, Math.round((totalAttempts / totalQuestions) * 100))
+            : 0;
+
     return (
-        <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <Head title="Cortex Med - Clinical Readiness & Dashboard" />
+        <TooltipProvider delayDuration={150}>
+            <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <Head title="Cortex Med - Clinical Readiness & Dashboard" />
 
-            {/* Welcome Banner Sub-bar */}
-            <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/50 to-cyan-50/70 p-6 shadow-sm dark:border-cortex-border dark:bg-gradient-to-r dark:from-slate-900 dark:via-blue-950/40 dark:to-slate-900 dark:shadow-xl">
-                {/* Decorative blurred medical glow */}
-                <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/10" />
-                <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/10" />
-
-                <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <div className="mb-1.5 flex items-center space-x-2">
-                            <span className="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-300">
-                                <span className="mr-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-600 dark:bg-cyan-400"></span>
-                                {user.pathway_label ||
-                                    'India: INI-CET Nov Track'}
-                            </span>
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                Target Exam:{' '}
-                                <span className="text-slate-700 dark:text-slate-300">
-                                    {user.target_exam_date || 'Date not set'}
+                {/* Clean, Modern Header Bar */}
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-xs transition">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                                    {user.pathway_label || 'Combined Track'}
                                 </span>
-                                {user.days_until_exam !== null &&
-                                    user.days_until_exam !== undefined && (
-                                        <span className="ml-1 font-semibold text-cyan-700 dark:text-cyan-400">
-                                            ({user.days_until_exam} days to go)
+
+                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-xs text-muted-foreground">
+                                    <Calendar className="h-3 w-3" />
+                                    {user.days_until_exam !== null &&
+                                    user.days_until_exam !== undefined ? (
+                                        <span>
+                                            <strong className="text-foreground">
+                                                {user.days_until_exam}
+                                            </strong>{' '}
+                                            days to exam
                                         </span>
+                                    ) : user.target_exam_date ? (
+                                        <span>Exam: {user.target_exam_date}</span>
+                                    ) : (
+                                        <span>Target date not set</span>
                                     )}
-                            </span>
-                        </div>
-                        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                            Welcome, {user.name}
-                        </h2>
-                        <p className="mt-1 max-w-2xl text-sm font-normal text-slate-600 dark:text-slate-400">
-                            Dual-metric clinical analytics, high-yield spaced
-                            repetition queues, and sub-second vignette delivery.
-                        </p>
-                    </div>
+                                </span>
+                            </div>
 
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setIsSettingDate(!isSettingDate)}
-                            className="flex cursor-pointer items-center space-x-1.5 rounded-xl border border-slate-200 bg-white/90 px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs backdrop-blur-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
-                        >
-                            <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-400" />
-                            <span>Set Exam Date</span>
-                        </button>
-                        <a href="#readiness-section">
-                            <button
-                                type="button"
-                                className="flex cursor-pointer items-center space-x-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-800 shadow-xs transition hover:border-cyan-500/60 hover:bg-cyan-500/20 dark:border-cyan-500/30 dark:bg-cyan-600/20 dark:text-cyan-300 dark:hover:bg-cyan-600/30"
-                            >
-                                <Sliders className="h-4 w-4 text-cyan-700 dark:text-cyan-400" />
-                                <span>What-If Simulator</span>
-                            </button>
-                        </a>
-                    </div>
-                </div>
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                                Welcome back, {user.name}
+                            </h1>
+                        </div>
 
-                {/* Inline Exam Date Picker Dropdown */}
-                {isSettingDate && (
-                    <div className="relative z-10 mt-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-slate-200 bg-white/95 p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-900/95">
-                        <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                            Target Exam Date:
-                        </span>
-                        <Input
-                            type="date"
-                            value={targetDateInput}
-                            onChange={(e) => setTargetDateInput(e.target.value)}
-                            className="h-8 w-44 border-slate-300 bg-slate-50 text-xs text-slate-900 [color-scheme:light] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:[color-scheme:dark]"
-                        />
-                        <Button
-                            size="sm"
-                            onClick={handleSaveDate}
-                            disabled={isSavingDate}
-                            className="h-8 bg-cyan-600 text-xs font-bold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
-                        >
-                            {isSavingDate ? 'Saving...' : 'Save Date'}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsSettingDate(false)}
-                            className="h-8 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                        >
-                            Cancel
-                        </Button>
-                    </div>
-                )}
-            </div>
+                        <div className="flex items-center gap-2">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsSettingDate(!isSettingDate)}
+                                        className="h-9 gap-1.5 rounded-xl border-border text-xs font-medium"
+                                    >
+                                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <span>
+                                            {user.target_exam_date ? 'Edit Date' : 'Set Date'}
+                                        </span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom">
+                                    Target exam date for study scheduling
+                                </TooltipContent>
+                            </Tooltip>
 
-            {/* BEGIN: FiveColumnStatMetrics */}
-            <section
-                className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5"
-                data-purpose="top-metrics-row"
-            >
-                {/* Metric 1: Daily Target */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                        <span>Daily Target</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-400">
-                            <Target className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-2 mb-3">
-                        <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
-                                {studyStreak?.today_attempts ?? 0}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                / {user.daily_mcq_target || 100} MCQs
-                            </span>
-                        </div>
-                        {/* Progress Bar */}
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                            <div
-                                className="h-1.5 rounded-full bg-cyan-500 transition-all"
-                                style={{
-                                    width: `${Math.min(
-                                        100,
-                                        Math.round(
-                                            ((studyStreak?.today_attempts ??
-                                                0) /
-                                                (user.daily_mcq_target ||
-                                                    100)) *
-                                                100,
-                                        ),
-                                    )}%`,
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
-                        <span>Capacity:</span>
-                        <span className="font-medium text-foreground dark:text-slate-300">
-                            {user.daily_study_hours || 6} hrs/day
-                        </span>
-                    </div>
-                </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <a href="#readiness-section">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 gap-1.5 rounded-xl border-border text-xs font-medium"
+                                        >
+                                            <Sliders className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span>Simulator</span>
+                                        </Button>
+                                    </a>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom">
+                                    Simulate readiness score improvements
+                                </TooltipContent>
+                            </Tooltip>
 
-                {/* Metric 2: Spaced Repetition */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                        <span>Spaced Repetition</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/70 dark:text-amber-400">
-                            <Repeat className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-2 mb-3">
-                        <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-amber-600 dark:text-amber-400">
-                                {dueCardsCount}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                Cards Due
-                            </span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                            Ready for consolidation
-                        </p>
-                    </div>
-                    <div className="border-t border-border pt-2 text-[11px]">
-                        <Link
-                            href="/spaced-repetition"
-                            className="inline-flex items-center font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
-                        >
-                            Review Due Deck →
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Metric 3: Clinical Notebook */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                        <span>Clinical Notebook</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-400">
-                            <Bookmark className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-2 mb-3">
-                        <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
-                                {bookmarkedCount}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                Flagged
-                            </span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                            High-yield pearls saved
-                        </p>
-                    </div>
-                    <div className="border-t border-border pt-2 text-[11px]">
-                        <Link
-                            href="/bookmarks"
-                            className="inline-flex items-center font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
-                        >
-                            Open Notebook →
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Metric 4: Total Solved */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                        <span>Total Solved</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-2 mb-3">
-                        <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
-                                {totalAttempts}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                / {totalQuestions} Active
-                            </span>
-                        </div>
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                            <div
-                                className="h-1.5 rounded-full bg-emerald-500 transition-all"
-                                style={{
-                                    width: `${totalQuestions > 0 ? Math.min(100, Math.round((totalAttempts / totalQuestions) * 100)) : 0}%`,
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
-                        <span>Progress:</span>
-                        <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            {totalQuestions > 0
-                                ? Math.round(
-                                      (totalAttempts / totalQuestions) * 100,
-                                  )
-                                : 0}
-                            % Q-Bank
-                        </span>
-                    </div>
-                </div>
-
-                {/* Metric 5: Mock Exam Hall */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                        <span>Mock Exam Hall</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-400">
-                            <Award className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-2 mb-3">
-                        <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
-                                {grandMocksCount}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                Grand Mocks
-                            </span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                            Full 200Q AIIMS Pattern
-                        </p>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
-                        <span>{completedSessionsCount} Sessions</span>
-                        <Link
-                            href="/mock-exam"
-                            className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                        >
-                            Hall →
-                        </Link>
-                    </div>
-                </div>
-            </section>
-            {/* END: FiveColumnStatMetrics */}
-
-            {/* Core 2-Column Analytics Section (Stitch Web Design) */}
-            <div
-                id="readiness-section"
-                className="grid grid-cols-1 gap-6 lg:grid-cols-12"
-            >
-                {/* Left Column: Readiness Score & Performance Matrix */}
-                <div className="flex flex-col gap-6 lg:col-span-6">
-                    <ReadinessGauge
-                        score={readiness.readiness_score}
-                        components={readiness.components}
-                        targetExamDate={user.target_exam_date ?? undefined}
-                        daysUntilExam={user.days_until_exam}
-                        pathwayName={user.pathway_label}
-                        dueCardsCount={dueCardsCount}
-                    />
-
-                    <PerformanceQuadrant
-                        quadrants={quadrants.quadrants}
-                        answerSwitching={quadrants.answer_switching}
-                    />
-                </div>
-
-                {/* Right Column: National Rank Predictor & Daily Study Streak */}
-                <div className="flex flex-col gap-6 lg:col-span-6">
-                    <NationalRankPredictor prediction={rankPrediction} />
-
-                    <StudyStreakHeatmap streakData={studyStreak} />
-                </div>
-            </div>
-
-            {/* BEGIN: 19SubjectCurriculumSection */}
-            <section
-                className="bg-cortex-card border-cortex-border card-glow space-y-6 rounded-2xl border p-6 shadow-xl"
-                data-purpose="curriculum-mastery"
-            >
-                {/* Subject Directory Header */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <div className="flex items-center space-x-2">
-                            <h3 className="text-lg font-bold tracking-wide text-foreground dark:text-white">
-                                19-SUBJECT CURRICULUM MASTERY
-                            </h3>
-                            <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground dark:bg-slate-800 dark:text-slate-300">
-                                {subjects.length} Subjects
-                            </span>
-                            <span className="rounded border border-cyan-200 bg-cyan-50 px-2 py-0.5 font-mono text-xs text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-400">
-                                Avg Mastery: {avgMastery}%
-                            </span>
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Pre-Clinical, Para-Clinical, and Clinical curriculum
-                            tracking with instant MCQ drills
-                        </p>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                        {/* Search Bar */}
-                        <div className="relative">
-                            <input
-                                className="w-48 rounded-lg border border-border bg-background py-1.5 pr-3 pl-8 text-xs text-foreground transition placeholder:text-muted-foreground focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                                placeholder="Filter subjects..."
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                            <Search className="absolute top-2.5 left-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                        <Link
-                            className="inline-flex items-center text-xs font-semibold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
-                            href="/directory"
-                        >
-                            View Full Directory →
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Subject Classification Filter Pills */}
-                <div className="flex items-center justify-between border-b border-border pb-3 dark:border-slate-800">
-                    <div className="flex items-center space-x-2 text-xs">
-                        {(
-                            [
-                                {
-                                    id: 'ALL',
-                                    label: `All (${subjects.length})`,
-                                },
-                                { id: 'PRE', label: 'Pre-Clinical' },
-                                { id: 'PARA', label: 'Para-Clinical' },
-                                { id: 'CLINICAL', label: 'Clinical' },
-                            ] as const
-                        ).map((tab) => (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => setPhaseFilter(tab.id)}
-                                className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                                    phaseFilter === tab.id
-                                        ? 'border border-cyan-500/40 bg-cyan-50 text-cyan-800 dark:border-cyan-500/30 dark:bg-cyan-500/20 dark:text-cyan-300'
-                                        : 'bg-muted text-muted-foreground hover:bg-muted/80 dark:bg-slate-800/50 dark:text-slate-400 dark:hover:bg-slate-800'
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                        {showAllSubjects
-                            ? `Showing All ${filteredSubjects.length} Subjects`
-                            : `Showing ${displayedSubjects.length} High-Yield Subjects`}
-                    </span>
-                </div>
-
-                {/* Subjects Grid (3 Columns Desktop) */}
-                {displayedSubjects.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {displayedSubjects.map((sub) => {
-                            const info = getSubjectPhase(sub.name);
-                            return (
-                                <div
-                                    key={sub.id}
-                                    className="border-cortex-border group card-glow flex flex-col justify-between rounded-xl border bg-card p-4 transition hover:border-cyan-500/40 dark:bg-slate-900/80"
+                            <Link href="/qbank/runner">
+                                <Button
+                                    size="sm"
+                                    className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
                                 >
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <span
-                                                className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase ${
-                                                    info.category === 'PRE'
-                                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                                        : info.category ===
-                                                            'PARA'
-                                                          ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                                                          : 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                                                }`}
-                                            >
-                                                {info.phase}
-                                            </span>
-                                            <span className="font-mono text-xs font-bold text-muted-foreground transition group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
-                                                {sub.mastery_percentage}%
-                                                Mastery
-                                            </span>
-                                        </div>
+                                    <PlaySquare className="h-3.5 w-3.5" />
+                                    <span>Practice MCQs</span>
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
 
-                                        <h4 className="mt-2 truncate text-base font-bold text-foreground transition group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-300">
-                                            {sub.name}
-                                        </h4>
+                    {/* Inline Exam Date Picker Dropdown */}
+                    {isSettingDate && (
+                        <div className="mt-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-border bg-muted/40 p-3.5 shadow-xs">
+                            <span className="text-xs font-semibold text-foreground">
+                                Target Exam Date:
+                            </span>
+                            <Input
+                                type="date"
+                                value={targetDateInput}
+                                onChange={(e) => setTargetDateInput(e.target.value)}
+                                className="h-8 w-44 border-border bg-background text-xs text-foreground [color-scheme:light] dark:[color-scheme:dark]"
+                            />
+                            <Button
+                                size="sm"
+                                onClick={handleSaveDate}
+                                disabled={isSavingDate}
+                                className="h-8 bg-cyan-600 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
+                            >
+                                {isSavingDate ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsSettingDate(false)}
+                                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    )}
+                </div>
 
-                                        <div className="mt-3 space-y-2 border-t border-border pt-3 text-xs text-muted-foreground dark:border-slate-800/80">
-                                            <div className="flex justify-between">
-                                                <span>Q-Bank Coverage:</span>
-                                                <span className="font-mono font-medium text-foreground dark:text-slate-300">
-                                                    {sub.attempted_count} /{' '}
-                                                    {sub.questions_count} (
-                                                    {sub.coverage_percentage}%)
+                {/* Minimal, High-Contrast 5-Stat KPI Grid */}
+                <section
+                    className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5"
+                    data-purpose="kpi-metrics-row"
+                >
+                    {/* Card 1: Daily Target */}
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                <Target className="h-4 w-4" />
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        aria-label="Daily target info"
+                                    >
+                                        <Info className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    Target: {user.daily_mcq_target || 100} MCQs/day (
+                                    {user.daily_study_hours || 6}h planned)
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="mt-3">
+                            <div className="flex items-baseline gap-1 font-mono">
+                                <span className="text-2xl font-bold text-foreground">
+                                    {studyStreak?.today_attempts ?? 0}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    / {user.daily_mcq_target || 100}
+                                </span>
+                            </div>
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-1.5 rounded-full bg-cyan-500 transition-all"
+                                    style={{ width: `${dailyProgressPct}%` }}
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>Daily Goal</span>
+                            <span className="font-semibold text-cyan-600 dark:text-cyan-400">
+                                {dailyProgressPct}%
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Card 2: Spaced Repetition */}
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                <Repeat className="h-4 w-4" />
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        aria-label="Spaced repetition info"
+                                    >
+                                        <Info className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    Overdue cards ready for memory consolidation
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="mt-3">
+                            <div className="font-mono text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                {dueCardsCount}
+                            </div>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                Due for Review
+                            </p>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                            <span className="text-muted-foreground">Flashcards</span>
+                            <Link
+                                href="/spaced-repetition"
+                                className="inline-flex items-center font-semibold text-amber-600 hover:underline dark:text-amber-400"
+                            >
+                                Review →
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Card 3: Saved Pearls */}
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                <Bookmark className="h-4 w-4" />
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        aria-label="Notebook info"
+                                    >
+                                        <Info className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    Bookmarked clinical vignettes & high-yield pearls
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="mt-3">
+                            <div className="font-mono text-2xl font-bold text-foreground">
+                                {bookmarkedCount}
+                            </div>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                Saved Pearls
+                            </p>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                            <span className="text-muted-foreground">Notebook</span>
+                            <Link
+                                href="/bookmarks"
+                                className="inline-flex items-center font-semibold text-purple-600 hover:underline dark:text-purple-400"
+                            >
+                                Open →
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Card 4: Q-Bank Progress */}
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="h-4 w-4" />
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        aria-label="Q-Bank progress info"
+                                    >
+                                        <Info className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    {totalAttempts} attempted out of {totalQuestions} active questions
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="mt-3">
+                            <div className="flex items-baseline gap-1 font-mono">
+                                <span className="text-2xl font-bold text-foreground">
+                                    {totalAttempts}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    / {totalQuestions}
+                                </span>
+                            </div>
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-1.5 rounded-full bg-emerald-500 transition-all"
+                                    style={{ width: `${overallQBankPct}%` }}
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>Q-Bank Solved</span>
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                {overallQBankPct}%
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Card 5: Mock Exam Hall */}
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                        <div className="flex items-center justify-between">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                                <Award className="h-4 w-4" />
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="text-muted-foreground hover:text-foreground"
+                                        aria-label="Mock exams info"
+                                    >
+                                        <Info className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    Full-length timed mock exams taken
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="mt-3">
+                            <div className="font-mono text-2xl font-bold text-foreground">
+                                {grandMocksCount}
+                            </div>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                Grand Mocks Taken
+                            </p>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                            <span className="text-muted-foreground">
+                                {completedSessionsCount} Sessions
+                            </span>
+                            <Link
+                                href="/mock-exam"
+                                className="inline-flex items-center font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+                            >
+                                Hall →
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Core 2-Column Analytics Section */}
+                <div
+                    id="readiness-section"
+                    className="grid grid-cols-1 gap-6 lg:grid-cols-12"
+                >
+                    {/* Left Column: Readiness Score & Performance Matrix */}
+                    <div className="flex flex-col gap-6 lg:col-span-6">
+                        <ReadinessGauge
+                            score={readiness.readiness_score}
+                            components={readiness.components}
+                            targetExamDate={user.target_exam_date ?? undefined}
+                            daysUntilExam={user.days_until_exam}
+                            pathwayName={user.pathway_label}
+                            dueCardsCount={dueCardsCount}
+                        />
+
+                        <PerformanceQuadrant
+                            quadrants={quadrants.quadrants}
+                            answerSwitching={quadrants.answer_switching}
+                        />
+                    </div>
+
+                    {/* Right Column: National Rank Predictor & Daily Study Streak */}
+                    <div className="flex flex-col gap-6 lg:col-span-6">
+                        <NationalRankPredictor prediction={rankPrediction} />
+
+                        <StudyStreakHeatmap streakData={studyStreak} />
+                    </div>
+                </div>
+
+                {/* 19-Subject Curriculum Mastery Section */}
+                <section
+                    className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-xs"
+                    data-purpose="curriculum-mastery"
+                >
+                    {/* Header */}
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                                <h2 className="text-base font-bold tracking-tight text-foreground">
+                                    Curriculum Mastery
+                                </h2>
+                                <span className="rounded-md border border-border bg-muted/60 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                                    {subjects.length} Subjects
+                                </span>
+                                <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-700 dark:text-cyan-400">
+                                    Avg: {avgMastery}%
+                                </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Pre-Clinical, Para-Clinical, and Clinical syllabus progress
+                            </p>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                            <div className="relative">
+                                <input
+                                    className="w-48 rounded-lg border border-border bg-background py-1.5 pr-3 pl-8 text-xs text-foreground transition placeholder:text-muted-foreground focus:border-cyan-500 focus:outline-none"
+                                    placeholder="Search subjects..."
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                <Search className="absolute top-2.5 left-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                            <Link
+                                className="inline-flex items-center text-xs font-semibold text-cyan-600 hover:underline dark:text-cyan-400"
+                                href="/directory"
+                            >
+                                Full Directory →
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                        <div className="flex items-center space-x-2">
+                            {(
+                                [
+                                    {
+                                        id: 'ALL',
+                                        label: `All (${subjects.length})`,
+                                    },
+                                    { id: 'PRE', label: 'Pre-Clinical' },
+                                    { id: 'PARA', label: 'Para-Clinical' },
+                                    { id: 'CLINICAL', label: 'Clinical' },
+                                ] as const
+                            ).map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setPhaseFilter(tab.id)}
+                                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                                        phaseFilter === tab.id
+                                            ? 'border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300'
+                                            : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {showAllSubjects
+                                ? `All ${filteredSubjects.length} subjects`
+                                : `${displayedSubjects.length} high-yield subjects`}
+                        </span>
+                    </div>
+
+                    {/* Subjects Grid */}
+                    {displayedSubjects.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {displayedSubjects.map((sub) => {
+                                const info = getSubjectPhase(sub.name);
+                                return (
+                                    <div
+                                        key={sub.id}
+                                        className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-cyan-500/40"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <span
+                                                    className={`rounded-md border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase ${
+                                                        info.category === 'PRE'
+                                                            ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                                                            : info.category === 'PARA'
+                                                              ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                                                              : 'border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                                                    }`}
+                                                >
+                                                    {info.phase}
                                                 </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Accuracy Mastery:</span>
-                                                <span className="font-mono font-medium text-foreground dark:text-slate-300">
+                                                <span className="font-mono text-xs font-bold text-muted-foreground transition group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
                                                     {sub.mastery_percentage}%
                                                 </span>
                                             </div>
-                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                                                <div
-                                                    className="h-1.5 rounded-full bg-cyan-500 transition-all"
-                                                    style={{
-                                                        width: `${Math.min(100, Math.max(0, sub.coverage_percentage))}%`,
-                                                    }}
-                                                />
+
+                                            <h3 className="mt-2 truncate text-sm font-bold text-foreground transition group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
+                                                {sub.name}
+                                            </h3>
+
+                                            <div className="mt-3 space-y-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
+                                                <div className="flex justify-between text-[11px]">
+                                                    <span>Coverage</span>
+                                                    <span className="font-mono font-medium text-foreground">
+                                                        {sub.attempted_count} / {sub.questions_count} ({sub.coverage_percentage}%)
+                                                    </span>
+                                                </div>
+                                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                                    <div
+                                                        className="h-1.5 rounded-full bg-cyan-500 transition-all"
+                                                        style={{
+                                                            width: `${Math.min(
+                                                                100,
+                                                                Math.max(
+                                                                    0,
+                                                                    sub.coverage_percentage,
+                                                                ),
+                                                            )}%`,
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="mt-4 flex items-center justify-between border-t border-border pt-3 dark:border-slate-800">
-                                        <span className="text-[11px] text-muted-foreground">
-                                            {getSubtopicsCount(
-                                                sub.slug,
-                                                sub.id,
-                                            )}{' '}
-                                            High-Yield Subtopics
-                                        </span>
-                                        <Link
-                                            href={`/qbank/runner?mode=TUTOR&subject_id=${sub.id}`}
-                                            className="inline-flex items-center text-xs font-semibold text-cyan-600 group-hover:underline hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
-                                        >
-                                            Drill MCQs →
-                                        </Link>
+                                        <div className="mt-3.5 flex items-center justify-between border-t border-border pt-3 text-xs">
+                                            <span className="text-[11px] text-muted-foreground">
+                                                {getSubtopicsCount(
+                                                    sub.slug,
+                                                    sub.id,
+                                                )}{' '}
+                                                Subtopics
+                                            </span>
+                                            <Link
+                                                href={`/qbank/runner?mode=TUTOR&subject_id=${sub.id}`}
+                                                className="inline-flex items-center font-semibold text-cyan-600 hover:underline dark:text-cyan-400"
+                                            >
+                                                Practice →
+                                            </Link>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <p className="text-xs font-semibold text-muted-foreground">
-                            No subjects found matching "{searchQuery}".
-                        </p>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                setSearchQuery('');
-                                setPhaseFilter('ALL');
-                            }}
-                            className="mt-2 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                No subjects found matching "{searchQuery}".
+                            </p>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setPhaseFilter('ALL');
+                                }}
+                                className="mt-2 text-xs text-cyan-600 hover:underline dark:text-cyan-400"
+                            >
+                                Reset filters
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Bottom Expand Toggle */}
+                    <div className="pt-2 text-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowAllSubjects(!showAllSubjects)}
+                            className="inline-flex cursor-pointer items-center text-xs font-medium text-muted-foreground transition hover:text-foreground"
                         >
-                            Reset filters
-                        </Button>
+                            {showAllSubjects
+                                ? 'Show High-Yield Subjects Only ↑'
+                                : `View All ${filteredSubjects.length} Subjects →`}
+                        </button>
                     </div>
-                )}
+                </section>
 
-                {/* Bottom Expand Banner */}
-                <div className="pt-2 text-center">
-                    <button
-                        type="button"
-                        onClick={() => setShowAllSubjects(!showAllSubjects)}
-                        className="inline-flex cursor-pointer items-center text-xs font-medium text-muted-foreground transition hover:text-cyan-600 dark:hover:text-cyan-400"
-                    >
-                        {showAllSubjects
-                            ? 'Collapse to High-Yield Subjects ↑'
-                            : 'View All 19 Subjects (Anatomy, Physiology, Biochemistry, Microbiology, PSM, Forensic...) →'}
-                    </button>
-                </div>
-            </section>
-            {/* END: 19SubjectCurriculumSection */}
-
-            {/* BEGIN: MinimalFooter */}
-            <footer className="border-cortex-border mt-auto border-t px-8 py-4 text-center text-xs text-slate-500">
-                <p>
-                    © 2025 Cortex Med AI Systems. India INI-CET, NEET-PG &amp;
-                    USMLE Clinical Actuarial Engine. Strict Medical
-                    Confidentiality Standard.
-                </p>
-            </footer>
-            {/* END: MinimalFooter */}
-        </div>
+                {/* Minimal Footer */}
+                <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
+                    <p>
+                        © {new Date().getFullYear()} Cortex Med Actuarial Engine. Strict Medical Confidentiality Standard.
+                    </p>
+                </footer>
+            </div>
+        </TooltipProvider>
     );
 }

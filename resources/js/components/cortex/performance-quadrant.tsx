@@ -101,17 +101,16 @@ export function PerformanceQuadrant({
         <div className="bg-cortex-card border-cortex-border card-glow rounded-2xl border p-6 shadow-xl">
             <div className="mb-2 flex items-center justify-between">
                 <div>
-                    <h3 className="text-base font-bold tracking-wide text-foreground dark:text-white">
-                        PERFORMANCE VS. CONFIDENCE MATRIX
+                    <h3 className="text-base font-bold tracking-tight text-foreground dark:text-white">
+                        Performance vs. Confidence
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                        Dual-metric classification identifying deadly clinical
-                        blind spots before the real exam
+                        Diagnostic accuracy mapped against subjective confidence
                     </p>
                 </div>
-                <div className="rounded border border-border bg-muted px-2.5 py-1 font-mono text-[11px] text-foreground dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                <div className="rounded-lg border border-border bg-card px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
                     Switching Penalty:{' '}
-                    <span className="font-bold text-rose-600 dark:text-rose-400">
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">
                         {penaltyPercent}%
                     </span>
                 </div>
@@ -244,26 +243,25 @@ export function PerformanceQuadrant({
             </div>
 
             {/* Calibration Prompt */}
-            <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 dark:border-blue-500/30 dark:bg-blue-950/30">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3.5 shadow-xs">
                 <div className="flex items-center space-x-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/50 dark:text-blue-400">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
                         <HelpCircle className="h-4 w-4" />
                     </div>
                     <div>
                         <p className="text-xs font-semibold text-foreground dark:text-white">
-                            Awaiting Confidence Calibration
+                            Confidence Calibration
                         </p>
                         <p className="text-[11px] text-muted-foreground">
-                            Rate your confidence during MCQs to separate
-                            solidified mastery from blind spots.
+                            Rate your confidence during practice to uncover blind spots.
                         </p>
                     </div>
                 </div>
                 <Link
                     href="/qbank/runner?mode=TUTOR"
-                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow transition hover:bg-blue-500"
+                    className="inline-flex items-center gap-1 rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow-xs transition hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
                 >
-                    <span>Start Tutor Drill →</span>
+                    <span>Practice Drill →</span>
                 </Link>
             </div>
         </div>

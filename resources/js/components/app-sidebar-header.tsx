@@ -6,6 +6,12 @@ import { PlaySquare, Plus, Shield, Bell, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PathwaySelector } from '@/components/cortex/pathway-selector';
 import { ThemeToggle } from '@/components/theme-toggle';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function AppSidebarHeader({
     breadcrumbs = [],
@@ -190,32 +196,43 @@ export function AppSidebarHeader({
                                 currentPathway={user?.active_pathway}
                             />
 
-                            <button
-                                type="button"
-                                className="relative rounded-xl border border-border bg-card p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                title="Notifications"
-                            >
-                                <Bell className="size-4" />
-                                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-cyan-400 shadow-xs shadow-cyan-400" />
-                            </button>
-
-                            {url !== '/qbank/runner' &&
-                                !url.startsWith('/mock-exam/hall') && (
-                                    <Link href="/qbank/runner">
-                                        <Button
-                                            size="sm"
-                                            className="h-9 gap-2 rounded-xl border border-cyan-400/40 bg-gradient-to-r from-cyan-500 to-sky-500 px-3.5 font-bold text-slate-950 shadow-md shadow-cyan-500/25 hover:from-cyan-400 hover:to-sky-400 hover:brightness-105"
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="relative rounded-xl border border-border bg-card p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            aria-label="Notifications"
                                         >
-                                            <Zap className="size-4 fill-current" />
-                                            <span className="text-xs font-bold">
-                                                Launch MCQ Runner
-                                            </span>
-                                            <span className="hidden rounded bg-slate-950/20 px-1.5 py-0.5 text-[9px] font-black tracking-wider text-slate-950 uppercase sm:inline-block">
-                                                Adaptive AI
-                                            </span>
-                                        </Button>
-                                    </Link>
-                                )}
+                                            <Bell className="size-4" />
+                                            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-cyan-500 shadow-xs shadow-cyan-500/50" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">
+                                        <span>Notifications</span>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                {url !== '/qbank/runner' &&
+                                    !url.startsWith('/mock-exam/hall') && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Link href="/qbank/runner">
+                                                    <Button
+                                                        size="sm"
+                                                        className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-3 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
+                                                    >
+                                                        <PlaySquare className="size-3.5" />
+                                                        <span>Practice</span>
+                                                    </Button>
+                                                </Link>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="bottom">
+                                                <span>Adaptive MCQ Practice</span>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    )}
+                            </TooltipProvider>
                         </>
                     )}
                 </div>

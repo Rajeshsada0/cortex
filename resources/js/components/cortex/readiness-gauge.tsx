@@ -19,6 +19,12 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface ReadinessComponents {
     recent_accuracy: number;
@@ -262,36 +268,33 @@ export function ReadinessGauge({
             <div>
                 <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <h3 className="text-base font-bold tracking-wide text-foreground dark:text-white">
-                            CORTEX READINESS SCORE™
+                        <h3 className="text-base font-bold tracking-tight text-foreground dark:text-white">
+                            Readiness Score
                         </h3>
-                        <span className="rounded border border-cyan-200 bg-cyan-50 px-2 py-0.5 font-mono text-[10px] text-cyan-700 uppercase dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
-                            Live Dual-Metric Engine
-                        </span>
                         {isSimulating && (
-                            <span className="animate-pulse rounded border border-amber-800 bg-amber-950 px-2 py-0.5 font-mono text-[10px] text-amber-300 uppercase">
+                            <span className="animate-pulse rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-600 uppercase dark:text-amber-400">
                                 Simulating
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1.5">
                         <button
                             type="button"
                             onClick={() => setIsSimulating(!isSimulating)}
-                            className="flex cursor-pointer items-center space-x-1 rounded border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground transition hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-white"
+                            className="flex cursor-pointer items-center space-x-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:border-slate-300 hover:text-foreground dark:hover:border-slate-700"
                         >
                             <Sliders className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                             <span>
                                 {isSimulating
-                                    ? 'Exit Simulation'
-                                    : 'What-If Simulator'}
+                                    ? 'Exit'
+                                    : 'What-If'}
                             </span>
                         </button>
                         {isSimulating && (
                             <button
                                 type="button"
                                 onClick={resetSimulation}
-                                className="rounded border border-border bg-muted p-1 text-xs text-muted-foreground hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-white"
+                                className="rounded-lg border border-border bg-card p-1 text-xs text-muted-foreground transition hover:border-slate-300 hover:text-foreground dark:hover:border-slate-700"
                                 title="Reset simulation"
                             >
                                 <RotateCcw className="h-3.5 w-3.5" />
@@ -299,17 +302,24 @@ export function ReadinessGauge({
                         )}
                     </div>
                 </div>
-                <p className="font-mono text-xs text-muted-foreground">
-                    Algorithmic index:{' '}
-                    <span className="text-foreground/80 dark:text-slate-300">
-                        0.35A + 0.20V + 0.20M + 0.15R - 0.10S
-                    </span>{' '}
-                    (Target Track:{' '}
-                    <span className="text-cyan-600 dark:text-cyan-400">
-                        {pathwayName || 'India: INI-CET'}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                        <span>Track: <span className="font-semibold text-foreground">{pathwayName || 'Active Track'}</span></span>
                     </span>
-                    )
-                </p>
+                    <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button type="button" className="inline-flex items-center text-muted-foreground hover:text-foreground" aria-label="Formula breakdown">
+                                    <Info className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-xs text-xs">
+                                Actuarial Index: 35% Accuracy + 20% Syllabus + 20% Mocks + 15% SRS − 10% Instability Penalty
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
             </div>
 
             {/* Gauge Visualization and Status Center */}
