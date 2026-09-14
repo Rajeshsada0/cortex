@@ -257,16 +257,23 @@ function SidebarTrigger({
     <Button
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      variant="ghost"
+      variant="outline"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      className={cn(
+        "size-9 shrink-0 rounded-xl border border-border bg-card text-muted-foreground shadow-xs transition-colors hover:border-slate-300 hover:bg-muted hover:text-foreground active:scale-95 dark:border-slate-700/80 dark:bg-[#0d1627] dark:hover:border-slate-600 dark:hover:bg-[#121f36]",
+        className
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      {isMobile || state === "collapsed" ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+      {isMobile || state === "collapsed" ? (
+        <PanelLeftOpenIcon className="size-4.5" />
+      ) : (
+        <PanelLeftCloseIcon className="size-4.5" />
+      )}
       <span className="sr-only">Toggle sidebar</span>
     </Button>
   )

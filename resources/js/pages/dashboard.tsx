@@ -269,7 +269,7 @@ export default function Dashboard({
                             </h1>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
@@ -528,7 +528,7 @@ export default function Dashboard({
                     </div>
 
                     {/* Card 5: Mock Exam Hall */}
-                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                    <div className="col-span-2 sm:col-span-1 flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
                         <div className="flex items-center justify-between">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                                 <Award className="h-4 w-4" />

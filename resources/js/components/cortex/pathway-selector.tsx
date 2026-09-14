@@ -142,22 +142,22 @@ export function PathwaySelector({
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-2.5 rounded-xl border border-border bg-card px-3.5 text-xs text-foreground shadow-xs hover:border-slate-300 hover:bg-muted/80 dark:border-slate-700/80 dark:bg-[#0d1627] dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-[#121f36]"
+                    className="h-9 gap-1.5 sm:gap-2.5 rounded-xl border border-border bg-card px-2 sm:px-3.5 text-xs text-foreground shadow-xs hover:border-slate-300 hover:bg-muted/80 dark:border-slate-700/80 dark:bg-[#0d1627] dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-[#121f36]"
                     disabled={isUpdating}
                 >
-                    <span className="size-2 rounded-full bg-emerald-500 shadow-xs ring-2 shadow-emerald-500/50 ring-emerald-500/20 dark:bg-emerald-400" />
-                    <div className="flex items-center gap-1.5 text-left text-xs">
-                        <span className="font-semibold text-foreground dark:text-white">
+                    <span className="size-2 shrink-0 rounded-full bg-emerald-500 shadow-xs ring-2 shadow-emerald-500/50 ring-emerald-500/20 dark:bg-emerald-400" />
+                    <div className="flex min-w-0 items-center gap-1.5 text-left text-xs">
+                        <span className="max-w-[70px] xs:max-w-[105px] sm:max-w-none truncate font-semibold text-foreground dark:text-white">
                             {active.name}
                         </span>
                         <span className="hidden rounded border border-border bg-muted/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 sm:inline-block">
                             {active.marking}
                         </span>
                     </div>
-                    <ChevronDown className="size-3.5 text-muted-foreground" />
+                    <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 p-2">
+            <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-2">
                 <div className="text-muted-foreground px-2 py-1.5 text-xs font-semibold">
                     SWITCH EXAM PATHWAY
                 </div>

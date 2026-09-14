@@ -512,8 +512,8 @@ export default function MCQRunner({
             <Head title={`MCQ Runner — ${currentQuestion.code}`} />
 
             {/* Runner Top Navigation Bar */}
-            <div className="border-border bg-card flex items-center justify-between rounded-xl border p-3 shadow-sm">
-                <div className="flex items-center gap-2">
+            <div className="border-border bg-card flex flex-wrap items-center justify-between gap-2.5 rounded-xl border p-3 shadow-sm">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <span className="rounded bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-[#55BDEB]">
                         {currentQuestion.code}
                     </span>
@@ -532,7 +532,7 @@ export default function MCQRunner({
                 </div>
 
                 {/* Right controls: Timer and Quick Navigation */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <div className="border-border bg-muted/30 flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs">
                         <Clock className="text-muted-foreground size-3.5" />
                         <span>

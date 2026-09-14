@@ -161,51 +161,68 @@ export function AppSidebarHeader({
         (user?.active_pathway ? user.active_pathway.replace('_', ' ') : null);
 
     return (
-        <header className="border-cortex-border bg-cortex-bg flex h-14 shrink-0 items-center justify-between border-b px-4 transition-[width,height] ease-linear sm:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-3">
-                <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-                <div className="h-4 w-px bg-border" />
-                <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} />
-            </div>
+        <TooltipProvider delayDuration={150}>
+            <header className="border-cortex-border bg-cortex-bg flex h-14 shrink-0 items-center justify-between border-b px-3 sm:px-6 lg:px-8 transition-[width,height] ease-linear">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <SidebarTrigger />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            <span>Toggle Sidebar</span>
+                        </TooltipContent>
+                    </Tooltip>
 
-            {user && (
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                    <ThemeToggle />
+                    <div className="hidden h-4 w-px bg-border md:block" />
 
-                    {isAdmin ? (
-                        <>
-                            <div className="hidden items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-600 sm:flex dark:text-purple-400">
-                                <Shield className="size-3 text-purple-500" />
-                                <span>Faculty &amp; Content Admin</span>
-                            </div>
-                            {url !== '/admin/questions/create' && (
-                                <Link href="/admin/questions/create">
-                                    <Button
-                                        size="sm"
-                                        className="hidden h-8 gap-1.5 bg-cyan-600 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 sm:flex dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
-                                    >
-                                        <Plus className="size-3.5" />
-                                        <span>New MCQ</span>
-                                    </Button>
-                                </Link>
-                            )}
-                        </>
-                    ) : (
-                        <>
-                            <PathwaySelector
-                                currentPathway={user?.active_pathway}
-                            />
+                    <div className="hidden md:flex min-w-0 items-center">
+                        <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} />
+                    </div>
 
-                            <TooltipProvider delayDuration={150}>
+                    {resolvedBreadcrumbs.length > 0 && (
+                        <span className="truncate text-xs font-semibold text-foreground md:hidden max-w-[120px] xs:max-w-[160px] sm:max-w-[240px]">
+                            {resolvedBreadcrumbs[resolvedBreadcrumbs.length - 1]?.title}
+                        </span>
+                    )}
+                </div>
+
+                {user && (
+                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+                        <ThemeToggle />
+
+                        {isAdmin ? (
+                            <>
+                                <div className="hidden items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-600 sm:flex dark:text-purple-400">
+                                    <Shield className="size-3 text-purple-500" />
+                                    <span>Faculty &amp; Content Admin</span>
+                                </div>
+                                {url !== '/admin/questions/create' && (
+                                    <Link href="/admin/questions/create">
+                                        <Button
+                                            size="sm"
+                                            className="hidden h-8 gap-1.5 bg-cyan-600 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 sm:flex dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
+                                        >
+                                            <Plus className="size-3.5" />
+                                            <span>New MCQ</span>
+                                        </Button>
+                                    </Link>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <PathwaySelector
+                                    currentPathway={user?.active_pathway}
+                                />
+
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <button
                                             type="button"
-                                            className="relative rounded-xl border border-border bg-card p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            className="relative flex size-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95"
                                             aria-label="Notifications"
                                         >
                                             <Bell className="size-4" />
-                                            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-cyan-500 shadow-xs shadow-cyan-500/50" />
+                                            <span className="absolute top-2 right-2 size-2 rounded-full bg-cyan-500 shadow-xs shadow-cyan-500/50" />
                                         </button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom">
@@ -217,7 +234,7 @@ export function AppSidebarHeader({
                                     !url.startsWith('/mock-exam/hall') && (
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Link href="/qbank/runner">
+                                                <Link href="/qbank/runner" className="hidden sm:inline-flex">
                                                     <Button
                                                         size="sm"
                                                         className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-3 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
@@ -232,11 +249,11 @@ export function AppSidebarHeader({
                                             </TooltipContent>
                                         </Tooltip>
                                     )}
-                            </TooltipProvider>
-                        </>
-                    )}
-                </div>
-            )}
-        </header>
+                            </>
+                        )}
+                    </div>
+                )}
+            </header>
+        </TooltipProvider>
     );
 }
