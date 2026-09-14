@@ -105,6 +105,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Exam Pathways & Blueprints
     Route::get('/pathways', [AdminPathwayWebController::class, 'index'])->name('pathways.index');
+    Route::post('/pathways', [AdminPathwayWebController::class, 'store'])->name('pathways.store');
+    Route::put('/pathways/{pathway}', [AdminPathwayWebController::class, 'update'])->name('pathways.update');
+    Route::delete('/pathways/{pathway}', [AdminPathwayWebController::class, 'destroy'])->name('pathways.destroy');
 
     // User Directory & Role Assignment
     Route::get('/users', [AdminUserWebController::class, 'index'])->name('users.index');
