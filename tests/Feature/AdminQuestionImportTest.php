@@ -160,4 +160,19 @@ class AdminQuestionImportTest extends TestCase
         $this->assertEquals(1, $importResults['failed']);
         $this->assertNotEmpty($importResults['errors']);
     }
+
+    public function test_import_rejects_files_exceeding_150mb(): void
+    {
+        $admin = User::where('email', 'dr.cortex@example.com')->first();
+
+        // 151MB file (154624 KB > 153600 KB limit)
+        $file = UploadedFile::fake()->create('huge_questions.csv', 154624);
+
+        $response = $this->actingAs($admin)->post('/admin/questions/import', [
+            'file' => $file,
+            'status' => 'draft',
+        ]);
+
+        $response->assertSessionHasErrors(['file' => 'The question file size must not exceed 150MB.']);
+    }
 }

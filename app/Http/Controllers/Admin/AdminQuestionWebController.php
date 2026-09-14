@@ -240,10 +240,17 @@ class AdminQuestionWebController extends Controller
 
     public function importProcess(Request $request, QuestionImportService $importService): RedirectResponse
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(600);
+
         $validated = $request->validate([
-            'file' => 'required|file|max:10240',
+            'file' => 'required|file|max:153600',
             'status' => 'nullable|in:active,draft',
             'subject_id' => 'nullable|exists:subjects,id',
+        ], [
+            'file.max' => 'The question file size must not exceed 150MB.',
+            'file.required' => 'Please select a CSV or JSON question file to upload.',
+            'file.file' => 'The uploaded file is invalid or exceeded the maximum upload limit.',
         ]);
 
         $publishAsActive = ($validated['status'] ?? 'active') === 'active';

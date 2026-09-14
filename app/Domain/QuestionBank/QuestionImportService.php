@@ -22,6 +22,9 @@ class QuestionImportService
      */
     public function import(UploadedFile $file, bool $publishAsActive = true, ?int $defaultSubjectId = null): array
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(600);
+
         $extension = strtolower($file->getClientOriginalExtension());
         $content = file_get_contents($file->getRealPath());
 

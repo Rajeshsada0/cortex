@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 interface SubjectItem {
     id: number;
@@ -64,10 +65,22 @@ export default function QuestionsImport({
 
     const handleFileChange = (file: File | null) => {
         if (!file) return;
+
+        // Check if file size exceeds 150MB (150 * 1024 * 1024 bytes)
+        const maxSizeBytes = 150 * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            toast.error('File exceeds 150MB limit', {
+                description: `Selected file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Maximum allowed upload size is 150MB.`,
+            });
+            return;
+        }
+
         setData('file', file);
-        setSelectedFileName(
-            `${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
-        );
+        const formattedSize =
+            file.size >= 1024 * 1024
+                ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                : `${(file.size / 1024).toFixed(1)} KB`;
+        setSelectedFileName(`${file.name} (${formattedSize})`);
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -348,7 +361,7 @@ export default function QuestionsImport({
                                                 <span className="font-semibold text-[#0066FF] underline">
                                                     browse local files
                                                 </span>{' '}
-                                                (max 10MB)
+                                                (max 150MB)
                                             </p>
                                         </div>
                                     )}
