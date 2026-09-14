@@ -613,40 +613,46 @@ export default function QBankIndex({
             </div>
 
             {/* Launch Action Banner */}
-            <div className="card-glow mt-2 flex flex-col justify-between gap-5 rounded-2xl border border-cyan-500/40 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 p-6 text-white shadow-xl dark:from-[#0c1e33] dark:via-[#0d1f36] dark:to-[#0a1626] sm:flex-row sm:items-center">
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-black tracking-wider text-cyan-400 uppercase">
-                            Ready to Launch
-                        </span>
-                        <span className="rounded-md border border-cyan-500/40 bg-cyan-950/80 px-2.5 py-0.5 font-mono text-xs font-semibold text-cyan-300">
-                            {mode === 'TUTOR'
-                                ? 'Tutor Mode'
-                                : 'Timed Simulation'}
-                        </span>
-                        <span className="rounded-md border border-slate-700 bg-slate-800/80 px-2.5 py-0.5 font-mono text-xs font-semibold text-slate-200">
-                            {statusMode}
-                        </span>
-                    </div>
-                    <h3 className="text-lg font-black text-white sm:text-xl">
-                        {questionCount} Clinical Vignette MCQs •{' '}
-                        {selectedSubjectsCount} Disciplines
-                    </h3>
-                    <p className="text-xs font-medium text-slate-300">
-                        Estimated duration: ~{Math.round(questionCount * 1.0)}{' '}
-                        minutes at official examination pacing.
-                    </p>
-                </div>
+            <div className="relative mt-2 overflow-hidden rounded-2xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/60 to-cyan-50/80 p-6 shadow-sm transition-all dark:border-cyan-500/40 dark:bg-gradient-to-r dark:from-[#0c1e33] dark:via-[#0d1f36] dark:to-[#0a1626] dark:shadow-xl">
+                {/* Decorative ambient medical glows */}
+                <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/10" />
+                <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-blue-400/15 blur-3xl dark:bg-blue-500/10" />
 
-                <Button
-                    onClick={handleLaunch}
-                    size="lg"
-                    className="shrink-0 cursor-pointer gap-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 px-8 py-3 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/25 transition-all hover:scale-[1.02] hover:from-cyan-400 hover:to-sky-400"
-                >
-                    <PlaySquare className="size-5 fill-slate-950 text-cyan-400" />
-                    <span>Start Practice Session</span>
-                    <ArrowRight className="size-4.5" />
-                </Button>
+                <div className="relative z-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-black tracking-wider text-cyan-700 uppercase dark:text-cyan-400">
+                                Ready to Launch
+                            </span>
+                            <span className="rounded-md border border-cyan-500/30 bg-cyan-100/70 px-2.5 py-0.5 font-mono text-xs font-semibold text-cyan-800 dark:border-cyan-500/40 dark:bg-cyan-950/80 dark:text-cyan-300">
+                                {mode === 'TUTOR'
+                                    ? 'Tutor Mode'
+                                    : 'Timed Simulation'}
+                            </span>
+                            <span className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-0.5 font-mono text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200">
+                                {statusMode}
+                            </span>
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 sm:text-xl dark:text-white">
+                            {questionCount} Clinical Vignette MCQs •{' '}
+                            {selectedSubjectsCount} Disciplines
+                        </h3>
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                            Estimated duration: ~{Math.round(questionCount * 1.0)}{' '}
+                            minutes at official examination pacing.
+                        </p>
+                    </div>
+
+                    <Button
+                        onClick={handleLaunch}
+                        size="lg"
+                        className="shrink-0 cursor-pointer gap-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 px-8 py-3 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/25 transition-all hover:scale-[1.02] hover:from-cyan-400 hover:to-sky-400"
+                    >
+                        <PlaySquare className="size-5 fill-slate-950 text-cyan-400" />
+                        <span>Start Practice Session</span>
+                        <ArrowRight className="size-4.5" />
+                    </Button>
+                </div>
             </div>
         </div>
     );
