@@ -417,7 +417,7 @@ export default function MockExamHall({
             {/* Top Bar: Exam Info, Blur Warning, Countdown Timer, and Actions */}
             <header className="border-border bg-card/95 sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                    <span className="rounded bg-sky-100 px-2.5 py-1 font-mono text-xs font-bold text-sky-800 dark:bg-[#102A43] dark:text-[#55BDEB]">
+                    <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-cyan-700 dark:text-cyan-300">
                         GRAND MOCK MODE
                     </span>
                     <span className="text-foreground hidden text-xs font-semibold sm:inline">
@@ -443,8 +443,8 @@ export default function MockExamHall({
                     <div
                         className={`flex items-center gap-1.5 rounded-lg px-3 py-1 font-mono text-sm font-extrabold ${
                             secondsRemaining < 300
-                                ? 'animate-pulse bg-[#E05252] text-white'
-                                : 'bg-sky-100 text-sky-900 dark:bg-[#102A43] dark:text-[#55BDEB]'
+                                ? 'animate-pulse bg-red-600 text-white'
+                                : 'bg-muted text-foreground'
                         }`}
                     >
                         <Clock className="size-4" />
@@ -452,7 +452,7 @@ export default function MockExamHall({
                     </div>
 
                     {blurViolations > 0 && (
-                        <div className="flex items-center gap-1 rounded bg-[#E05252]/15 px-2 py-0.5 text-xs font-bold text-[#E05252]">
+                        <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-xs font-bold text-red-600 dark:text-red-400">
                             <ShieldAlert className="size-3.5" />
                             <span>{blurViolations} Violations</span>
                         </div>
@@ -466,7 +466,7 @@ export default function MockExamHall({
                         variant="outline"
                         size="sm"
                         onClick={() => setIsStudyMode(!isStudyMode)}
-                        className={`h-8 gap-1.5 text-xs font-bold ${
+                        className={`h-8 gap-1.5 rounded-xl text-xs font-bold ${
                             isStudyMode
                                 ? 'border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                                 : 'text-muted-foreground'
@@ -485,7 +485,7 @@ export default function MockExamHall({
                         variant="ghost"
                         size="sm"
                         onClick={toggleFullscreen}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 rounded-lg p-0"
                         title="Toggle Fullscreen Mode"
                     >
                         {isFullscreen ? (
@@ -499,7 +499,7 @@ export default function MockExamHall({
                         type="button"
                         size="sm"
                         onClick={() => setShowConfirmSubmit(true)}
-                        className="h-8 bg-[#E05252] text-xs font-bold text-white hover:bg-[#E05252]/90"
+                        className="h-8 rounded-xl bg-red-600 text-xs font-semibold text-white shadow-xs hover:bg-red-700"
                     >
                         Finish Exam
                     </Button>
@@ -508,7 +508,7 @@ export default function MockExamHall({
 
             {/* Final 5-Minute Warning Banner */}
             {secondsRemaining <= 300 && secondsRemaining > 0 && (
-                <div className="flex animate-pulse items-center justify-between border-b border-[#E05252]/30 bg-[#E05252]/15 px-4 py-2 text-xs font-bold text-[#E05252]">
+                <div className="flex animate-pulse items-center justify-between border-b border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400">
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="size-4 shrink-0" />
                         <span>
@@ -527,7 +527,7 @@ export default function MockExamHall({
                     {/* Clinical Vignette (Anti-scraping user-select disabled) */}
                     <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-6 shadow-sm">
                         <div className="border-border flex items-center justify-between border-b pb-2">
-                            <span className="font-mono text-xs font-bold text-[#55BDEB]">
+                            <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
                                 {currentQuestion.code}
                             </span>
                             <span className="text-muted-foreground text-[10px] font-bold uppercase">
@@ -588,7 +588,7 @@ export default function MockExamHall({
                                     }
                                 } else if (isSelected) {
                                     optionStyle =
-                                        'border-[#0066FF] dark:border-[#55BDEB] bg-[#EBF5FC] dark:bg-sky-950/40 text-[#0A1E34] dark:text-slate-100 font-semibold ring-1.5 ring-[#0066FF] dark:ring-[#55BDEB] shadow-xs cursor-pointer';
+                                        'border-cyan-600 dark:border-cyan-400 bg-cyan-50/70 dark:bg-cyan-950/40 text-foreground font-semibold ring-1.5 ring-cyan-600 dark:ring-cyan-400 shadow-xs cursor-pointer';
                                 }
 
                                 return (
@@ -614,7 +614,7 @@ export default function MockExamHall({
                                                                   ? 'bg-rose-600 text-white'
                                                                   : 'bg-muted text-muted-foreground'
                                                             : isSelected
-                                                              ? 'bg-[#0066FF] text-white'
+                                                              ? 'bg-cyan-600 text-white dark:bg-cyan-500 dark:text-neutral-950'
                                                               : 'bg-muted text-muted-foreground'
                                                     }`}
                                                 >
@@ -628,27 +628,28 @@ export default function MockExamHall({
                                             {isRevealed && (
                                                 <div className="ml-2 flex shrink-0 items-center gap-1.5 font-bold">
                                                     {isCorrectOpt && (
-                                                        <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-                                                            <CheckCircle2 className="size-4" />{' '}
-                                                            (Key Answer)
+                                                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                                            <CheckCircle className="size-4" />{' '}
+                                                            Correct
                                                         </span>
                                                     )}
                                                     {isSelected &&
                                                         !isCorrectOpt && (
-                                                            <span className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400">
+                                                            <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
                                                                 <XCircle className="size-4" />{' '}
-                                                                (Your Answer)
+                                                                Incorrect
                                                             </span>
                                                         )}
                                                 </div>
                                             )}
                                         </div>
 
+                                        {/* Option Rationale (Study Mode Reveal) */}
                                         {isRevealed && opt.rationale && (
-                                            <div className="mt-2 border-t border-current/10 pt-2 text-[11px] leading-relaxed font-normal text-slate-700 dark:text-slate-300">
-                                                <strong className="font-semibold">
-                                                    Distractor Analysis:
-                                                </strong>{' '}
+                                            <div className="border-border/60 mt-2 border-t pt-2 pl-9 text-[11px] leading-relaxed text-muted-foreground">
+                                                <span className="text-foreground font-semibold">
+                                                    Rationale:{' '}
+                                                </span>
                                                 {opt.rationale}
                                             </div>
                                         )}
@@ -662,13 +663,13 @@ export default function MockExamHall({
                             answers[currentQuestion.id] &&
                             (currentQuestion.learning_objective ||
                                 currentQuestion.foundation_explanation) && (
-                                <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/80 p-4 text-xs dark:border-sky-800 dark:bg-sky-950/40">
-                                    <div className="mb-1 flex items-center gap-1.5 font-bold text-[#0066FF] dark:text-sky-400">
-                                        <Lightbulb className="size-4 text-[#0066FF] dark:text-sky-400" />
+                                <div className="mt-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-xs dark:bg-cyan-950/30">
+                                    <div className="mb-1 flex items-center gap-1.5 font-bold text-cyan-700 dark:text-cyan-300">
+                                        <Lightbulb className="size-4 text-cyan-600 dark:text-cyan-400" />
                                         Clinical Takeaway &amp; Learning
                                         Objective
                                     </div>
-                                    <p className="leading-relaxed font-normal text-slate-700 dark:text-slate-300">
+                                    <p className="leading-relaxed font-normal text-foreground opacity-90">
                                         {currentQuestion.learning_objective ||
                                             currentQuestion.foundation_explanation}
                                     </p>
@@ -711,7 +712,7 @@ export default function MockExamHall({
                             size="sm"
                             disabled={currentIndex === questions.length - 1}
                             onClick={() => setCurrentIndex((prev) => prev + 1)}
-                            className="gap-1 bg-cyan-600 text-xs font-bold text-white hover:bg-cyan-700 dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
+                            className="gap-1 rounded-xl bg-cyan-600 px-3 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
                         >
                             Next <ChevronRight className="size-4" />
                         </Button>
@@ -736,7 +737,7 @@ export default function MockExamHall({
                         </span>
                         <div className="text-muted-foreground flex justify-between">
                             <span>Answered:</span>
-                            <span className="font-bold text-[#2FB36F]">
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">
                                 {Object.keys(answers).length} /{' '}
                                 {questions.length}
                             </span>
@@ -789,7 +790,7 @@ export default function MockExamHall({
                                 size="sm"
                                 disabled={isSubmitting}
                                 onClick={handleFinalSubmit}
-                                className="bg-[#E05252] font-bold text-white"
+                                className="h-9 rounded-xl bg-red-600 px-3 text-xs font-semibold text-white shadow-xs hover:bg-red-700"
                             >
                                 {isSubmitting
                                     ? 'Grading...'

@@ -108,48 +108,46 @@ export default function MockExamResult({
             />
 
             {/* Top Score Banner (Hidden on Print) */}
-            <div className="border-border flex flex-col justify-between gap-6 rounded-2xl border bg-gradient-to-r from-[#102A43] via-[#102A43] to-[#1c3d5a] p-6 text-white shadow-md sm:flex-row sm:items-center sm:p-8 print:hidden">
-                <div className="flex flex-col gap-1">
+            <div className="flex flex-col justify-between gap-6 rounded-2xl border border-border bg-card p-6 shadow-xs sm:flex-row sm:items-center sm:p-8 print:hidden">
+                <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
-                        <span className="rounded bg-[#55BDEB]/20 px-2.5 py-0.5 text-xs font-bold text-[#55BDEB]">
+                        <span className="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
                             {session.exam_pathway || 'INI_CET'} Scoring
                         </span>
-                        <span className="text-xs text-neutral-300">
+                        <span className="text-xs text-muted-foreground">
                             Completed in {stats.timeSpentMinutes} mins
                         </span>
                     </div>
-                    <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-                        Official Grand Mock Performance Report
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                        Grand Mock Performance Report
                     </h1>
-                    <p className="max-w-xl text-xs text-neutral-300">
-                        Scores calculated utilizing exact national examination
-                        negative-marking algorithms.
+                    <p className="max-w-xl text-xs text-muted-foreground">
+                        Scores calculated utilizing exact national examination negative-marking algorithms.
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex flex-col items-center justify-center rounded-xl bg-white/10 px-5 py-4 backdrop-blur-md">
-                        <span className="text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted/30 px-4 py-3">
+                        <span className="text-[11px] font-medium text-muted-foreground">
                             Final Scaled Score
                         </span>
-                        <span className="text-3xl font-extrabold text-[#55BDEB]">
+                        <span className="font-mono text-2xl font-bold text-cyan-600 dark:text-cyan-400">
                             {stats.score}
                         </span>
-                        <span className="text-[10px] text-neutral-400">
+                        <span className="font-mono text-[10px] text-muted-foreground">
                             Out of {stats.maxMarks || stats.total} Points
                         </span>
                     </div>
 
                     {rankPrediction && (
-                        <div className="flex flex-col items-center justify-center rounded-xl bg-white/10 px-5 py-4 backdrop-blur-md">
-                            <span className="text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-muted/30 px-4 py-3">
+                            <span className="text-[11px] font-medium text-muted-foreground">
                                 Projected Rank
                             </span>
-                            <span className="text-3xl font-extrabold text-[#2FB36F]">
-                                #
-                                {rankPrediction.predicted_rank.toLocaleString()}
+                            <span className="font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                #{rankPrediction.predicted_rank.toLocaleString()}
                             </span>
-                            <span className="text-[10px] text-neutral-400">
+                            <span className="font-mono text-[10px] text-muted-foreground">
                                 {rankPrediction.percentile}th Percentile
                             </span>
                         </div>
@@ -160,19 +158,19 @@ export default function MockExamResult({
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <Button className="gap-2 bg-[#55BDEB] font-bold text-neutral-950 shadow-sm hover:bg-[#43a9d7]">
-                            <Download className="size-4" />
-                            Download PDF Report
+                        <Button className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400">
+                            <Download className="h-3.5 w-3.5" />
+                            <span>PDF Report</span>
                         </Button>
                     </a>
 
                     <Button
                         variant="outline"
                         onClick={() => window.print()}
-                        className="gap-2 border-white/30 font-bold text-white shadow-sm hover:bg-white/10"
+                        className="h-9 gap-1.5 rounded-xl text-xs font-semibold"
                     >
-                        <Printer className="size-4" />
-                        Print View
+                        <Printer className="h-3.5 w-3.5" />
+                        <span>Print</span>
                     </Button>
                 </div>
             </div>
@@ -258,15 +256,15 @@ export default function MockExamResult({
             {/* Medical Audit & Executive Impact Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4">
                 {/* 1. Negative Marking Impact */}
-                <div className="flex flex-col justify-between rounded-xl border border-[#E05252]/30 bg-[#E05252]/5 p-4 print:border-neutral-300 print:bg-white">
+                <div className="flex flex-col justify-between rounded-2xl border border-red-500/20 bg-red-500/5 p-4 shadow-xs print:border-neutral-300 print:bg-white">
                     <div className="flex items-center gap-2">
-                        <ShieldAlert className="size-5 text-[#E05252]" />
-                        <h3 className="text-foreground text-xs font-bold tracking-wider uppercase print:text-black">
+                        <ShieldAlert className="size-5 text-red-600 dark:text-red-400" />
+                        <h3 className="text-xs font-semibold text-foreground print:text-black">
                             Negative Marking Loss
                         </h3>
                     </div>
                     <div className="mt-2">
-                        <span className="text-2xl font-black text-[#E05252]">
+                        <span className="font-mono text-2xl font-bold text-red-600 dark:text-red-400">
                             -
                             {totalPenaltyLost > 0
                                 ? totalPenaltyLost
@@ -275,26 +273,26 @@ export default function MockExamResult({
                                   ).toFixed(2)}{' '}
                             pts
                         </span>
-                        <p className="text-muted-foreground mt-1 text-[11px] print:text-neutral-600">
+                        <p className="mt-1 text-[11px] text-muted-foreground print:text-neutral-600">
                             {stats.incorrect} questions missed at -
-                            {stats.penaltyRate ?? 0.33} penalty deduction rate.
+                            {stats.penaltyRate ?? 0.33} penalty rate.
                         </p>
                     </div>
                 </div>
 
                 {/* 2. Top Performing Discipline */}
-                <div className="flex flex-col justify-between rounded-xl border border-[#2FB36F]/30 bg-[#2FB36F]/5 p-4 print:border-neutral-300 print:bg-white">
+                <div className="flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 shadow-xs print:border-neutral-300 print:bg-white">
                     <div className="flex items-center gap-2">
-                        <Award className="size-5 text-[#2FB36F]" />
-                        <h3 className="text-foreground text-xs font-bold tracking-wider uppercase print:text-black">
+                        <Award className="size-5 text-emerald-600 dark:text-emerald-400" />
+                        <h3 className="text-xs font-semibold text-foreground print:text-black">
                             Highest Proficiency
                         </h3>
                     </div>
                     <div className="mt-2">
-                        <span className="line-clamp-1 text-base font-bold text-[#2FB36F] print:text-neutral-900">
+                        <span className="line-clamp-1 text-base font-bold text-emerald-600 dark:text-emerald-400 print:text-neutral-900">
                             {topSubject ? topSubject.name : 'Core Curriculum'}
                         </span>
-                        <p className="text-muted-foreground mt-1 text-[11px] print:text-neutral-600">
+                        <p className="mt-1 text-[11px] text-muted-foreground print:text-neutral-600">
                             {topSubject
                                 ? `${topSubject.accuracy}% accuracy (${topSubject.correct}/${topSubject.total} correct)`
                                 : 'Awaiting subject attempts'}
@@ -303,10 +301,10 @@ export default function MockExamResult({
                 </div>
 
                 {/* 3. Primary Vulnerability Discipline */}
-                <div className="flex flex-col justify-between rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 print:border-neutral-300 print:bg-white">
+                <div className="flex flex-col justify-between rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 shadow-xs print:border-neutral-300 print:bg-white">
                     <div className="flex items-center gap-2">
-                        <TrendingDown className="size-5 text-amber-500" />
-                        <h3 className="text-foreground text-xs font-bold tracking-wider uppercase print:text-black">
+                        <TrendingDown className="size-5 text-amber-600 dark:text-amber-400" />
+                        <h3 className="text-xs font-semibold text-foreground print:text-black">
                             Remediation Priority
                         </h3>
                     </div>
@@ -316,7 +314,7 @@ export default function MockExamResult({
                                 ? weakestSubject.name
                                 : 'All Balanced'}
                         </span>
-                        <p className="text-muted-foreground mt-1 text-[11px] print:text-neutral-600">
+                        <p className="mt-1 text-[11px] text-muted-foreground print:text-neutral-600">
                             {weakestSubject
                                 ? `${weakestSubject.accuracy}% accuracy (${weakestSubject.incorrect} wrong, -${weakestSubject.penalty_lost} pts lost)`
                                 : 'No critical weaknesses'}
@@ -325,20 +323,20 @@ export default function MockExamResult({
                 </div>
 
                 {/* 4. Projected National Rank & Counselling */}
-                <div className="flex flex-col justify-between rounded-xl border border-[#55BDEB]/30 bg-[#55BDEB]/5 p-4 print:border-neutral-300 print:bg-white">
+                <div className="flex flex-col justify-between rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 shadow-xs print:border-neutral-300 print:bg-white">
                     <div className="flex items-center gap-2">
-                        <FileCheck2 className="size-5 text-[#55BDEB]" />
-                        <h3 className="text-foreground text-xs font-bold tracking-wider uppercase print:text-black">
+                        <FileCheck2 className="size-5 text-cyan-600 dark:text-cyan-400" />
+                        <h3 className="text-xs font-semibold text-foreground print:text-black">
                             Predicted Rank & Seat
                         </h3>
                     </div>
                     <div className="mt-2">
-                        <span className="text-2xl font-black text-[#55BDEB]">
+                        <span className="font-mono text-2xl font-bold text-cyan-600 dark:text-cyan-400">
                             #
                             {rankPrediction?.predicted_rank.toLocaleString() ??
                                 '—'}
                         </span>
-                        <p className="text-muted-foreground mt-1 line-clamp-1 text-[11px] print:text-neutral-600">
+                        <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground print:text-neutral-600">
                             {rankPrediction?.tier_status ??
                                 'AIR Top 10% Probability'}
                         </p>
@@ -347,51 +345,51 @@ export default function MockExamResult({
             </div>
 
             {/* Performance Metric Counters */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="border-border bg-card flex flex-col rounded-xl border p-4 shadow-sm">
-                    <span className="text-muted-foreground text-xs font-semibold uppercase">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-xs">
+                    <span className="text-xs font-semibold text-muted-foreground">
                         Accuracy
                     </span>
-                    <span className="text-foreground mt-1 text-2xl font-extrabold">
+                    <span className="mt-1 font-mono text-2xl font-bold text-foreground">
                         {stats.accuracy}%
                     </span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                         {stats.correct} of {stats.total} questions
                     </span>
                 </div>
 
-                <div className="flex flex-col rounded-xl border border-[#2FB36F]/30 bg-[#2FB36F]/5 p-4 shadow-sm">
-                    <span className="text-xs font-semibold text-[#2FB36F] uppercase">
+                <div className="flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 shadow-xs">
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                         Correct Answers
                     </span>
-                    <span className="mt-1 text-2xl font-extrabold text-[#2FB36F]">
+                    <span className="mt-1 font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                         {stats.correct}
                     </span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                         +1.0 per correct question
                     </span>
                 </div>
 
-                <div className="flex flex-col rounded-xl border border-[#E05252]/30 bg-[#E05252]/5 p-4 shadow-sm">
-                    <span className="text-xs font-semibold text-[#E05252] uppercase">
+                <div className="flex flex-col justify-between rounded-2xl border border-red-500/20 bg-red-500/5 p-4 shadow-xs">
+                    <span className="text-xs font-semibold text-red-600 dark:text-red-400">
                         Negative Marking
                     </span>
-                    <span className="mt-1 text-2xl font-extrabold text-[#E05252]">
+                    <span className="mt-1 font-mono text-2xl font-bold text-red-600 dark:text-red-400">
                         {stats.incorrect}
                     </span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                         Penalty applied per pathway
                     </span>
                 </div>
 
-                <div className="border-border bg-card flex flex-col rounded-xl border p-4 shadow-sm">
-                    <span className="text-muted-foreground text-xs font-semibold uppercase">
+                <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-xs">
+                    <span className="text-xs font-semibold text-muted-foreground">
                         Unanswered
                     </span>
-                    <span className="text-foreground mt-1 text-2xl font-extrabold">
+                    <span className="mt-1 font-mono text-2xl font-bold text-foreground">
                         {stats.unanswered}
                     </span>
-                    <span className="text-muted-foreground text-[10px]">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                         Zero penalty
                     </span>
                 </div>
@@ -402,7 +400,7 @@ export default function MockExamResult({
                 <div className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-6 shadow-sm">
                     <div className="border-border flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-2">
-                            <BarChart3 className="size-5 text-[#55BDEB]" />
+                            <BarChart3 className="size-5 text-cyan-600 dark:text-cyan-400" />
                             <div>
                                 <h2 className="text-foreground text-base font-bold">
                                     Subject-Wise Diagnostic & Penalty Audit
@@ -455,10 +453,10 @@ export default function MockExamResult({
                                 {subjectBreakdown.map((sb) => {
                                     const accuracyClass =
                                         sb.accuracy >= 70
-                                            ? 'text-[#2FB36F] font-bold'
+                                            ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                                             : sb.accuracy >= 50
-                                              ? 'text-amber-500 font-semibold'
-                                              : 'text-[#E05252] font-bold';
+                                              ? 'text-amber-600 dark:text-amber-400 font-semibold'
+                                              : 'text-red-600 dark:text-red-400 font-bold';
 
                                     return (
                                         <tr
@@ -471,10 +469,10 @@ export default function MockExamResult({
                                             <td className="text-muted-foreground px-3 py-3 text-center font-mono">
                                                 {sb.total}
                                             </td>
-                                            <td className="px-3 py-3 text-center font-mono font-bold text-[#2FB36F]">
+                                            <td className="px-3 py-3 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                                 {sb.correct}
                                             </td>
-                                            <td className="px-3 py-3 text-center font-mono text-[#E05252]">
+                                            <td className="px-3 py-3 text-center font-mono text-red-600 dark:text-red-400">
                                                 {sb.incorrect}
                                             </td>
                                             <td className="text-muted-foreground px-3 py-3 text-center font-mono">
@@ -506,16 +504,12 @@ export default function MockExamResult({
                             Certified Transcript issued by Cortex Medical
                             Education Assessment Platform
                         </span>
-                        <span className="font-mono">
-                            Security Digest:{' '}
-                            {String(session.id).substring(0, 16).toUpperCase()}{' '}
-                            • Verified Authenticated
-                        </span>
+                        <span>Official Cryptographic Audit Signature</span>
                     </div>
                 </div>
             )}
 
-            {/* Question Review Deconstruction Split View (Hidden on Print) */}
+            {/* Candidate Question Diagnostic Navigation & Deep Dive */}
             <div className="flex flex-col gap-4 print:hidden">
                 <div className="border-border flex items-center justify-between border-b pb-2">
                     <h3 className="text-foreground text-sm font-bold tracking-wider uppercase">
@@ -526,7 +520,7 @@ export default function MockExamResult({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-xs"
+                                className="h-8 rounded-xl text-xs font-semibold"
                             >
                                 Back to Dashboard
                             </Button>
@@ -534,7 +528,7 @@ export default function MockExamResult({
                         <Link href="/qbank/runner">
                             <Button
                                 size="sm"
-                                className="bg-[#55BDEB] text-xs font-bold text-neutral-950"
+                                className="h-8 rounded-xl bg-cyan-600 px-3 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
                             >
                                 Practice Weak Subjects
                             </Button>
@@ -557,8 +551,8 @@ export default function MockExamResult({
                                 className={`flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border text-xs font-bold transition-all ${
                                     att
                                         ? isCorrect
-                                            ? 'border-[#2FB36F] bg-[#2FB36F]/15 text-[#2FB36F]'
-                                            : 'border-[#E05252] bg-[#E05252]/15 text-[#E05252]'
+                                            ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                            : 'border-red-500 bg-red-500/15 text-red-700 dark:text-red-300'
                                         : 'border-border bg-muted/30 text-muted-foreground'
                                 } ${isSelected ? 'ring-primary scale-105 shadow-sm ring-2' : ''}`}
                             >
@@ -573,7 +567,7 @@ export default function MockExamResult({
                     <div className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-6 shadow-sm">
                         <div className="border-border flex items-center justify-between border-b pb-3">
                             <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-[#55BDEB]">
+                                <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
                                     {activeQuestion.code}
                                 </span>
                                 <span className="text-muted-foreground text-xs">
@@ -583,12 +577,12 @@ export default function MockExamResult({
                             <div>
                                 {activeAttempt ? (
                                     activeAttempt.is_correct ? (
-                                        <span className="flex items-center gap-1 rounded bg-[#2FB36F]/15 px-2.5 py-0.5 text-xs font-bold text-[#2FB36F]">
+                                        <span className="flex items-center gap-1 rounded bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
                                             <CheckCircle2 className="size-3.5" />{' '}
                                             Correct (+1.0)
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1 rounded bg-[#E05252]/15 px-2.5 py-0.5 text-xs font-bold text-[#E05252]">
+                                        <span className="flex items-center gap-1 rounded bg-red-500/15 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:text-red-300">
                                             <XCircle className="size-3.5" />{' '}
                                             Incorrect (Negative Marking Penalty)
                                         </span>

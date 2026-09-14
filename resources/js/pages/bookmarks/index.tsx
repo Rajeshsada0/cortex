@@ -5,7 +5,6 @@ import {
     BookOpen,
     PlaySquare,
     Search,
-    Filter,
     Edit3,
     Check,
     X,
@@ -13,11 +12,18 @@ import {
     ChevronUp,
     Lightbulb,
     Sparkles,
-    CheckCircle2,
-    Clock,
-    Tag,
+    FileText,
+    ListFilter,
+    Info,
+    ArrowUpRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
 import { toast } from 'sonner';
@@ -247,420 +253,466 @@ export default function BookmarksIndex({
     }, [items, searchQuery, selectedSubject, filterType]);
 
     return (
-        <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-            <Head title="Clinical Bookmarks & Notes — Cortex Medical" />
+        <TooltipProvider delayDuration={150}>
+            <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                <Head title="Bookmarks & Notes — Cortex Medical" />
 
-            {/* Top Bar Banner */}
-            <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 sm:flex-row sm:items-center dark:border-slate-800">
-                <div className="flex flex-col gap-1.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-600 dark:text-cyan-400">
-                            <Sparkles className="size-3.5" />
-                            Candidate Notebook
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                            High-Yield Revision & Personal Clinical Notes
-                        </span>
-                    </div>
-                    <h1 className="font-heading text-2xl font-black tracking-tight text-foreground dark:text-white sm:text-3xl">
-                        Clinical Bookmarks & High-Yield Pearls
-                    </h1>
-                    <p className="max-w-2xl text-xs text-muted-foreground sm:text-sm">
-                        Comprehensive repository of your flagged diagnostic
-                        vignettes, personal clinical mnemonics, and 3-tier
-                        rationales.
-                    </p>
-                </div>
+                {/* Clean, Modern Header Bar */}
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-xs transition">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+                                    <Sparkles className="h-3 w-3" />
+                                    Candidate Notebook
+                                </span>
+                                <span className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+                                    {activeCounts.bookmarked} Bookmarked
+                                </span>
+                            </div>
 
-                <div className="flex items-center gap-3">
-                    <Link href="/qbank/runner?status=BOOKMARKED">
-                        <Button className="h-11 gap-2 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-cyan-400 px-5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:to-sky-300 hover:shadow-cyan-500/30 active:scale-[0.98]">
-                            <PlaySquare className="size-4" />
-                            Practice Bookmarked ({activeCounts.bookmarked})
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-
-            {/* Statistics Counters */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4.5 shadow-sm transition-all hover:border-cyan-500/40 dark:border-slate-800 dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-[#0d1322]">
-                    <div className="flex items-center gap-4">
-                        <div className="flex size-12 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                            <BookOpen className="size-5" />
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                                Bookmarks & Notes
+                            </h1>
                         </div>
-                        <div>
-                            <span className="block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                Total Notebook Entries
-                            </span>
-                            <span className="font-mono text-2xl font-black text-foreground dark:text-white sm:text-3xl">
-                                {activeCounts.total}
-                            </span>
+
+                        <div className="flex items-center gap-2">
+                            <Link href="/qbank/runner?status=BOOKMARKED">
+                                <Button
+                                    size="sm"
+                                    disabled={activeCounts.bookmarked === 0}
+                                    className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
+                                >
+                                    <PlaySquare className="h-3.5 w-3.5" />
+                                    <span>Practice Bookmarked</span>
+                                    <span className="ml-1 rounded-full bg-black/15 px-1.5 py-0.2 font-mono text-[10px] dark:bg-white/20">
+                                        {activeCounts.bookmarked}
+                                    </span>
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4.5 shadow-sm transition-all hover:border-amber-500/40 dark:border-slate-800 dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-[#0d1322]">
-                    <div className="flex items-center gap-4">
-                        <div className="flex size-12 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500 dark:text-amber-400">
-                            <Bookmark className="size-5 fill-amber-500 dark:fill-amber-400" />
-                        </div>
-                        <div>
-                            <span className="block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                Active Bookmarks
-                            </span>
-                            <span className="font-mono text-2xl font-black text-amber-600 dark:text-amber-400 sm:text-3xl">
-                                {activeCounts.bookmarked}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4.5 shadow-sm transition-all hover:border-emerald-500/40 dark:border-slate-800 dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-[#0d1322]">
-                    <div className="flex items-center gap-4">
-                        <div className="flex size-12 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                            <Edit3 className="size-5" />
-                        </div>
-                        <div>
-                            <span className="block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                Personal Clinical Notes
-                            </span>
-                            <span className="font-mono text-2xl font-black text-emerald-600 dark:text-emerald-400 sm:text-3xl">
-                                {activeCounts.withNotes}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Search and Filters Strip */}
-            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-[#0d1322]">
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                    <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search vignettes, disease entities, or personal notes..."
-                        className="h-10 w-full rounded-xl border border-border bg-background pr-4 pl-10 text-xs font-medium text-foreground placeholder:text-muted-foreground transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white"
-                    />
-                </div>
-
-                {/* Filter Controls */}
-                <div className="flex flex-wrap items-center gap-2.5">
-                    {/* Subject Filter Dropdown */}
-                    <select
-                        value={selectedSubject}
-                        onChange={(e) => setSelectedSubject(e.target.value)}
-                        className="h-10 cursor-pointer rounded-xl border border-border bg-background px-3.5 text-xs font-semibold text-foreground transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
-                    >
-                        <option value="all">All 19 Disciplines</option>
-                        {subjects.map((s) => (
-                            <option key={s.id} value={s.slug}>
-                                {s.name}
-                            </option>
-                        ))}
-                    </select>
-
-                    {/* Filter Type Pills */}
-                    <div className="flex items-center rounded-xl border border-border bg-muted/60 p-1 text-xs dark:border-slate-700 dark:bg-slate-950/80">
-                        <button
-                            type="button"
-                            onClick={() => setFilterType('all')}
-                            className={`rounded-lg px-3 py-1.5 font-bold transition-all ${
-                                filterType === 'all'
-                                    ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-sm dark:from-cyan-500 dark:to-sky-500 dark:text-slate-950'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            All ({items.length})
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setFilterType('bookmarked')}
-                            className={`rounded-lg px-3 py-1.5 font-bold transition-all ${
-                                filterType === 'bookmarked'
-                                    ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-sm dark:from-cyan-500 dark:to-sky-500 dark:text-slate-950'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            Bookmarks ({activeCounts.bookmarked})
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setFilterType('notes')}
-                            className={`rounded-lg px-3 py-1.5 font-bold transition-all ${
-                                filterType === 'notes'
-                                    ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-sm dark:from-cyan-500 dark:to-sky-500 dark:text-slate-950'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            Notes ({activeCounts.withNotes})
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Bookmarks List */}
-            {filteredItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-12 text-center dark:border-slate-800 dark:bg-gradient-to-b dark:from-slate-900/50 dark:to-[#0d1322]">
-                    <div className="mb-3 flex size-14 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                        <Bookmark className="size-7" />
-                    </div>
-                    <h3 className="text-base font-bold text-foreground dark:text-white">
-                        No Saved Items Found
-                    </h3>
-                    <p className="mt-1 mb-5 max-w-sm text-xs text-muted-foreground">
-                        {searchQuery ||
-                        selectedSubject !== 'all' ||
-                        filterType !== 'all'
-                            ? 'No entries match your current search and discipline filters. Try clearing your search.'
-                            : 'You have not bookmarked any questions or saved clinical notes yet. Bookmark high-yield vignettes while practicing in the Q-Bank Runner!'}
-                    </p>
-                    <Link href="/qbank/runner">
-                        <Button className="h-10 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-cyan-400 px-5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-sky-300">
-                            Explore Q-Bank Questions
-                        </Button>
-                    </Link>
-                </div>
-            ) : (
-                <div className="flex flex-col gap-4">
-                    {filteredItems.map((item) => {
-                        const q = item.question;
-                        const isExpanded = Boolean(expandedQuestionIds[q.id]);
-                        const isEditingThisNote = editingNoteId === q.id;
-
-                        const difficultyClass =
-                            q.difficulty === 'HARD'
-                                ? 'bg-destructive/15 text-destructive border-destructive/20'
-                                : q.difficulty === 'MEDIUM'
-                                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                                  : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
-
-                        return (
-                            <div
-                                key={item.id}
-                                className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-slate-300 dark:border-slate-800 dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-[#0d1322] dark:hover:border-slate-700"
-                            >
-                                {/* Card Header */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 dark:border-slate-800/80">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
-                                            {q.code}
-                                        </span>
-                                        {q.subject && (
-                                            <span className="rounded border border-border bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
-                                                {q.subject.name}
-                                            </span>
-                                        )}
-                                        {q.topic && (
-                                            <span className="max-w-[200px] truncate text-xs text-muted-foreground">
-                                                • {q.topic.name}
-                                            </span>
-                                        )}
-                                        <span
-                                            className={`rounded border px-2 py-0.5 text-[10px] font-extrabold tracking-wide uppercase ${difficultyClass}`}
-                                        >
-                                            {q.difficulty}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleToggleBookmark(q.id)
-                                            }
-                                            title={
-                                                item.is_bookmarked
-                                                    ? 'Remove Bookmark'
-                                                    : 'Add Bookmark'
-                                            }
-                                            className={`flex size-8 cursor-pointer items-center justify-center rounded-lg border transition-colors ${
-                                                item.is_bookmarked
-                                                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-500 dark:text-amber-400'
-                                                    : 'border-border text-muted-foreground hover:bg-muted dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
-                                            }`}
-                                        >
-                                            <Bookmark
-                                                className={`size-4 ${item.is_bookmarked ? 'fill-amber-500 dark:fill-amber-400' : ''}`}
-                                            />
-                                        </button>
-
-                                        <Link href={`/qbank/runner?question_id=${q.id}`}>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 border-border bg-muted text-xs font-semibold text-foreground hover:bg-muted/80 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-700"
-                                            >
-                                                Practice Item
-                                            </Button>
-                                        </Link>
-                                    </div>
+                {/* Minimal Statistics Strip */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {/* 1. Total Notebook Entries */}
+                    <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-xs">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                <BookOpen className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <div className="font-mono text-2xl font-bold text-foreground">
+                                    {activeCounts.total}
                                 </div>
-
-                                {/* Question Stem */}
-                                <p className="text-xs leading-relaxed font-medium whitespace-pre-line text-foreground/90 dark:text-slate-200">
-                                    {q.stem}
+                                <p className="text-xs text-muted-foreground">
+                                    Total Saved
                                 </p>
+                            </div>
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    aria-label="Notebook entries info"
+                                >
+                                    <Info className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                                Total questions saved with bookmarks or notes
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
 
-                                {/* Learning Objective Highlight */}
-                                {q.learning_objective && (
-                                    <div className="flex items-start gap-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs">
-                                        <Lightbulb className="mt-0.5 size-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
-                                        <div>
-                                            <span className="text-[10px] font-bold tracking-wider text-cyan-700 dark:text-cyan-400 uppercase">
-                                                High-Yield Objective
+                    {/* 2. Active Bookmarks */}
+                    <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-xs">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                <Bookmark className="h-5 w-5 fill-amber-500/20" />
+                            </div>
+                            <div>
+                                <div className="font-mono text-2xl font-bold text-foreground">
+                                    {activeCounts.bookmarked}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Flagged Vignettes
+                                </p>
+                            </div>
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    aria-label="Active bookmarks info"
+                                >
+                                    <Info className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                                Questions flagged for quick revision in Q-Bank
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+
+                    {/* 3. Personal Notes */}
+                    <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-xs">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <Edit3 className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <div className="font-mono text-2xl font-bold text-foreground">
+                                    {activeCounts.withNotes}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Clinical Pearls
+                                </p>
+                            </div>
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    aria-label="Clinical notes info"
+                                >
+                                    <Info className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                                Questions with custom clinical pearls or mnemonics
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
+
+                {/* Minimal Search & Filter Toolbar */}
+                <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+                    {/* Search Bar */}
+                    <div className="relative flex-1">
+                        <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search vignettes, disease entities, or personal notes..."
+                            className="h-9 w-full rounded-xl border border-border bg-background pr-3 pl-9 text-xs text-foreground placeholder:text-muted-foreground transition focus:border-cyan-500 focus:outline-none"
+                        />
+                    </div>
+
+                    {/* Filter Controls */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Discipline Select */}
+                        <select
+                            value={selectedSubject}
+                            onChange={(e) => setSelectedSubject(e.target.value)}
+                            className="h-9 cursor-pointer rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground transition focus:border-cyan-500 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                        >
+                            <option value="all">All Disciplines</option>
+                            {subjects.map((s) => (
+                                <option key={s.id} value={s.slug}>
+                                    {s.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        {/* Segmented Filter Pills */}
+                        <div className="flex items-center rounded-xl border border-border bg-muted/50 p-0.5 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setFilterType('all')}
+                                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                                    filterType === 'all'
+                                        ? 'bg-card text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                All ({items.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFilterType('bookmarked')}
+                                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                                    filterType === 'bookmarked'
+                                        ? 'bg-card text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                <Bookmark className="h-3 w-3 fill-amber-500/30 text-amber-500" />
+                                <span>Bookmarks ({activeCounts.bookmarked})</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFilterType('notes')}
+                                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                                    filterType === 'notes'
+                                        ? 'bg-card text-foreground shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                <FileText className="h-3 w-3 text-emerald-500" />
+                                <span>Notes ({activeCounts.withNotes})</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bookmarks List */}
+                {filteredItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 p-12 text-center shadow-xs">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            <Bookmark className="h-6 w-6" />
+                        </div>
+                        <h3 className="mt-4 text-base font-bold text-foreground">
+                            No Saved Items Found
+                        </h3>
+                        <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                            {searchQuery ||
+                            selectedSubject !== 'all' ||
+                            filterType !== 'all'
+                                ? 'No entries match your search or filter criteria. Try resetting your search.'
+                                : 'You have not saved any bookmarks or clinical pearls yet. Bookmark high-yield vignettes while practicing in the Q-Bank Runner!'}
+                        </p>
+                        <Link href="/qbank/runner" className="mt-4">
+                            <Button
+                                size="sm"
+                                className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
+                            >
+                                <PlaySquare className="h-3.5 w-3.5" />
+                                <span>Explore Q-Bank Questions</span>
+                            </Button>
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {filteredItems.map((item) => {
+                            const q = item.question;
+                            const isExpanded = Boolean(expandedQuestionIds[q.id]);
+                            const isEditingThisNote = editingNoteId === q.id;
+
+                            const difficultyBadge =
+                                q.difficulty === 'HARD'
+                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                                    : q.difficulty === 'MEDIUM'
+                                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="rounded-2xl border border-border bg-card p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700"
+                                >
+                                    {/* Card Header */}
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
+                                                {q.code}
                                             </span>
-                                            <p className="mt-0.5 leading-snug text-foreground/90 dark:text-slate-200">
-                                                {q.learning_objective}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Personal Clinical Note Box */}
-                                <div className="flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-amber-700 dark:text-amber-400 uppercase">
-                                            <Sparkles className="size-3.5" />
-                                            <span>
-                                                Personal Clinical Pearl & Memory
-                                                Note
-                                            </span>
-                                        </div>
-
-                                        {!isEditingThisNote && (
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    handleStartEditNote(item)
-                                                }
-                                                className="flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-amber-700 hover:underline dark:text-amber-400"
+                                            {q.subject && (
+                                                <span className="rounded-md border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                                    {q.subject.name}
+                                                </span>
+                                            )}
+                                            {q.topic && (
+                                                <span className="max-w-[180px] truncate text-[11px] text-muted-foreground">
+                                                    {q.topic.name}
+                                                </span>
+                                            )}
+                                            <span
+                                                className={`rounded-md border px-1.5 py-0.2 font-mono text-[10px] font-bold ${difficultyBadge}`}
                                             >
-                                                <Edit3 className="size-3" />
-                                                {item.note_content
-                                                    ? 'Edit Pearl'
-                                                    : 'Add Note'}
-                                            </button>
-                                        )}
+                                                {q.difficulty}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleToggleBookmark(q.id)}
+                                                        className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border transition ${
+                                                            item.is_bookmarked
+                                                                ? 'border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 dark:text-amber-400'
+                                                                : 'border-border text-muted-foreground hover:border-slate-300 hover:bg-muted hover:text-foreground'
+                                                        }`}
+                                                    >
+                                                        <Bookmark
+                                                            className={`h-3.5 w-3.5 ${
+                                                                item.is_bookmarked
+                                                                    ? 'fill-amber-500 dark:fill-amber-400'
+                                                                    : ''
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">
+                                                    {item.is_bookmarked
+                                                        ? 'Remove Bookmark'
+                                                        : 'Bookmark Vignette'}
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Link href={`/qbank/runner?question_id=${q.id}`}>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 gap-1 rounded-xl border-border px-2.5 text-xs font-medium"
+                                                        >
+                                                            <span>Practice</span>
+                                                            <ArrowUpRight className="h-3 w-3 text-muted-foreground" />
+                                                        </Button>
+                                                    </Link>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">
+                                                    Launch this vignette in Practice Runner
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
                                     </div>
 
-                                    {isEditingThisNote ? (
-                                        <div className="mt-1 flex flex-col gap-2">
-                                            <textarea
-                                                value={noteDraft}
-                                                onChange={(e) =>
-                                                    setNoteDraft(e.target.value)
-                                                }
-                                                rows={3}
-                                                placeholder="Enter your personalized high-yield clinical mnemonic, key takeaway, or diagnostic rule..."
-                                                className="w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white"
-                                            />
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    disabled={isSavingNote}
-                                                    onClick={() =>
-                                                        setEditingNoteId(null)
-                                                    }
-                                                    className="h-7 text-xs text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
-                                                >
-                                                    Cancel
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    disabled={isSavingNote}
-                                                    onClick={() =>
-                                                        handleSaveNote(q.id)
-                                                    }
-                                                    className="h-7 bg-amber-500 text-xs font-bold text-slate-950 hover:bg-amber-400"
-                                                >
-                                                    {isSavingNote
-                                                        ? 'Saving...'
-                                                        : 'Save Note'}
-                                                </Button>
+                                    {/* Question Stem */}
+                                    <div className="pt-3.5 pb-2">
+                                        <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-line sm:text-sm">
+                                            {q.stem}
+                                        </p>
+                                    </div>
+
+                                    {/* Learning Objective (Clean Minimal Callout) */}
+                                    {q.learning_objective && (
+                                        <div className="my-2 flex items-start gap-2.5 rounded-xl border-l-2 border-cyan-500 bg-cyan-500/5 px-3 py-2 text-xs">
+                                            <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
+                                            <div>
+                                                <span className="font-semibold text-cyan-700 dark:text-cyan-300">
+                                                    High-Yield Takeaway:{' '}
+                                                </span>
+                                                <span className="text-foreground/80">
+                                                    {q.learning_objective}
+                                                </span>
                                             </div>
                                         </div>
-                                    ) : item.note_content ? (
-                                        <p className="mt-0.5 text-xs leading-relaxed whitespace-pre-line text-foreground/90 italic dark:text-slate-200">
-                                            "{item.note_content}"
-                                        </p>
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground italic">
-                                            No personal notes added yet. Click
-                                            "Add Note" to annotate your mnemonic
-                                            or clinical pearl.
-                                        </p>
                                     )}
-                                </div>
 
-                                {/* Toggle Full 3-Tier Rationale and Options Table */}
-                                <div>
-                                    <button
-                                        type="button"
-                                        onClick={() => toggleExpand(q.id)}
-                                        className="flex cursor-pointer items-center gap-1 text-xs font-bold text-cyan-600 hover:underline dark:text-cyan-400"
-                                    >
-                                        {isExpanded ? (
-                                            <>
-                                                <ChevronUp className="size-3.5" />
-                                                Hide 3-Tier Deconstruction &
-                                                Distractor Rationale
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ChevronDown className="size-3.5" />
-                                                Show 3-Tier Deconstruction &
-                                                Distractor Rationale
-                                            </>
-                                        )}
-                                    </button>
+                                    {/* Personal Clinical Note Card */}
+                                    <div className="my-2 rounded-xl border border-border bg-muted/40 p-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                                                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                                                <span>Personal Note / Mnemonic</span>
+                                            </div>
 
-                                    {isExpanded && (
-                                        <div className="mt-4 flex flex-col gap-4">
-                                            <TierBreakdown
-                                                learningObjective={
-                                                    q.learning_objective
-                                                }
-                                                foundationExplanation={
-                                                    q.foundation_explanation
-                                                }
-                                                integrationExplanation={
-                                                    q.integration_explanation
-                                                }
-                                                applicationExplanation={
-                                                    q.application_explanation
-                                                }
-                                                memoryPeg={q.memory_peg}
-                                            />
-
-                                            <OptionRationaleTable
-                                                options={[...q.options]
-                                                    .sort((a, b) =>
-                                                        (a.option_key || '').localeCompare(b.option_key || '')
-                                                    )
-                                                    .map((opt, idx) => ({
-                                                        id: `${q.id}-${opt.option_key}-${idx}`,
-                                                        option_key:
-                                                            opt.option_key,
-                                                        option_text:
-                                                            opt.option_text,
-                                                        rationale:
-                                                            opt.rationale,
-                                                    }))}
-                                                correctOption={q.correct_option}
-                                            />
+                                            {!isEditingThisNote && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleStartEditNote(item)}
+                                                    className="flex cursor-pointer items-center gap-1 text-[11px] font-medium text-cyan-600 hover:underline dark:text-cyan-400"
+                                                >
+                                                    <Edit3 className="h-3 w-3" />
+                                                    <span>
+                                                        {item.note_content ? 'Edit Note' : 'Add Note'}
+                                                    </span>
+                                                </button>
+                                            )}
                                         </div>
-                                    )}
+
+                                        {isEditingThisNote ? (
+                                            <div className="mt-2 space-y-2">
+                                                <textarea
+                                                    value={noteDraft}
+                                                    onChange={(e) => setNoteDraft(e.target.value)}
+                                                    rows={3}
+                                                    placeholder="Enter your personal clinical pearl, diagnostic mnemonic, or key takeaway..."
+                                                    className="w-full rounded-xl border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-cyan-500 focus:outline-none"
+                                                />
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        disabled={isSavingNote}
+                                                        onClick={() => setEditingNoteId(null)}
+                                                        className="h-7 text-xs text-muted-foreground"
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={isSavingNote}
+                                                        onClick={() => handleSaveNote(q.id)}
+                                                        className="h-7 rounded-lg bg-cyan-600 text-xs font-semibold text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950"
+                                                    >
+                                                        {isSavingNote ? 'Saving...' : 'Save Note'}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : item.note_content ? (
+                                            <p className="mt-1 text-xs leading-relaxed text-foreground/80 italic">
+                                                "{item.note_content}"
+                                            </p>
+                                        ) : (
+                                            <p className="mt-1 text-xs text-muted-foreground italic">
+                                                No personal notes added. Click "Add Note" to record your clinical pearl.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* 3-Tier Rationale Collapsible Toggle */}
+                                    <div className="pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleExpand(q.id)}
+                                            className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                                        >
+                                            {isExpanded ? (
+                                                <>
+                                                    <ChevronUp className="h-3.5 w-3.5" />
+                                                    <span>Hide Explanations & Rationales</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ChevronDown className="h-3.5 w-3.5" />
+                                                    <span>View Explanations & Rationales</span>
+                                                </>
+                                            )}
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div className="mt-4 space-y-4 border-t border-border pt-4">
+                                                <TierBreakdown
+                                                    learningObjective={q.learning_objective}
+                                                    foundationExplanation={q.foundation_explanation}
+                                                    integrationExplanation={q.integration_explanation}
+                                                    applicationExplanation={q.application_explanation}
+                                                    memoryPeg={q.memory_peg}
+                                                />
+
+                                                <OptionRationaleTable
+                                                    options={[...q.options]
+                                                        .sort((a, b) =>
+                                                            (a.option_key || '').localeCompare(b.option_key || '')
+                                                        )
+                                                        .map((opt, idx) => ({
+                                                            id: `${q.id}-${opt.option_key}-${idx}`,
+                                                            option_key: opt.option_key,
+                                                            option_text: opt.option_text,
+                                                            rationale: opt.rationale,
+                                                        }))}
+                                                    correctOption={q.correct_option}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </TooltipProvider>
     );
 }
