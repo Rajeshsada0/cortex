@@ -202,9 +202,10 @@ export default function MCQRunner({
 
     // Handle Option Selection
     const handleSelectOption = (key: string) => {
-        if (isSubmitted || isBlockFinished) return;
+        if (isSubmitted || isBlockFinished || !currentQuestion) return;
 
-        if (selectedOption && selectedOption !== key) {
+        const switched = Boolean(selectedOption && selectedOption !== key);
+        if (switched) {
             setWasSwitched(true);
             if (!initialOption) {
                 setInitialOption(selectedOption);
@@ -213,32 +214,67 @@ export default function MCQRunner({
         setSelectedOption(key);
         setAnswers((prev) => ({ ...prev, [currentQuestion.id]: key }));
 
-        // In TIMED mode, silently persist candidate answer attempt
-        if (activeMode === 'TIMED' && currentQuestion) {
-            const isCorrect =
-                key.toUpperCase() ===
-                currentQuestion.correct_option.toUpperCase();
+        const isCorrect =
+            key.toUpperCase() === currentQuestion.correct_option.toUpperCase();
+        const sessId = session?.id || session?.data?.id;
+
+        if (activeMode === 'TUTOR') {
+            setIsSubmitted(true);
             setResults((prev) => ({
                 ...prev,
                 [currentQuestion.id]: { isCorrect, selected: key },
             }));
 
-            const sessId = session.id || session.data?.id;
-            fetch(`/api/v1/test-sessions/${sessId}/attempts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify({
-                    question_id: currentQuestion.id,
-                    selected_option: key,
-                    confidence: confidence,
-                    time_taken_seconds: secondsElapsed,
-                    was_switched: wasSwitched,
-                    initial_option: initialOption,
-                }),
-            }).catch(() => {});
+            if (isCorrect) {
+                toast.success('Correct Answer!', {
+                    description: `Option ${key} is correct • Synced to SM-2 Spaced Repetition Queue`,
+                });
+            } else {
+                toast.error('Incorrect Choice', {
+                    description: `Selected Option ${key}. Correct was Option ${currentQuestion.correct_option}. Scheduled for rapid review.`,
+                });
+            }
+
+            if (sessId) {
+                fetch(`/api/v1/test-sessions/${sessId}/attempts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question_id: currentQuestion.id,
+                        selected_option: key,
+                        confidence: confidence,
+                        time_taken_seconds: secondsElapsed,
+                        was_switched: switched || wasSwitched,
+                        initial_option: initialOption || key,
+                    }),
+                }).catch(() => {});
+            }
+        } else if (activeMode === 'TIMED') {
+            setResults((prev) => ({
+                ...prev,
+                [currentQuestion.id]: { isCorrect, selected: key },
+            }));
+
+            if (sessId) {
+                fetch(`/api/v1/test-sessions/${sessId}/attempts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question_id: currentQuestion.id,
+                        selected_option: key,
+                        confidence: confidence,
+                        time_taken_seconds: secondsElapsed,
+                        was_switched: switched || wasSwitched,
+                        initial_option: initialOption || key,
+                    }),
+                }).catch(() => {});
+            }
         }
     };
 
@@ -271,67 +307,6 @@ export default function MCQRunner({
             return next;
         });
     }, [currentQuestion?.id]);
-
-    // Submit Answer (in Tutor Mode)
-    const handleSubmitAnswer = async () => {
-        if (!selectedOption || !currentQuestion || isSubmitted || isSubmitting)
-            return;
-
-        setIsSubmitting(true);
-        const isCorrect =
-            selectedOption.toUpperCase() ===
-            currentQuestion.correct_option.toUpperCase();
-
-        try {
-            const res = await fetch(
-                `/api/v1/test-sessions/${session.id || session.data?.id}/attempts`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                    },
-                    body: JSON.stringify({
-                        question_id: currentQuestion.id,
-                        selected_option: selectedOption,
-                        confidence: confidence,
-                        time_taken_seconds: secondsElapsed,
-                        was_switched: wasSwitched,
-                        initial_option: initialOption,
-                    }),
-                },
-            );
-
-            if (res.ok) {
-                setIsSubmitted(true);
-                setResults((prev) => ({
-                    ...prev,
-                    [currentQuestion.id]: {
-                        isCorrect,
-                        selected: selectedOption,
-                    },
-                }));
-
-                if (isCorrect) {
-                    toast.success('Correct Answer!', {
-                        description: `Confidence: ${confidence} • Synced to SM-2 Spaced Repetition Queue`,
-                    });
-                } else {
-                    toast.error('Incorrect Choice', {
-                        description: `Correct was Option ${currentQuestion.correct_option}. Scheduled for rapid review.`,
-                    });
-                }
-            }
-        } catch (err) {
-            setIsSubmitted(true);
-            setResults((prev) => ({
-                ...prev,
-                [currentQuestion.id]: { isCorrect, selected: selectedOption },
-            }));
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     // Finish Block in Timed Mode
     const handleFinishTimedBlock = async () => {
@@ -383,16 +358,12 @@ export default function MCQRunner({
                 handleSelectOption(map[key]);
             } else if (key === 'ENTER') {
                 e.preventDefault();
-                if (activeMode === 'TUTOR') {
-                    if (!isSubmitted) {
-                        handleSubmitAnswer();
-                    } else if (currentIndex < questions.length - 1) {
-                        setCurrentIndex((prev) => prev + 1);
-                    }
+                if (currentIndex < questions.length - 1) {
+                    setCurrentIndex((prev) => prev + 1);
+                } else if (activeMode === 'TIMED' && !isBlockFinished) {
+                    handleFinishTimedBlock();
                 } else {
-                    if (currentIndex < questions.length - 1) {
-                        setCurrentIndex((prev) => prev + 1);
-                    }
+                    toast.info('Completed all questions in this block!');
                 }
             } else if (key === 'M') {
                 e.preventDefault();
@@ -749,7 +720,7 @@ export default function MCQRunner({
                 {/* RIGHT COLUMN: Options Palette, Confidence Rating, and 3-Tier Rationale */}
                 <div className="flex flex-col gap-4 lg:col-span-5">
                     {/* Pre-Submission Confidence Rating in Tutor mode */}
-                    {activeMode === 'TUTOR' && !isSubmitted && (
+                    {activeMode === 'TUTOR' && (
                         <div className="border-border bg-card rounded-xl border p-4 shadow-sm">
                             <ConfidenceSelector
                                 value={confidence}
@@ -862,79 +833,57 @@ export default function MCQRunner({
                         </div>
 
                         {/* Navigation / Action button based on mode */}
-                        {activeMode === 'TUTOR' ? (
-                            !isSubmitted ? (
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={currentIndex === 0}
+                                onClick={() =>
+                                    setCurrentIndex((prev) => prev - 1)
+                                }
+                                className="w-1/2 text-xs font-bold"
+                            >
+                                ← Previous
+                            </Button>
+                            {currentIndex < questions.length - 1 ? (
                                 <Button
                                     type="button"
-                                    disabled={!selectedOption || isSubmitting}
-                                    onClick={handleSubmitAnswer}
-                                    className="mt-3 h-10 w-full bg-[#102A43] font-bold text-white shadow-sm hover:opacity-90 dark:bg-[#55BDEB] dark:text-neutral-950"
+                                    onClick={() =>
+                                        setCurrentIndex((prev) => prev + 1)
+                                    }
+                                    className={`w-1/2 text-xs font-bold transition-all ${
+                                        isSubmitted || activeMode === 'TIMED'
+                                            ? 'bg-[#0066FF] text-white hover:bg-[#0052cc] dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:bg-[#55BDEB]/90 shadow-xs'
+                                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                    }`}
+                                >
+                                    Next Question →
+                                </Button>
+                            ) : activeMode === 'TIMED' && !isBlockFinished ? (
+                                <Button
+                                    type="button"
+                                    onClick={handleFinishTimedBlock}
+                                    disabled={isSubmitting}
+                                    className="w-1/2 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                                 >
                                     {isSubmitting
-                                        ? 'Verifying...'
-                                        : 'Submit Answer (Enter)'}
+                                        ? 'Submitting...'
+                                        : 'Submit Block'}
                                 </Button>
                             ) : (
-                                <div className="mt-3 flex gap-2">
-                                    <Button
-                                        type="button"
-                                        onClick={() => {
-                                            if (
-                                                currentIndex <
-                                                questions.length - 1
-                                            ) {
-                                                setCurrentIndex(
-                                                    (prev) => prev + 1,
-                                                );
-                                            } else {
-                                                toast.info(
-                                                    'Completed all questions in this block!',
-                                                );
-                                            }
-                                        }}
-                                        className="h-10 w-full bg-[#55BDEB] font-bold text-neutral-950 hover:bg-[#55BDEB]/90"
-                                    >
-                                        Next Question →
-                                    </Button>
-                                </div>
-                            )
-                        ) : (
-                            <div className="mt-3 flex items-center justify-between gap-2">
                                 <Button
                                     type="button"
-                                    variant="outline"
-                                    disabled={currentIndex === 0}
                                     onClick={() =>
-                                        setCurrentIndex((prev) => prev - 1)
+                                        toast.info(
+                                            'Completed all questions in this block!',
+                                        )
                                     }
-                                    className="w-1/2 text-xs font-bold"
+                                    className="w-1/2 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                                 >
-                                    ← Previous
+                                    Finish Practice
                                 </Button>
-                                {currentIndex < questions.length - 1 ? (
-                                    <Button
-                                        type="button"
-                                        onClick={() =>
-                                            setCurrentIndex((prev) => prev + 1)
-                                        }
-                                        className="w-1/2 bg-[#0066FF] text-xs font-bold text-white hover:bg-[#0052cc]"
-                                    >
-                                        Next Question →
-                                    </Button>
-                                ) : (
-                                    !isBlockFinished && (
-                                        <Button
-                                            type="button"
-                                            onClick={handleFinishTimedBlock}
-                                            disabled={isSubmitting}
-                                            className="w-1/2 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
-                                        >
-                                            Submit Block
-                                        </Button>
-                                    )
-                                )}
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
 
                     {/* Question Palette Widget */}
