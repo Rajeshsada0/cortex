@@ -5,6 +5,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
@@ -17,6 +18,7 @@ export function NavMain({
     label?: string;
 }) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { isMobile, setOpenMobile } = useSidebar();
 
     return (
         <SidebarGroup className="px-2 py-1">
@@ -41,6 +43,11 @@ export function NavMain({
                                 <Link
                                     href={item.href}
                                     prefetch
+                                    onClick={() => {
+                                        if (isMobile) {
+                                            setOpenMobile(false);
+                                        }
+                                    }}
                                     className="flex w-full items-center justify-between"
                                 >
                                     <div className="flex items-center gap-3 truncate">

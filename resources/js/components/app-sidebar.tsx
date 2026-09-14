@@ -26,6 +26,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import type { Auth, NavItem } from '@/types';
 
@@ -107,6 +108,7 @@ const adminNavItems: NavItem[] = [
 
 export function AppSidebar() {
     const { auth } = usePage<{ auth: Auth }>().props;
+    const { isMobile, setOpenMobile } = useSidebar();
     const isAdmin = Boolean(auth?.user?.is_admin);
 
     return (
@@ -126,6 +128,11 @@ export function AppSidebar() {
                             <Link
                                 href={isAdmin ? '/admin' : '/dashboard'}
                                 prefetch
+                                onClick={() => {
+                                    if (isMobile) {
+                                        setOpenMobile(false);
+                                    }
+                                }}
                             >
                                 <AppLogo />
                             </Link>

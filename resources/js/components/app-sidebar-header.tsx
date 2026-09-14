@@ -168,7 +168,7 @@ export function AppSidebarHeader({
                         <TooltipTrigger asChild>
                             <SidebarTrigger />
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">
+                        <TooltipContent side="bottom" className="hidden md:block">
                             <span>Toggle Sidebar</span>
                         </TooltipContent>
                     </Tooltip>

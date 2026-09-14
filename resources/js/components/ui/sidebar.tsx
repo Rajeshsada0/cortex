@@ -1,7 +1,7 @@
 import { Slot } from "@radix-ui/react-slot"
 import type { VariantProps} from "class-variance-authority";
 import { cva } from "class-variance-authority"
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react"
+import { Menu, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
@@ -187,7 +187,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:top-3.5 [&>button]:right-3.5 [&>button]:flex [&>button]:size-8 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-xl [&>button]:border [&>button]:border-border [&>button]:bg-card [&>button]:text-muted-foreground [&>button]:shadow-xs [&>button]:transition-colors [&>button]:hover:bg-muted [&>button]:hover:text-foreground"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -269,7 +269,9 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      {isMobile || state === "collapsed" ? (
+      {isMobile ? (
+        <Menu className="size-4.5" />
+      ) : state === "collapsed" ? (
         <PanelLeftOpenIcon className="size-4.5" />
       ) : (
         <PanelLeftCloseIcon className="size-4.5" />
