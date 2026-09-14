@@ -1,7 +1,7 @@
 import { Slot } from "@radix-ui/react-slot"
 import type { VariantProps} from "class-variance-authority";
 import { cva } from "class-variance-authority"
-import { Menu, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react"
+import { ChevronsLeft, ChevronsRight, Menu } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
@@ -272,9 +272,9 @@ function SidebarTrigger({
       {isMobile ? (
         <Menu className="size-4.5" />
       ) : state === "collapsed" ? (
-        <PanelLeftOpenIcon className="size-4.5" />
+        <ChevronsRight className="size-4.5" />
       ) : (
-        <PanelLeftCloseIcon className="size-4.5" />
+        <ChevronsLeft className="size-4.5" />
       )}
       <span className="sr-only">Toggle sidebar</span>
     </Button>
