@@ -73,10 +73,15 @@ class AdminQuestionWebController extends Controller
             ->withQueryString();
 
         $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+        $pathways = \App\Models\ExamPathway::where('is_active', true)
+            ->orderBy('order_index')
+            ->orderBy('id')
+            ->get(['code', 'name', 'region']);
 
         return Inertia::render('admin/questions/index', [
             'questions' => $questions,
             'subjects' => $subjects,
+            'pathways' => $pathways,
             'filters' => [
                 'search' => $search ?? '',
                 'subject_id' => $subjectId ? (int) $subjectId : '',
@@ -101,10 +106,15 @@ class AdminQuestionWebController extends Controller
             },
         ])->orderBy('order_index')->get(['id', 'name', 'slug']);
 
+        $pathways = \App\Models\ExamPathway::where('is_active', true)
+            ->orderBy('order_index')
+            ->orderBy('id')
+            ->get(['code', 'name', 'region', 'badge_color']);
+
         return Inertia::render('admin/questions/form', [
             'question' => null,
             'subjects' => $subjects,
-            'available_exams' => ['MECEE_PG', 'INI_CET', 'USMLE_STEP1', 'USMLE_STEP2CK', 'COMBINED'],
+            'available_exams' => $pathways,
         ]);
     }
 
@@ -174,7 +184,15 @@ class AdminQuestionWebController extends Controller
             'options.*.option_text' => 'required|string',
             'options.*.rationale' => 'nullable|string',
             'relevant_exams' => 'required|array|min:1',
-            'relevant_exams.*' => 'in:MECEE_PG,INI_CET,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
+            'relevant_exams.*' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (! \App\Models\ExamPathway::where('code', $value)->exists() && ! \App\Domain\Scoring\ExamPathway::tryFrom($value)) {
+                        $fail("The selected pathway {$value} is invalid.");
+                    }
+                },
+            ],
         ]);
 
         $code = ! empty($validated['code'])
@@ -302,10 +320,15 @@ class AdminQuestionWebController extends Controller
             },
         ])->orderBy('order_index')->get(['id', 'name', 'slug']);
 
+        $pathways = \App\Models\ExamPathway::where('is_active', true)
+            ->orderBy('order_index')
+            ->orderBy('id')
+            ->get(['code', 'name', 'region', 'badge_color']);
+
         return Inertia::render('admin/questions/form', [
             'question' => $question,
             'subjects' => $subjects,
-            'available_exams' => ['MECEE_PG', 'INI_CET', 'USMLE_STEP1', 'USMLE_STEP2CK', 'COMBINED'],
+            'available_exams' => $pathways,
         ]);
     }
 
@@ -334,7 +357,15 @@ class AdminQuestionWebController extends Controller
             'options.*.option_text' => 'required|string',
             'options.*.rationale' => 'nullable|string',
             'relevant_exams' => 'required|array|min:1',
-            'relevant_exams.*' => 'in:MECEE_PG,INI_CET,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
+            'relevant_exams.*' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (! \App\Models\ExamPathway::where('code', $value)->exists() && ! \App\Domain\Scoring\ExamPathway::tryFrom($value)) {
+                        $fail("The selected pathway {$value} is invalid.");
+                    }
+                },
+            ],
         ]);
 
         $imageUrl = $validated['image_url'] ?? $question->image_url;

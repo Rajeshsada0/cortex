@@ -31,7 +31,15 @@ class TestSessionController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:150',
             'session_type' => 'nullable|string|in:PRACTICE,TIMED_BLOCK,GRAND_MOCK',
-            'exam_pathway' => 'nullable|string|in:MECEE_PG,INI_CET,NEET_PG,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
+            'exam_pathway' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (! \App\Models\ExamPathway::where('code', $value)->exists() && ! \App\Domain\Scoring\ExamPathway::tryFrom($value)) {
+                        $fail("The selected {$attribute} is invalid.");
+                    }
+                },
+            ],
             'subject_id' => 'nullable|integer',
             'topic_id' => 'nullable|integer',
             'difficulty' => 'nullable|string|in:EASY,MEDIUM,HARD',

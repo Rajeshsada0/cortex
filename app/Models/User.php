@@ -73,6 +73,13 @@ class User extends Authenticatable implements PasskeyUser
 
     public function getPathwayLabelAttribute(): string
     {
+        if (! empty($this->active_pathway)) {
+            $dbPathway = ExamPathway::where('code', $this->active_pathway)->first();
+            if ($dbPathway) {
+                return $dbPathway->name;
+            }
+        }
+
         $pathwayEnum = \App\Domain\Scoring\ExamPathway::tryFrom($this->active_pathway ?? 'INI_CET') ?? \App\Domain\Scoring\ExamPathway::INI_CET;
         return $pathwayEnum->label();
     }

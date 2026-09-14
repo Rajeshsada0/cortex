@@ -104,7 +104,6 @@ class DashboardWebController extends Controller
             ? (int) max(0, ceil(now()->floatDiffInDays($targetDate, false)))
             : null;
 
-        $pathwayEnum = ExamPathway::tryFrom($user->active_pathway ?? 'INI_CET') ?? ExamPathway::INI_CET;
         $rankPrediction = $this->rankPredictor->predict($user, $readiness['readiness_score']);
         $studyStreak = $this->streakService->calculate($user);
 
@@ -114,7 +113,7 @@ class DashboardWebController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'active_pathway' => $user->active_pathway ?? 'INI_CET',
-                'pathway_label' => $pathwayEnum->label(),
+                'pathway_label' => $user->pathway_label,
                 'target_exam_date' => $user->target_exam_date?->toDateString(),
                 'days_until_exam' => $daysUntilExam,
                 'daily_study_hours' => $user->daily_study_hours,

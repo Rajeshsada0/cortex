@@ -77,10 +77,17 @@ interface QuestionData {
     relevant_exams?: Array<{ exam: string }>;
 }
 
+export interface ExamPathwayOption {
+    code: string;
+    name: string;
+    region?: string;
+    badge_color?: string;
+}
+
 interface QuestionFormProps {
     question: QuestionData | null;
     subjects: Subject[];
-    available_exams: string[];
+    available_exams?: Array<string | ExamPathwayOption>;
 }
 
 export default function QuestionForm({
@@ -89,6 +96,25 @@ export default function QuestionForm({
     available_exams,
 }: QuestionFormProps) {
     const isEdit = Boolean(question?.id);
+
+    const examOptions = React.useMemo(() => {
+        if (available_exams && available_exams.length > 0) {
+            return available_exams.map((item) => {
+                if (typeof item === 'string') {
+                    return { key: item, label: item };
+                }
+                return { key: item.code, label: item.name || item.code };
+            });
+        }
+        return [
+            { key: 'MECEE_PG', label: 'Nepal MECEE-PG' },
+            { key: 'INI_CET', label: 'India INI-CET' },
+            { key: 'NEET_PG', label: 'India NEET-PG (2026)' },
+            { key: 'USMLE_STEP1', label: 'USMLE Step 1' },
+            { key: 'USMLE_STEP2CK', label: 'USMLE Step 2 CK' },
+            { key: 'COMBINED', label: 'Combined Track' },
+        ];
+    }, [available_exams]);
 
     // Form state
     const [code, setCode] = useState(
@@ -622,16 +648,7 @@ export default function QuestionForm({
                             Relevant Exam Pathways
                         </Label>
                         <div className="flex flex-wrap gap-2">
-                            {[
-                                { key: 'MECEE_PG', label: 'Nepal MECEE-PG' },
-                                { key: 'INI_CET', label: 'India INI-CET' },
-                                { key: 'USMLE_STEP1', label: 'USMLE Step 1' },
-                                {
-                                    key: 'USMLE_STEP2CK',
-                                    label: 'USMLE Step 2 CK',
-                                },
-                                { key: 'COMBINED', label: 'Combined Track' },
-                            ].map((ep) => {
+                            {examOptions.map((ep) => {
                                 const selected = relevantExams.includes(ep.key);
                                 return (
                                     <button

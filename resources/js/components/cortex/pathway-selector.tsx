@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ChevronDown,
     Check,
@@ -14,23 +14,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
 
 export interface PathwayOption {
-    id:
-        | 'MECEE_PG'
-        | 'INI_CET'
-        | 'NEET_PG'
-        | 'USMLE_STEP1'
-        | 'USMLE_STEP2CK'
-        | 'COMBINED';
+    id: string;
+    code?: string;
     name: string;
+    fullName?: string;
     region: string;
     marking: string;
     penalty: string;
-    badgeColor: string;
+    badgeColor?: string;
+    totalQuestions?: number;
+    durationMinutes?: number;
 }
 
-const PATHWAYS: PathwayOption[] = [
+const DEFAULT_PATHWAYS: PathwayOption[] = [
     {
         id: 'NEET_PG',
         name: 'NEET-PG (2026)',
@@ -88,7 +87,7 @@ const PATHWAYS: PathwayOption[] = [
 ];
 
 interface PathwaySelectorProps {
-    currentPathway: string;
+    currentPathway?: string;
     onPathwayChange?: (newPathway: string) => void;
 }
 
@@ -96,15 +95,32 @@ export function PathwaySelector({
     currentPathway,
     onPathwayChange,
 }: PathwaySelectorProps) {
+    const { exam_pathways } = usePage<{ exam_pathways?: PathwayOption[] }>().props;
+    const pathways = exam_pathways && exam_pathways.length > 0 ? exam_pathways : DEFAULT_PATHWAYS;
+
     const [activeId, setActiveId] = useState<string>(
-        currentPathway || 'INI_CET',
+        currentPathway || pathways[0]?.id || 'INI_CET',
     );
     const [isUpdating, setIsUpdating] = useState(false);
 
-    const active = PATHWAYS.find((p) => p.id === activeId) || PATHWAYS[0];
+    useEffect(() => {
+        if (currentPathway && currentPathway !== activeId) {
+            setActiveId(currentPathway);
+        }
+    }, [currentPathway]);
+
+    const active = pathways.find((p) => p.id === activeId) || pathways[0] || {
+        id: activeId,
+        name: activeId,
+        region: 'Global',
+        marking: '',
+        penalty: '',
+        badgeColor: '',
+    };
 
     const handleSelect = async (pathwayId: string) => {
         if (pathwayId === activeId) return;
+        const target = pathways.find((p) => p.id === pathwayId) || { name: pathwayId, marking: '' };
         setActiveId(pathwayId);
         setIsUpdating(true);
 
@@ -119,15 +135,19 @@ export function PathwaySelector({
             });
 
             if (res.ok) {
-                const data = await res.json();
-                toast.success(`Active pathway switched to ${active.name}`, {
-                    description: `Marking rules & blueprints dynamically updated to ${active.marking}`,
+                toast.success(`Active pathway switched to ${target.name}`, {
+                    description: target.marking
+                        ? `Marking rules & blueprints dynamically updated to ${target.marking}`
+                        : undefined,
                 });
                 if (onPathwayChange) {
                     onPathwayChange(pathwayId);
                 } else {
                     window.location.reload();
                 }
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                toast.error(errData.message || 'Failed to update pathway');
             }
         } catch (error) {
             toast.error('Failed to update pathway');
@@ -150,9 +170,11 @@ export function PathwaySelector({
                         <span className="max-w-[70px] xs:max-w-[105px] sm:max-w-none truncate font-semibold text-foreground dark:text-white">
                             {active.name}
                         </span>
-                        <span className="hidden rounded border border-border bg-muted/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 sm:inline-block">
-                            {active.marking}
-                        </span>
+                        {active.marking && (
+                            <span className="hidden rounded border border-border bg-muted/80 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 sm:inline-block">
+                                {active.marking}
+                            </span>
+                        )}
                     </div>
                     <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
                 </Button>
@@ -161,7 +183,7 @@ export function PathwaySelector({
                 <div className="text-muted-foreground px-2 py-1.5 text-xs font-semibold">
                     SWITCH EXAM PATHWAY
                 </div>
-                {PATHWAYS.map((p) => {
+                {pathways.map((p) => {
                     const isSelected = p.id === activeId;
                     return (
                         <DropdownMenuItem
@@ -183,7 +205,7 @@ export function PathwaySelector({
                                     </span>
                                 </div>
                                 <span className="text-muted-foreground text-[11px]">
-                                    Rules: {p.marking} ({p.penalty})
+                                    Rules: {p.marking} {p.penalty ? `(${p.penalty})` : ''}
                                 </span>
                             </div>
                             {isSelected && (

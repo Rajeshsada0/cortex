@@ -13,7 +13,8 @@ class ExamConfigController extends Controller
      */
     public function show(string $pathway): JsonResponse
     {
-        $enum = ExamPathway::tryFrom(strtoupper($pathway)) ?? ExamPathway::INI_CET;
+        $pathwayUpper = strtoupper($pathway);
+        $enum = ExamPathway::tryFrom($pathwayUpper);
 
         $configs = [
             'MECEE_PG' => [
@@ -108,10 +109,53 @@ class ExamConfigController extends Controller
             ],
         ];
 
+        $availablePathways = array_values(array_unique(array_merge(
+            array_keys($configs),
+            \App\Models\ExamPathway::where('is_active', true)->pluck('code')->toArray()
+        )));
+
+        if (isset($configs[$pathwayUpper])) {
+            return response()->json([
+                'success' => true,
+                'config' => $configs[$pathwayUpper],
+                'available_pathways' => $availablePathways,
+            ]);
+        }
+
+        $dbPathway = \App\Models\ExamPathway::where('code', $pathwayUpper)->first();
+        if ($dbPathway) {
+            $totalQ = $dbPathway->total_questions ?? 200;
+            $durationMin = $dbPathway->duration_minutes ?? 180;
+            $pace = $totalQ > 0 ? (int) round(($durationMin * 60) / $totalQ) : 54;
+
+            $config = [
+                'pathway' => $dbPathway->code,
+                'name' => $dbPathway->name,
+                'subtitle' => $dbPathway->full_name ?? $dbPathway->name,
+                'total_questions' => $totalQ,
+                'duration_minutes' => $durationMin,
+                'pace_seconds_per_question' => $pace,
+                'marking_rule' => $dbPathway->correct_marks > 0
+                    ? "+{$dbPathway->correct_marks} Correct / -{$dbPathway->negative_marks} Incorrect"
+                    : 'Pass / Fail',
+                'negative_marking_penalty' => (float) $dbPathway->negative_marks,
+                'scoring_type' => $dbPathway->scoring_type ?? 'NEGATIVE_DEDUCTION',
+                'blueprint' => $dbPathway->blueprint_weights ?? ['All Subjects' => '100%'],
+                'question_format' => 'Single Best Answer (SBA) and integrated clinical vignettes',
+                'color' => '#55BDEB',
+            ];
+
+            return response()->json([
+                'success' => true,
+                'config' => $config,
+                'available_pathways' => $availablePathways,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'config' => $configs[$enum->value] ?? $configs['INI_CET'],
-            'available_pathways' => array_keys($configs),
+            'config' => $configs[$enum?->value ?? 'INI_CET'] ?? $configs['INI_CET'],
+            'available_pathways' => $availablePathways,
         ]);
     }
 }

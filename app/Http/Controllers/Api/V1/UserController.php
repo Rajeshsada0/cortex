@@ -44,7 +44,15 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'active_pathway' => 'nullable|string|in:MECEE_PG,INI_CET,NEET_PG,USMLE_STEP1,USMLE_STEP2CK,COMBINED',
+            'active_pathway' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (! \App\Models\ExamPathway::where('code', $value)->exists() && ! \App\Domain\Scoring\ExamPathway::tryFrom($value)) {
+                        $fail("The selected {$attribute} is invalid.");
+                    }
+                },
+            ],
             'target_exam_date' => 'nullable|date',
             'daily_study_hours' => 'nullable|integer|min:1|max:18',
             'daily_mcq_target' => 'nullable|integer|min:10|max:500',

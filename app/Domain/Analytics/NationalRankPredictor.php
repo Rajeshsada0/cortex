@@ -31,7 +31,10 @@ final class NationalRankPredictor
     public function predict(User $user, ?float $customScore = null): array
     {
         $pathwayStr = $user->active_pathway ?? 'INI_CET';
+        $dbPathway = \App\Models\ExamPathway::where('code', $pathwayStr)->first();
         $pathway = ExamPathway::tryFrom($pathwayStr) ?? ExamPathway::INI_CET;
+        $pathwayCode = $dbPathway?->code ?? $pathway->value;
+        $pathwayLabel = $dbPathway?->name ?? $pathway->label();
 
         $readiness = $customScore ?? $this->readinessCalculator->calculate($user)['readiness_score'];
 
@@ -81,8 +84,8 @@ final class NationalRankPredictor
         };
 
         return [
-            'pathway' => $pathway->value,
-            'pathway_label' => $pathway->label(),
+            'pathway' => $pathwayCode,
+            'pathway_label' => $pathwayLabel,
             'readiness_score' => round($readiness, 1),
             'cohort_size' => $cohortSize,
             'percentile' => round($percentile, 1),

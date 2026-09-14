@@ -33,15 +33,20 @@ class MockExamWebController extends Controller
             ->latest('created_at')
             ->get();
 
+        $dbPathway = \App\Models\ExamPathway::where('code', $user->active_pathway)->first();
         $pathway = ExamPathway::tryFrom($user->active_pathway) ?? ExamPathway::INI_CET;
 
         return Inertia::render('mock-exam/index', [
             'user' => $user,
             'activePathway' => $user->active_pathway,
-            'pathwayName' => $pathway->label(),
-            'targetQuestions' => $pathway->targetQuestions(),
-            'durationMinutes' => $pathway->durationMinutes(),
-            'markingRules' => $pathway->markingRules(),
+            'pathwayName' => $dbPathway?->name ?? $pathway->label(),
+            'targetQuestions' => $dbPathway?->total_questions ?? $pathway->targetQuestions(),
+            'durationMinutes' => $dbPathway?->duration_minutes ?? $pathway->durationMinutes(),
+            'markingRules' => $dbPathway ? [
+                'correct' => $dbPathway->correct_marks,
+                'negative' => $dbPathway->negative_marks,
+                'penalty_label' => $dbPathway->penalty_label,
+            ] : $pathway->markingRules(),
             'history' => $history,
         ]);
     }
@@ -83,13 +88,18 @@ class MockExamWebController extends Controller
     {
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
-        $pathway = ExamPathway::tryFrom($request->input('pathway', $user->active_pathway)) ?? ExamPathway::INI_CET;
+        $requestedPathway = $request->input('pathway', $user->active_pathway);
+        $dbPathway = \App\Models\ExamPathway::where('code', $requestedPathway)->first();
+        $pathway = ExamPathway::tryFrom($requestedPathway) ?? ExamPathway::INI_CET;
 
-        $targetQuestions = (int) $request->input('target_questions', 200);
+        $defaultTarget = $dbPathway?->total_questions ?? $pathway->targetQuestions();
+        $defaultDuration = $dbPathway?->duration_minutes ?? $pathway->durationMinutes();
+
+        $targetQuestions = (int) $request->input('target_questions', $defaultTarget);
 
         $durationMinutes = $request->filled('duration_minutes')
             ? (int) $request->input('duration_minutes')
-            : ($targetQuestions >= 200 ? 180 : ($targetQuestions >= 100 ? 90 : ($targetQuestions >= 50 ? 45 : 20)));
+            : ($defaultDuration ?: ($targetQuestions >= 200 ? 180 : ($targetQuestions >= 100 ? 90 : ($targetQuestions >= 50 ? 45 : 20))));
 
         $result = $this->testSessionService->createBlueprintMockSession(
             user: $user,

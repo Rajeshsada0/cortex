@@ -38,13 +38,11 @@ class AdminDashboardWebController extends Controller
         ];
 
         // Pathway distribution
-        $pathwayBreakdown = [
-            'MECEE_PG' => QuestionExamRelevance::whereIn('exam', ['MECEE_PG', 'COMBINED'])->distinct('question_id')->count('question_id'),
-            'INI_CET' => QuestionExamRelevance::whereIn('exam', ['INI_CET', 'COMBINED'])->distinct('question_id')->count('question_id'),
-            'USMLE_STEP1' => QuestionExamRelevance::whereIn('exam', ['USMLE_STEP1', 'COMBINED'])->distinct('question_id')->count('question_id'),
-            'USMLE_STEP2CK' => QuestionExamRelevance::whereIn('exam', ['USMLE_STEP2CK', 'COMBINED'])->distinct('question_id')->count('question_id'),
-            'COMBINED' => QuestionExamRelevance::where('exam', 'COMBINED')->distinct('question_id')->count('question_id'),
-        ];
+        $activePathways = \App\Models\ExamPathway::where('is_active', true)->get();
+        $pathwayBreakdown = [];
+        foreach ($activePathways as $p) {
+            $pathwayBreakdown[$p->code] = $p->getAvailableQuestionsCount();
+        }
 
         // Subjects with question counts
         $subjectsSummary = Subject::withCount(['questions', 'topics'])

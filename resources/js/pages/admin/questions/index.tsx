@@ -47,6 +47,12 @@ interface QuestionItem {
     options: Array<{ id: string; option_key: string; option_text: string }>;
 }
 
+interface PathwayFilterOption {
+    code: string;
+    name: string;
+    region?: string;
+}
+
 interface QuestionsIndexProps {
     questions: {
         data: QuestionItem[];
@@ -56,6 +62,7 @@ interface QuestionsIndexProps {
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
     subjects: SubjectOption[];
+    pathways?: PathwayFilterOption[];
     filters: {
         search: string;
         subject_id: string | number;
@@ -74,6 +81,7 @@ interface QuestionsIndexProps {
 export default function QuestionsIndex({
     questions,
     subjects,
+    pathways,
     filters,
     stats,
 }: QuestionsIndexProps) {
@@ -322,15 +330,25 @@ export default function QuestionsIndex({
                                 className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
                             >
                                 <option value="ALL">All Pathways</option>
-                                <option value="MECEE_PG">Nepal MECEE-PG</option>
-                                <option value="INI_CET">India INI-CET</option>
-                                <option value="USMLE_STEP1">
-                                    USMLE Step 1
-                                </option>
-                                <option value="USMLE_STEP2CK">
-                                    USMLE Step 2 CK
-                                </option>
-                                <option value="COMBINED">Combined Track</option>
+                                {pathways && pathways.length > 0 ? (
+                                    pathways.map((p) => (
+                                        <option key={p.code} value={p.code}>
+                                            {p.name}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="MECEE_PG">Nepal MECEE-PG</option>
+                                        <option value="INI_CET">India INI-CET</option>
+                                        <option value="USMLE_STEP1">
+                                            USMLE Step 1
+                                        </option>
+                                        <option value="USMLE_STEP2CK">
+                                            USMLE Step 2 CK
+                                        </option>
+                                        <option value="COMBINED">Combined Track</option>
+                                    </>
+                                )}
                             </select>
                         </div>
                     </div>

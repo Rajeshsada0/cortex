@@ -451,7 +451,8 @@ class QuestionImportService
 
         // 11. Relevant Exams
         $examsInput = $get(['relevant_exams', 'exams', 'exam', 'pathways', 'relevantexams'], 'COMBINED');
-        $validExams = ['MECEE_PG', 'INI_CET', 'USMLE_STEP1', 'USMLE_STEP2CK', 'COMBINED'];
+        $dbExams = \App\Models\ExamPathway::pluck('code')->map(fn ($c) => strtoupper($c))->toArray();
+        $validExams = array_unique(array_merge(['MECEE_PG', 'INI_CET', 'NEET_PG', 'USMLE_STEP1', 'USMLE_STEP2CK', 'COMBINED'], $dbExams));
         $relevantExams = [];
 
         if (is_array($examsInput)) {
