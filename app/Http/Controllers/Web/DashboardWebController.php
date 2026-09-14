@@ -119,6 +119,7 @@ class DashboardWebController extends Controller
                 'days_until_exam' => $daysUntilExam,
                 'daily_study_hours' => $user->daily_study_hours,
                 'daily_mcq_target' => $user->daily_mcq_target,
+                'dashboard_preferences' => $user->dashboard_preferences,
             ],
             'readiness' => $readiness,
             'quadrants' => $quadrants,

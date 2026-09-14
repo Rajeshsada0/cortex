@@ -40,6 +40,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
     'target_exam_date',
     'daily_study_hours',
     'daily_mcq_target',
+    'dashboard_preferences',
 ])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
@@ -62,6 +63,7 @@ class User extends Authenticatable implements PasskeyUser
             'target_exam_date' => 'date',
             'daily_study_hours' => 'integer',
             'daily_mcq_target' => 'integer',
+            'dashboard_preferences' => 'array',
         ];
     }
 

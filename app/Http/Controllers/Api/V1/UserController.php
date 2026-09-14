@@ -27,6 +27,7 @@ class UserController extends Controller
                 'target_exam_date' => $user?->target_exam_date?->toDateString(),
                 'daily_study_hours' => $user?->daily_study_hours ?? 6,
                 'daily_mcq_target' => $user?->daily_mcq_target ?? 100,
+                'dashboard_preferences' => $user?->dashboard_preferences,
             ],
         ]);
     }
@@ -47,6 +48,7 @@ class UserController extends Controller
             'target_exam_date' => 'nullable|date',
             'daily_study_hours' => 'nullable|integer|min:1|max:18',
             'daily_mcq_target' => 'nullable|integer|min:10|max:500',
+            'dashboard_preferences' => 'nullable|array',
         ]);
 
         $user->update(array_filter($validated, fn ($val) => ! is_null($val)));
@@ -63,6 +65,7 @@ class UserController extends Controller
                 'target_exam_date' => $user->target_exam_date?->toDateString(),
                 'daily_study_hours' => $user->daily_study_hours,
                 'daily_mcq_target' => $user->daily_mcq_target,
+                'dashboard_preferences' => $user->dashboard_preferences,
             ],
         ]);
     }

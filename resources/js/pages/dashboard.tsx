@@ -13,9 +13,25 @@ import {
     Search,
     Sliders,
     Info,
+    SlidersHorizontal,
+    Activity,
+    Compass,
+    Flame,
+    TrendingUp,
+    RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReadinessGauge } from '@/components/cortex/readiness-gauge';
 import { PerformanceQuadrant } from '@/components/cortex/performance-quadrant';
@@ -34,6 +50,20 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+export interface DashboardWidgetConfig {
+    readiness_score: boolean;
+    cohort_rank: boolean;
+    performance_quadrant: boolean;
+    study_streak: boolean;
+}
+
+const DEFAULT_WIDGET_CONFIG: DashboardWidgetConfig = {
+    readiness_score: true,
+    cohort_rank: true,
+    performance_quadrant: true,
+    study_streak: true,
+};
+
 interface DashboardProps {
     user: {
         id: number;
@@ -45,6 +75,7 @@ interface DashboardProps {
         days_until_exam?: number | null;
         daily_study_hours: number;
         daily_mcq_target: number;
+        dashboard_preferences?: DashboardWidgetConfig | null;
     };
     readiness: {
         readiness_score: number;
@@ -106,6 +137,101 @@ export default function Dashboard({
         user.target_exam_date || '',
     );
     const [isSavingDate, setIsSavingDate] = useState(false);
+
+    // Dashboard Widget Customization State
+    const [widgetConfig, setWidgetConfig] = useState<DashboardWidgetConfig>(() => {
+        if (user.dashboard_preferences && typeof user.dashboard_preferences === 'object') {
+            return {
+                readiness_score: user.dashboard_preferences.readiness_score ?? true,
+                cohort_rank: user.dashboard_preferences.cohort_rank ?? true,
+                performance_quadrant: user.dashboard_preferences.performance_quadrant ?? true,
+                study_streak: user.dashboard_preferences.study_streak ?? true,
+            };
+        }
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem('cortex_dashboard_widgets');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    return {
+                        readiness_score: parsed.readiness_score ?? true,
+                        cohort_rank: parsed.cohort_rank ?? true,
+                        performance_quadrant: parsed.performance_quadrant ?? true,
+                        study_streak: parsed.study_streak ?? true,
+                    };
+                }
+            } catch {
+                // Ignore parse errors
+            }
+        }
+        return DEFAULT_WIDGET_CONFIG;
+    });
+
+    const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+    const [isSavingCustomization, setIsSavingCustomization] = useState(false);
+
+    const handleToggleWidget = (key: keyof DashboardWidgetConfig, value: boolean) => {
+        const next = { ...widgetConfig, [key]: value };
+        setWidgetConfig(next);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('cortex_dashboard_widgets', JSON.stringify(next));
+        }
+    };
+
+    const handleSaveCustomization = async (newConfig?: DashboardWidgetConfig) => {
+        const configToSave = newConfig || widgetConfig;
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('cortex_dashboard_widgets', JSON.stringify(configToSave));
+        }
+        setIsSavingCustomization(true);
+        try {
+            await fetch('/api/v1/users/me', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ dashboard_preferences: configToSave }),
+            });
+            toast.success('Dashboard preferences saved!');
+            setIsCustomizeOpen(false);
+        } catch {
+            toast.error('Failed to sync preferences with server, saved locally.');
+            setIsCustomizeOpen(false);
+        } finally {
+            setIsSavingCustomization(false);
+        }
+    };
+
+    const handleResetWidgets = () => {
+        setWidgetConfig(DEFAULT_WIDGET_CONFIG);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('cortex_dashboard_widgets', JSON.stringify(DEFAULT_WIDGET_CONFIG));
+        }
+    };
+
+    const handleEnableAll = () => {
+        const allEnabled = {
+            readiness_score: true,
+            cohort_rank: true,
+            performance_quadrant: true,
+            study_streak: true,
+        };
+        setWidgetConfig(allEnabled);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('cortex_dashboard_widgets', JSON.stringify(allEnabled));
+        }
+    };
+
+    const activeWidgetsCount = [
+        widgetConfig.readiness_score,
+        widgetConfig.cohort_rank,
+        widgetConfig.performance_quadrant,
+        widgetConfig.study_streak,
+    ].filter(Boolean).length;
+
+    const hasCol1 = widgetConfig.readiness_score || widgetConfig.performance_quadrant;
+    const hasCol2 = widgetConfig.cohort_rank || widgetConfig.study_streak;
 
     const handleSaveDate = async () => {
         if (!targetDateInput) return;
@@ -304,6 +430,28 @@ export default function Dashboard({
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom">
                                     Simulate readiness score improvements
+                                </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsCustomizeOpen(true)}
+                                        className="h-9 gap-1.5 rounded-xl border-border text-xs font-medium hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-600 dark:hover:text-cyan-400"
+                                    >
+                                        <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <span>Customize</span>
+                                        {activeWidgetsCount < 4 && (
+                                            <span className="ml-0.5 rounded-full bg-cyan-500/20 px-1.5 py-0.2 font-mono text-[10px] font-bold text-cyan-700 dark:text-cyan-300">
+                                                {activeWidgetsCount}/4
+                                            </span>
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom">
+                                    Customize dashboard widgets & analytics
                                 </TooltipContent>
                             </Tooltip>
 
@@ -570,35 +718,83 @@ export default function Dashboard({
                     </div>
                 </section>
 
-                {/* Core 2-Column Analytics Section */}
-                <div
-                    id="readiness-section"
-                    className="grid grid-cols-1 gap-6 lg:grid-cols-12"
-                >
-                    {/* Left Column: Readiness Score & Performance Matrix */}
-                    <div className="flex flex-col gap-6 lg:col-span-6">
-                        <ReadinessGauge
-                            score={readiness.readiness_score}
-                            components={readiness.components}
-                            targetExamDate={user.target_exam_date ?? undefined}
-                            daysUntilExam={user.days_until_exam}
-                            pathwayName={user.pathway_label}
-                            dueCardsCount={dueCardsCount}
-                        />
-
-                        <PerformanceQuadrant
-                            quadrants={quadrants.quadrants}
-                            answerSwitching={quadrants.answer_switching}
-                        />
+                {/* Core Analytics Section with Dynamic Widget Customization */}
+                {activeWidgetsCount === 0 ? (
+                    <div
+                        id="readiness-section"
+                        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center shadow-xs"
+                    >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                            <SlidersHorizontal className="h-6 w-6" />
+                        </div>
+                        <h3 className="mt-4 text-base font-bold text-foreground">
+                            Analytics Widgets Hidden
+                        </h3>
+                        <p className="mt-1 max-w-md text-xs text-muted-foreground">
+                            All analytics widgets are currently hidden based on your display preferences. You can customize which panels to display at any time.
+                        </p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsCustomizeOpen(true)}
+                            className="mt-4 gap-1.5 rounded-xl border-cyan-500/30 text-xs font-semibold text-cyan-700 hover:bg-cyan-500/10 dark:text-cyan-300"
+                        >
+                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                            <span>Customize Dashboard</span>
+                        </Button>
                     </div>
+                ) : (
+                    <div
+                        id="readiness-section"
+                        className="grid grid-cols-1 gap-6 lg:grid-cols-12"
+                    >
+                        {/* Left Column: Readiness Score & Performance Matrix */}
+                        {hasCol1 && (
+                            <div
+                                className={cn(
+                                    'flex flex-col gap-6',
+                                    hasCol2 ? 'lg:col-span-6' : 'lg:col-span-12',
+                                )}
+                            >
+                                {widgetConfig.readiness_score && (
+                                    <ReadinessGauge
+                                        score={readiness.readiness_score}
+                                        components={readiness.components}
+                                        targetExamDate={user.target_exam_date ?? undefined}
+                                        daysUntilExam={user.days_until_exam}
+                                        pathwayName={user.pathway_label}
+                                        dueCardsCount={dueCardsCount}
+                                    />
+                                )}
 
-                    {/* Right Column: National Rank Predictor & Daily Study Streak */}
-                    <div className="flex flex-col gap-6 lg:col-span-6">
-                        <NationalRankPredictor prediction={rankPrediction} />
+                                {widgetConfig.performance_quadrant && (
+                                    <PerformanceQuadrant
+                                        quadrants={quadrants.quadrants}
+                                        answerSwitching={quadrants.answer_switching}
+                                    />
+                                )}
+                            </div>
+                        )}
 
-                        <StudyStreakHeatmap streakData={studyStreak} />
+                        {/* Right Column: National Rank Predictor & Daily Study Streak */}
+                        {hasCol2 && (
+                            <div
+                                className={cn(
+                                    'flex flex-col gap-6',
+                                    hasCol1 ? 'lg:col-span-6' : 'lg:col-span-12',
+                                )}
+                            >
+                                {widgetConfig.cohort_rank && (
+                                    <NationalRankPredictor prediction={rankPrediction} />
+                                )}
+
+                                {widgetConfig.study_streak && (
+                                    <StudyStreakHeatmap streakData={studyStreak} />
+                                )}
+                            </div>
+                        )}
                     </div>
-                </div>
+                )}
 
                 {/* 19-Subject Curriculum Mastery Section */}
                 <section
@@ -794,6 +990,154 @@ export default function Dashboard({
                     </p>
                 </footer>
             </div>
+
+            {/* Dashboard Customization Dialog */}
+            <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
+                <DialogContent className="sm:max-w-[480px]">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                <SlidersHorizontal className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-base font-bold text-foreground">
+                                    Dashboard Customization
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-muted-foreground">
+                                    Enable or disable analytics cards to customize your clinical dashboard.
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="space-y-3 py-2">
+                        {/* 1. Readiness Score */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                    <Activity className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-foreground">
+                                        Readiness Score
+                                    </div>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        Clinical readiness gauge, component breakdown, and milestone projections.
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={widgetConfig.readiness_score}
+                                onCheckedChange={(val) =>
+                                    handleToggleWidget('readiness_score', val)
+                                }
+                            />
+                        </div>
+
+                        {/* 2. Cohort Rank & Percentile */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <TrendingUp className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-foreground">
+                                        Cohort Rank & Percentile
+                                    </div>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        Estimated national rank, percentile curve, and cutoff gap benchmarks.
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={widgetConfig.cohort_rank}
+                                onCheckedChange={(val) =>
+                                    handleToggleWidget('cohort_rank', val)
+                                }
+                            />
+                        </div>
+
+                        {/* 3. Performance vs. Confidence */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                                    <Compass className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-foreground">
+                                        Performance vs. Confidence
+                                    </div>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        Quadrant calibration matrix, overconfidence vs blind spots, and answer switching.
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={widgetConfig.performance_quadrant}
+                                onCheckedChange={(val) =>
+                                    handleToggleWidget('performance_quadrant', val)
+                                }
+                            />
+                        </div>
+
+                        {/* 4. DAILY STUDY STREAK */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <Flame className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-foreground">
+                                        DAILY STUDY STREAK
+                                    </div>
+                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                        Yearly activity heatmap, current & longest study streaks, and daily question goal.
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={widgetConfig.study_streak}
+                                onCheckedChange={(val) =>
+                                    handleToggleWidget('study_streak', val)
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="flex-row items-center justify-between sm:justify-between border-t border-border pt-4">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleResetWidgets}
+                            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                            <RotateCcw className="h-3 w-3" />
+                            <span>Reset</span>
+                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleEnableAll}
+                                className="h-8 text-xs font-medium"
+                            >
+                                Enable All
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => handleSaveCustomization()}
+                                disabled={isSavingCustomization}
+                                className="h-8 bg-cyan-600 text-xs font-semibold text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
+                            >
+                                {isSavingCustomization ? 'Saving...' : 'Save & Close'}
+                            </Button>
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </TooltipProvider>
     );
 }
