@@ -28,7 +28,7 @@ interface MockIndexProps {
     pathwayName: string;
     targetQuestions: number;
     durationMinutes: number;
-    markingRules: string;
+    markingRules: string | { correct?: number; negative?: number; penalty_label?: string };
     history: any[];
 }
 
@@ -276,7 +276,11 @@ export default function MockExamIndex({
                                         Negative Marking
                                     </span>
                                     <span className="font-mono text-xs font-bold text-red-600 dark:text-red-400">
-                                        {markingRules}
+                                        {typeof markingRules === 'string'
+                                            ? markingRules
+                                            : markingRules && typeof markingRules === 'object'
+                                            ? `${(markingRules as any).correct ? `+${(markingRules as any).correct} / ` : ''}-${(markingRules as any).negative ?? 0}${(markingRules as any).penalty_label ? ` (${(markingRules as any).penalty_label})` : ''}`
+                                            : ''}
                                     </span>
                                 </div>
                             </div>

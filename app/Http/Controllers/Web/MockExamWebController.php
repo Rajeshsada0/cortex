@@ -42,11 +42,15 @@ class MockExamWebController extends Controller
             'pathwayName' => $dbPathway?->name ?? $pathway->label(),
             'targetQuestions' => $dbPathway?->total_questions ?? $pathway->targetQuestions(),
             'durationMinutes' => $dbPathway?->duration_minutes ?? $pathway->durationMinutes(),
-            'markingRules' => $dbPathway ? [
-                'correct' => $dbPathway->correct_marks,
-                'negative' => $dbPathway->negative_marks,
-                'penalty_label' => $dbPathway->penalty_label,
-            ] : $pathway->markingRules(),
+            'markingRules' => $dbPathway
+                ? ($dbPathway->correct_marks > 0
+                    ? sprintf('+%.1f Correct / -%s Incorrect%s',
+                        (float) $dbPathway->correct_marks,
+                        rtrim(rtrim(sprintf('%.2f', (float) $dbPathway->negative_marks), '0'), '.'),
+                        $dbPathway->penalty_label ? " ({$dbPathway->penalty_label})" : ''
+                    )
+                    : ($dbPathway->scoring_type ?? 'Pass / Fail (No negative marking)'))
+                : $pathway->markingRules(),
             'history' => $history,
         ]);
     }
