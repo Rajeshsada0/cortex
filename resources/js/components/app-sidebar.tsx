@@ -121,7 +121,7 @@ export function AppSidebar() {
                         <SidebarMenuButton
                             size="lg"
                             asChild
-                            className="hover:bg-slate-800/40"
+                            className="hover:bg-muted/80"
                         >
                             <Link
                                 href={isAdmin ? '/admin' : '/dashboard'}
@@ -135,11 +135,11 @@ export function AppSidebar() {
 
                 {!isAdmin && (
                     <div className="mt-2.5 px-1 group-data-[collapsible=icon]:hidden">
-                        <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#0a1120] p-2.5 text-xs shadow-xs">
-                            <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-2.5 text-xs shadow-xs dark:bg-[#0a1120]">
+                            <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                                 Active Track
                             </span>
-                            <span className="rounded-md border border-cyan-500/30 bg-[#0c1e33] px-2.5 py-1 text-xs font-semibold text-cyan-400">
+                            <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-600 dark:bg-[#0c1e33] dark:text-cyan-400">
                                 {(auth?.user as any)?.pathway_label ||
                                     'INI-CET (Nov 2024)'}
                             </span>

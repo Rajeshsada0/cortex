@@ -1,29 +1,35 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark" @class(['dark' => ($appearance ?? 'dark') !== 'light'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'light') === 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Enforce clinical dark theme --}}
+        {{-- Initialize light theme as default --}}
         <script>
             (function() {
-                document.documentElement.classList.add('dark');
-                document.documentElement.style.colorScheme = 'dark';
-                try {
-                    localStorage.setItem('appearance', 'dark');
-                } catch (e) {}
+                const appearance = localStorage.getItem('appearance') || 'light';
+                if (appearance === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.colorScheme = 'light';
+                    try {
+                        localStorage.setItem('appearance', 'light');
+                    } catch (e) {}
+                }
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on clinical theme --}}
+        {{-- Inline style to prevent theme flash --}}
         <style>
             html, body {
-                background-color: #070b14 !important;
-                color: #f1f5f9;
+                background-color: #f8fafc;
+                color: #0f172a;
             }
             html.dark, body.dark {
                 background-color: #070b14 !important;
-                color: #f1f5f9;
+                color: #f1f5f9 !important;
             }
         </style>
 
@@ -39,7 +45,7 @@
             <title>{{ config('app.name', 'Laravel') }}</title>
         </x-inertia::head>
     </head>
-    <body class="font-sans antialiased bg-[#070b14] text-slate-100">
+    <body class="font-sans antialiased bg-background text-foreground">
         <x-inertia::app />
     </body>
 </html>

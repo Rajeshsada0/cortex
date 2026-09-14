@@ -417,7 +417,7 @@ export default function MockExamHall({
             {/* Top Bar: Exam Info, Blur Warning, Countdown Timer, and Actions */}
             <header className="border-border bg-card/95 sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                    <span className="rounded bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-[#55BDEB]">
+                    <span className="rounded bg-sky-100 px-2.5 py-1 font-mono text-xs font-bold text-sky-800 dark:bg-[#102A43] dark:text-[#55BDEB]">
                         GRAND MOCK MODE
                     </span>
                     <span className="text-foreground hidden text-xs font-semibold sm:inline">
@@ -444,7 +444,7 @@ export default function MockExamHall({
                         className={`flex items-center gap-1.5 rounded-lg px-3 py-1 font-mono text-sm font-extrabold ${
                             secondsRemaining < 300
                                 ? 'animate-pulse bg-[#E05252] text-white'
-                                : 'bg-[#102A43] text-[#55BDEB]'
+                                : 'bg-sky-100 text-sky-900 dark:bg-[#102A43] dark:text-[#55BDEB]'
                         }`}
                     >
                         <Clock className="size-4" />
@@ -711,7 +711,7 @@ export default function MockExamHall({
                             size="sm"
                             disabled={currentIndex === questions.length - 1}
                             onClick={() => setCurrentIndex((prev) => prev + 1)}
-                            className="gap-1 bg-[#102A43] text-xs font-bold text-white dark:bg-[#55BDEB] dark:text-neutral-950"
+                            className="gap-1 bg-cyan-600 text-xs font-bold text-white hover:bg-cyan-700 dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
                         >
                             Next <ChevronRight className="size-4" />
                         </Button>

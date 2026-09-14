@@ -262,10 +262,10 @@ export function ReadinessGauge({
             <div>
                 <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <h3 className="text-base font-bold tracking-wide text-white">
+                        <h3 className="text-base font-bold tracking-wide text-foreground dark:text-white">
                             CORTEX READINESS SCORE™
                         </h3>
-                        <span className="rounded border border-cyan-800 bg-cyan-950 px-2 py-0.5 font-mono text-[10px] text-cyan-300 uppercase">
+                        <span className="rounded border border-cyan-200 bg-cyan-50 px-2 py-0.5 font-mono text-[10px] text-cyan-700 uppercase dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
                             Live Dual-Metric Engine
                         </span>
                         {isSimulating && (
@@ -278,9 +278,9 @@ export function ReadinessGauge({
                         <button
                             type="button"
                             onClick={() => setIsSimulating(!isSimulating)}
-                            className="flex cursor-pointer items-center space-x-1 rounded border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-400 transition hover:text-white"
+                            className="flex cursor-pointer items-center space-x-1 rounded border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground transition hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-white"
                         >
-                            <Sliders className="h-3.5 w-3.5 text-cyan-400" />
+                            <Sliders className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                             <span>
                                 {isSimulating
                                     ? 'Exit Simulation'
@@ -291,7 +291,7 @@ export function ReadinessGauge({
                             <button
                                 type="button"
                                 onClick={resetSimulation}
-                                className="rounded border border-slate-700 bg-slate-800/80 p-1 text-xs text-slate-400 hover:text-white"
+                                className="rounded border border-border bg-muted p-1 text-xs text-muted-foreground hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-white"
                                 title="Reset simulation"
                             >
                                 <RotateCcw className="h-3.5 w-3.5" />
@@ -299,13 +299,13 @@ export function ReadinessGauge({
                         )}
                     </div>
                 </div>
-                <p className="font-mono text-xs text-slate-400">
+                <p className="font-mono text-xs text-muted-foreground">
                     Algorithmic index:{' '}
-                    <span className="text-slate-300">
+                    <span className="text-foreground/80 dark:text-slate-300">
                         0.35A + 0.20V + 0.20M + 0.15R - 0.10S
                     </span>{' '}
                     (Target Track:{' '}
-                    <span className="text-cyan-400">
+                    <span className="text-cyan-600 dark:text-cyan-400">
                         {pathwayName || 'India: INI-CET'}
                     </span>
                     )
@@ -326,8 +326,9 @@ export function ReadinessGauge({
                             cy="60"
                             fill="transparent"
                             r="50"
-                            stroke="#1e293b"
+                            stroke="currentColor"
                             strokeWidth="10"
+                            className="text-slate-200 dark:text-slate-800"
                         ></circle>
                         {/* Foreground Progress Circle */}
                         <circle
@@ -361,10 +362,10 @@ export function ReadinessGauge({
                     </svg>
                     {/* Inside Gauge Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="font-mono text-5xl font-black tracking-tight text-white">
+                        <span className="font-mono text-5xl font-black tracking-tight text-foreground dark:text-white">
                             {displayScore}
                         </span>
-                        <span className="mt-0.5 text-[11px] tracking-widest text-slate-400 uppercase">
+                        <span className="mt-0.5 text-[11px] tracking-widest text-muted-foreground uppercase">
                             OUT OF 100
                         </span>
                         <span
@@ -389,25 +390,25 @@ export function ReadinessGauge({
                 <div
                     className={`mt-4 w-full rounded-xl border p-4 text-center ${
                         displayScore >= 75
-                            ? 'border-emerald-900/50 bg-emerald-950/30'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-slate-300'
                             : displayScore >= 50
-                              ? 'border-amber-900/50 bg-amber-950/30'
-                              : 'border-rose-900/50 bg-rose-950/30'
+                              ? 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-slate-300'
+                              : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-slate-300'
                     }`}
                 >
                     <span
                         className={`mb-1 block text-xs font-bold tracking-wider uppercase ${
                             displayScore >= 75
-                                ? 'text-emerald-400'
+                                ? 'text-emerald-700 dark:text-emerald-400'
                                 : displayScore >= 50
-                                  ? 'text-amber-400'
-                                  : 'text-rose-400'
+                                  ? 'text-amber-700 dark:text-amber-400'
+                                  : 'text-rose-700 dark:text-rose-400'
                         }`}
                     >
                         {assessment.tier}
                     </span>
-                    <p className="text-xs text-slate-300">
-                        <strong className="text-white">
+                    <p className="text-xs">
+                        <strong className="text-foreground dark:text-white">
                             {assessment.prob}:
                         </strong>{' '}
                         {assessment.desc}
@@ -415,19 +416,19 @@ export function ReadinessGauge({
                 </div>
 
                 {/* Next Tier Target Callout */}
-                <div className="border-cortex-border mt-3 flex w-full items-center justify-between rounded-xl border bg-slate-900/60 px-4 py-2.5 text-xs">
+                <div className="border-cortex-border mt-3 flex w-full items-center justify-between rounded-xl border bg-muted/50 px-4 py-2.5 text-xs dark:bg-slate-900/60">
                     <div className="flex items-center space-x-2">
-                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-400"></span>
-                        <span className="text-slate-300">
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-500"></span>
+                        <span className="text-muted-foreground">
                             Next Score Target:{' '}
-                            <strong className="text-white">
+                            <strong className="text-foreground dark:text-white">
                                 80% (Tier-1 Cutoff)
                             </strong>
                         </span>
                     </div>
                     <Link
                         href="/qbank/runner"
-                        className="inline-flex items-center text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+                        className="inline-flex items-center text-xs font-semibold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                     >
                         Drill Weak Points →
                     </Link>
@@ -435,8 +436,8 @@ export function ReadinessGauge({
             </div>
 
             {/* Algorithmic Components Breakdown List */}
-            <div className="space-y-3 border-t border-slate-800 pt-4">
-                <div className="flex items-center justify-between text-xs font-medium text-slate-400 uppercase">
+            <div className="space-y-3 border-t border-border pt-4 dark:border-slate-800">
+                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground uppercase">
                     <span>
                         {isSimulating
                             ? 'SIMULATOR SLIDERS'
@@ -471,22 +472,22 @@ export function ReadinessGauge({
                             className="cursor-pointer space-y-1 pt-1"
                         >
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-300">
+                                <span className="text-foreground/80 dark:text-slate-300">
                                     {meta.title} ({meta.weight})
                                 </span>
                                 <span
                                     className={`font-mono font-semibold ${
                                         isPenalty
-                                            ? 'text-rose-400'
-                                            : 'text-cyan-400'
+                                            ? 'text-rose-600 dark:text-rose-400'
+                                            : 'text-cyan-600 dark:text-cyan-400'
                                     }`}
                                 >
                                     {val}%{' '}
                                     <span
                                         className={
                                             isPenalty
-                                                ? 'text-rose-400'
-                                                : 'text-emerald-400'
+                                                ? 'text-rose-600 dark:text-rose-400'
+                                                : 'text-emerald-600 dark:text-emerald-400'
                                         }
                                     >
                                         {pointsContributed > 0
@@ -510,14 +511,14 @@ export function ReadinessGauge({
                                                 parseFloat(e.target.value),
                                             )
                                         }
-                                        className="h-1.5 w-full cursor-pointer rounded-lg bg-slate-800 accent-cyan-400"
+                                        className="h-1.5 w-full cursor-pointer rounded-lg bg-slate-200 accent-cyan-500 dark:bg-slate-800 dark:accent-cyan-400"
                                     />
-                                    <span className="w-10 text-right font-mono text-xs text-cyan-300">
+                                    <span className="w-10 text-right font-mono text-xs text-cyan-600 dark:text-cyan-300">
                                         {val}%
                                     </span>
                                 </div>
                             ) : (
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                                     <div
                                         className={`h-2 rounded-full transition-all ${
                                             isPenalty
@@ -536,10 +537,10 @@ export function ReadinessGauge({
                                 (isExpanded ||
                                     (key === 'recent_accuracy' &&
                                         val < 60)) && (
-                                    <div className="flex items-center justify-between pt-1 text-[11px] text-amber-300/90">
+                                    <div className="flex items-center justify-between pt-1 text-[11px] text-amber-700 dark:text-amber-300/90">
                                         <span className="flex items-center">
                                             <svg
-                                                className="mr-1 h-3.5 w-3.5 flex-shrink-0 text-amber-400"
+                                                className="mr-1 h-3.5 w-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400"
                                                 fill="currentColor"
                                                 viewBox="0 0 20 20"
                                             >
@@ -552,7 +553,7 @@ export function ReadinessGauge({
                                             {meta.diagnosis(val)}
                                         </span>
                                         <Link
-                                            className="ml-2 font-semibold whitespace-nowrap text-cyan-400 hover:underline"
+                                            className="ml-2 font-semibold whitespace-nowrap text-cyan-600 hover:underline dark:text-cyan-400"
                                             href={meta.ctaLink}
                                             onClick={(e) => e.stopPropagation()}
                                         >

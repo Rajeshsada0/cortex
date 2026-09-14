@@ -144,7 +144,7 @@ export default function DirectoryIndex({ user, subjects }: DirectoryProps) {
                             <div>
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="flex size-9 items-center justify-center rounded-xl bg-[#102A43] text-xs font-bold text-[#55BDEB] dark:bg-[#55BDEB]/15">
+                                        <div className="flex size-9 items-center justify-center rounded-xl bg-sky-100 text-xs font-bold text-sky-800 dark:bg-[#55BDEB]/15 dark:text-[#55BDEB]">
                                             #{sub.order_index}
                                         </div>
                                         <div>
@@ -263,7 +263,7 @@ export default function DirectoryIndex({ user, subjects }: DirectoryProps) {
                                 <Button
                                     size="sm"
                                     onClick={() => startSubjectPractice(sub.id)}
-                                    className="h-8 gap-1.5 bg-[#102A43] text-xs font-bold text-white hover:opacity-90 dark:bg-[#55BDEB] dark:text-neutral-950"
+                                    className="h-8 gap-1.5 bg-cyan-600 text-xs font-bold text-white hover:bg-cyan-700 dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
                                 >
                                     <PlaySquare className="size-3.5" />
                                     Practice Subject

@@ -203,7 +203,7 @@ export default function MockExamIndex({
                             {pathwayName} {selectedPreset.title}
                         </h2>
                     </div>
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-[#102A43] text-[#55BDEB]">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700 dark:bg-[#102A43] dark:text-[#55BDEB]">
                         <Trophy className="size-6" />
                     </div>
                 </div>
@@ -273,7 +273,7 @@ export default function MockExamIndex({
                 <Button
                     size="lg"
                     onClick={handleLaunch}
-                    className="h-12 w-full gap-2 bg-[#102A43] text-sm font-extrabold text-white shadow-md hover:opacity-90 dark:bg-[#55BDEB] dark:text-neutral-950"
+                    className="h-12 w-full gap-2 bg-cyan-600 text-sm font-extrabold text-white shadow-md hover:bg-cyan-700 dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
                 >
                     <GraduationCap className="size-5" />
                     Enter Grand Mock Exam Hall (Timed Simulation)

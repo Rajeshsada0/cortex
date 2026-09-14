@@ -80,13 +80,13 @@
     --color-brand-500: #06b6d4;
     --color-brand-600: #0891b2;
 
-    --color-cortex-bg: #070b14;
-    --color-cortex-surface: #0d1322;
-    --color-cortex-card: #11192e;
-    --color-cortex-border: rgba(255, 255, 255, 0.08);
-    --color-cortex-border-active: rgba(6, 182, 212, 0.3);
-    --color-cortex-hover: #16223d;
-    --color-cortex-accent: #0284c7;
+    --color-cortex-bg: var(--cortex-bg);
+    --color-cortex-surface: var(--cortex-surface);
+    --color-cortex-card: var(--cortex-card);
+    --color-cortex-border: var(--cortex-border);
+    --color-cortex-border-active: var(--cortex-border-active);
+    --color-cortex-hover: var(--cortex-hover);
+    --color-cortex-accent: var(--cortex-accent);
 
     --color-cortex-blue: #55bdeb;
     --color-cortex-navy: #102a43;
@@ -141,42 +141,58 @@
 }
 
 :root {
-    --background: #070b14;
-    --foreground: #f1f5f9;
-    --card: #11192e;
-    --card-foreground: #f1f5f9;
-    --popover: #11192e;
-    --popover-foreground: #f1f5f9;
-    --primary: #06b6d4;
-    --primary-foreground: #070b14;
-    --secondary: #16223d;
-    --secondary-foreground: #f1f5f9;
-    --muted: #0d1322;
-    --muted-foreground: #94a3b8;
-    --accent: #16223d;
-    --accent-foreground: #22d3ee;
-    --destructive: #f43f5e;
+    --cortex-bg: #f8fafc;
+    --cortex-surface: #ffffff;
+    --cortex-card: #ffffff;
+    --cortex-border: #e2e8f0;
+    --cortex-border-active: rgba(2, 132, 199, 0.35);
+    --cortex-hover: #f1f5f9;
+    --cortex-accent: #0284c7;
+
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #0284c7;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #e0f2fe;
+    --accent-foreground: #0369a1;
+    --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: rgba(255, 255, 255, 0.08);
-    --input: rgba(255, 255, 255, 0.12);
-    --ring: #06b6d4;
-    --chart-1: #06b6d4;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #0284c7;
+    --chart-1: #0284c7;
     --chart-2: #10b981;
     --chart-3: #f59e0b;
     --chart-4: #8b5cf6;
     --chart-5: #ec4899;
     --radius: 0.625rem;
-    --sidebar: #070b14;
-    --sidebar-foreground: #94a3b8;
-    --sidebar-primary: #06b6d4;
-    --sidebar-primary-foreground: #070b14;
-    --sidebar-accent: #0c1e33;
-    --sidebar-accent-foreground: #22d3ee;
-    --sidebar-border: rgba(255, 255, 255, 0.08);
-    --sidebar-ring: #06b6d4;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #334155;
+    --sidebar-primary: #0284c7;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f1f5f9;
+    --sidebar-accent-foreground: #0f172a;
+    --sidebar-border: #e2e8f0;
+    --sidebar-ring: #0284c7;
 }
 
 .dark {
+    --cortex-bg: #070b14;
+    --cortex-surface: #0d1322;
+    --cortex-card: #11192e;
+    --cortex-border: rgba(255, 255, 255, 0.08);
+    --cortex-border-active: rgba(6, 182, 212, 0.3);
+    --cortex-hover: #16223d;
+    --cortex-accent: #0284c7;
+
     --background: #070b14;
     --foreground: #f1f5f9;
     --card: #11192e;
@@ -340,14 +356,14 @@
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #070b14;
+    background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: var(--border);
     border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: var(--muted-foreground);
 }
 
 /* Subtle Card Shimmer Glow (Google Stitch Clinical Spec) */

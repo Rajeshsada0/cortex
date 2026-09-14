@@ -205,7 +205,7 @@ export default function SpacedRepetitionIndex({
                             <Button
                                 size="lg"
                                 onClick={() => setIsRevealed(true)}
-                                className="gap-2 bg-[#102A43] px-8 font-bold text-white shadow-sm dark:bg-[#55BDEB] dark:text-neutral-950"
+                                className="gap-2 bg-cyan-600 px-8 font-bold text-white shadow-sm hover:bg-cyan-700 dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
                             >
                                 <Eye className="size-4" />
                                 Reveal Clinical Answer & 3-Tier Rationale

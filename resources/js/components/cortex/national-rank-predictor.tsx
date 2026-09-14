@@ -361,10 +361,10 @@ export function NationalRankPredictor({
             {/* Header */}
             <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                    <h3 className="text-base font-bold tracking-wide text-white">
+                    <h3 className="text-base font-bold tracking-wide text-foreground dark:text-white">
                         NATIONAL COHORT RANK &amp; PERCENTILE
                     </h3>
-                    <span className="rounded border border-blue-800 bg-blue-950 px-2 py-0.5 font-mono text-[10px] text-blue-300 uppercase">
+                    <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 font-mono text-[10px] text-blue-700 uppercase dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
                         AI Calibrated
                     </span>
                     {isSimulating && (
@@ -377,9 +377,9 @@ export function NationalRankPredictor({
                     <button
                         type="button"
                         onClick={() => setIsSimulating(!isSimulating)}
-                        className="flex cursor-pointer items-center space-x-1 text-xs text-slate-400 hover:text-white"
+                        className="flex cursor-pointer items-center space-x-1 text-xs text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
                     >
-                        <Sliders className="h-3.5 w-3.5 text-cyan-400" />
+                        <Sliders className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                         <span>
                             {isSimulating
                                 ? 'Exit Simulation'
@@ -393,7 +393,7 @@ export function NationalRankPredictor({
                                 setSimulatedScore(prediction.readiness_score);
                                 setIsSimulating(false);
                             }}
-                            className="rounded border border-slate-700 bg-slate-800/80 p-1 text-xs text-slate-400 hover:text-white"
+                            className="rounded border border-border bg-muted p-1 text-xs text-muted-foreground hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:text-white"
                             title="Reset to real score"
                         >
                             <RotateCcw className="h-3.5 w-3.5" />
@@ -403,7 +403,7 @@ export function NationalRankPredictor({
             </div>
 
             {/* Cohort Select Tabs */}
-            <div className="flex items-center space-x-2 overflow-x-auto border-b border-slate-800 pb-2 text-xs">
+            <div className="flex items-center space-x-2 overflow-x-auto border-b border-border pb-2 text-xs dark:border-slate-800">
                 {Object.values(COHORTS).map((c) => {
                     const isSelected = c.id === selectedPathway;
                     return (
@@ -413,16 +413,16 @@ export function NationalRankPredictor({
                             onClick={() => setSelectedPathway(c.id)}
                             className={`cursor-pointer rounded-lg px-3 py-1.5 whitespace-nowrap transition ${
                                 isSelected
-                                    ? 'border border-cyan-500/40 bg-cyan-500/20 font-semibold text-cyan-300 shadow-sm'
-                                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
+                                    ? 'border border-cyan-500/40 bg-cyan-50 font-semibold text-cyan-800 shadow-sm dark:bg-cyan-500/20 dark:text-cyan-300'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:bg-slate-800/50 dark:text-slate-400 dark:hover:bg-slate-800'
                             }`}
                         >
                             {c.label}{' '}
                             <span
                                 className={`font-mono text-[10px] ${
                                     isSelected
-                                        ? 'text-cyan-400'
-                                        : 'text-slate-500'
+                                        ? 'text-cyan-600 dark:text-cyan-400'
+                                        : 'text-muted-foreground'
                                 }`}
                             >
                                 {c.size >= 1000
@@ -438,16 +438,16 @@ export function NationalRankPredictor({
             {isSimulating && (
                 <div className="mt-3 flex flex-col gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
                     <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-1.5 font-bold text-amber-400">
+                        <span className="flex items-center gap-1.5 font-bold text-amber-500 dark:text-amber-400">
                             <Sliders className="h-3.5 w-3.5" />
                             Simulate Target Readiness Score
                         </span>
-                        <span className="font-mono text-sm font-bold text-white">
+                        <span className="font-mono text-sm font-bold text-foreground dark:text-white">
                             {simulatedScore}% Readiness
                         </span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="text-[11px] text-slate-400">0%</span>
+                        <span className="text-[11px] text-muted-foreground">0%</span>
                         <input
                             type="range"
                             min="1"
@@ -456,9 +456,9 @@ export function NationalRankPredictor({
                             onChange={(e) =>
                                 setSimulatedScore(parseFloat(e.target.value))
                             }
-                            className="h-2 w-full cursor-pointer rounded-lg bg-slate-800 accent-amber-400"
+                            className="h-2 w-full cursor-pointer rounded-lg bg-slate-200 accent-amber-500 dark:bg-slate-800 dark:accent-amber-400"
                         />
-                        <span className="text-[11px] text-slate-400">100%</span>
+                        <span className="text-[11px] text-muted-foreground">100%</span>
                     </div>
                 </div>
             )}
@@ -466,44 +466,44 @@ export function NationalRankPredictor({
             {/* Actuarial Cards Row */}
             <div className="my-4 grid grid-cols-2 gap-4">
                 {/* Rank Card */}
-                <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4">
-                    <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
+                <div className="rounded-xl border border-border bg-card p-4 dark:border-slate-800 dark:bg-slate-900/90">
+                    <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                         <span className="text-[10px] font-semibold tracking-wider uppercase">
                             Predicted National Rank
                         </span>
-                        <span className="font-mono text-xs text-amber-400">
+                        <span className="font-mono text-xs text-amber-500 dark:text-amber-400">
                             ★
                         </span>
                     </div>
-                    <div className="font-mono text-3xl font-black tracking-tight text-amber-400">
+                    <div className="font-mono text-3xl font-black tracking-tight text-amber-600 dark:text-amber-400">
                         #{currentRank.toLocaleString()}{' '}
-                        <span className="text-sm font-normal text-slate-400">
+                        <span className="text-sm font-normal text-muted-foreground">
                             / {cohortSize.toLocaleString()}
                         </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2 text-[11px] text-slate-400">
+                    <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground dark:border-slate-800/80">
                         <span>{currentTierStatus}</span>
-                        <span className="font-mono text-slate-300">
+                        <span className="font-mono text-foreground/80 dark:text-slate-300">
                             ±15% Exam Variance
                         </span>
                     </div>
                 </div>
 
                 {/* Percentile Card */}
-                <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4">
-                    <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
+                <div className="rounded-xl border border-border bg-card p-4 dark:border-slate-800 dark:bg-slate-900/90">
+                    <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                         <span className="text-[10px] font-semibold tracking-wider uppercase">
                             Cohort Percentile
                         </span>
-                        <TrendingUp className="h-4 w-4 text-cyan-400" />
+                        <TrendingUp className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                     </div>
-                    <div className="font-mono text-3xl font-black tracking-tight text-cyan-400">
+                    <div className="font-mono text-3xl font-black tracking-tight text-cyan-600 dark:text-cyan-400">
                         {currentPercentile}%{' '}
-                        <span className="font-sans text-xs font-normal text-slate-400 uppercase">
+                        <span className="font-sans text-xs font-normal text-muted-foreground uppercase">
                             Percentile
                         </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2 text-[11px] text-slate-400">
+                    <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground dark:border-slate-800/80">
                         <span>
                             Ahead of ~
                             {Math.round(
@@ -511,7 +511,7 @@ export function NationalRankPredictor({
                             ).toLocaleString()}{' '}
                             doctors
                         </span>
-                        <span className="font-medium text-cyan-300">
+                        <span className="font-medium text-cyan-700 dark:text-cyan-300">
                             Target: ≥98.5%
                         </span>
                     </div>
@@ -519,16 +519,16 @@ export function NationalRankPredictor({
             </div>
 
             {/* Allocation Advisory Note */}
-            <div className="border-cortex-border mb-4 rounded-xl border bg-slate-900/60 p-3.5">
+            <div className="border-cortex-border mb-4 rounded-xl border bg-muted/40 p-3.5 dark:bg-slate-900/60">
                 <div className="flex items-start space-x-3">
-                    <div className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-slate-800 text-cyan-400">
+                    <div className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-cyan-600 dark:bg-slate-800 dark:text-cyan-400">
                         <ShieldCheck className="h-3.5 w-3.5" />
                     </div>
                     <div className="text-xs">
-                        <strong className="text-slate-200">
+                        <strong className="text-foreground dark:text-slate-200">
                             Seat Allocation Projection:
                         </strong>
-                        <p className="mt-0.5 text-slate-400">
+                        <p className="mt-0.5 text-muted-foreground">
                             {currentEligibility} Calibrated from official
                             central medical counselling register.
                         </p>
@@ -538,7 +538,7 @@ export function NationalRankPredictor({
 
             {/* Official Cutoff Benchmarks Table */}
             <div className="space-y-2">
-                <div className="flex items-center justify-between px-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                <div className="flex items-center justify-between px-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     <span>Official {activeCohort.label} Cutoff Benchmarks</span>
                     <span>Gap to Target</span>
                 </div>
@@ -550,28 +550,28 @@ export function NationalRankPredictor({
                     return (
                         <div
                             key={tier.title}
-                            className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 p-2.5 text-xs"
+                            className="flex items-center justify-between rounded-lg border border-border bg-card p-2.5 text-xs dark:border-slate-800 dark:bg-slate-900/80"
                         >
                             <div>
                                 <div className="flex items-center space-x-2">
-                                    <span className="font-bold text-white">
+                                    <span className="font-bold text-foreground dark:text-white">
                                         {tier.title}
                                     </span>
                                     <span
                                         className={`py-0.2 rounded px-1.5 font-mono text-[10px] ${
                                             tier.percentile >= 99
-                                                ? 'bg-purple-950 text-purple-300'
+                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
                                                 : tier.percentile >= 95
-                                                  ? 'bg-blue-950 text-blue-300'
+                                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
                                                   : tier.percentile >= 90
-                                                    ? 'bg-cyan-950 text-cyan-300'
-                                                    : 'bg-emerald-950 text-emerald-300'
+                                                    ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300'
+                                                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                         }`}
                                     >
                                         ≥{tier.percentile}%ile
                                     </span>
                                 </div>
-                                <div className="mt-0.5 text-[11px] text-slate-400">
+                                <div className="mt-0.5 text-[11px] text-muted-foreground">
                                     {tier.specialties} • AIR ≤{' '}
                                     {tier.rankThreshold.toLocaleString()}
                                 </div>
@@ -580,8 +580,8 @@ export function NationalRankPredictor({
                             <div
                                 className={`rounded border px-2 py-1 font-mono text-xs font-semibold ${
                                     isCleared
-                                        ? 'border-emerald-900/50 bg-emerald-950/40 text-emerald-400'
-                                        : 'border-rose-900/50 bg-rose-950/40 text-rose-400'
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                        : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400'
                                 }`}
                             >
                                 {isCleared

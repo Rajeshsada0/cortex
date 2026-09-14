@@ -31,11 +31,11 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group h-auto rounded-xl border border-slate-800/80 bg-[#0a1120] p-2 text-slate-300 transition-colors hover:bg-slate-800/60 hover:text-white data-[state=open]:bg-slate-800/80"
+                            className="group h-auto rounded-xl border border-border bg-card p-2 text-foreground transition-colors hover:bg-muted/80 data-[state=open]:bg-muted"
                             data-test="sidebar-menu-button"
                         >
                             <UserInfo user={auth.user} />
-                            <Settings className="ml-auto size-4 text-slate-500 transition-colors group-hover:text-slate-300" />
+                            <Settings className="ml-auto size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

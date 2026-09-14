@@ -179,15 +179,15 @@ export function StudyStreakHeatmap({
                     </div>
                     <div>
                         <div className="flex items-center space-x-2">
-                            <h4 className="text-base font-bold text-white">
+                            <h4 className="text-base font-bold text-foreground dark:text-white">
                                 DAILY STUDY STREAK
                             </h4>
-                            <span className="rounded border border-orange-800 bg-orange-950 px-2 py-0.5 text-xs font-bold text-orange-400">
+                            <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-bold text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400">
                                 {current_streak}{' '}
                                 {current_streak === 1 ? 'Day' : 'Days'} Streak
                             </span>
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                             Consistent deliberate retrieval practice builds
                             board exam automaticity.
                         </p>
@@ -195,7 +195,7 @@ export function StudyStreakHeatmap({
                 </div>
                 <Link
                     href="/qbank/runner"
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                    className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted/80 hover:text-foreground dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                 >
                     Extend Streak
                 </Link>
@@ -203,55 +203,55 @@ export function StudyStreakHeatmap({
 
             {/* Streak Stat Grid */}
             <div className="my-4 grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
-                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
+                <div className="rounded-lg border border-border bg-card p-2.5 dark:border-slate-800 dark:bg-slate-900/60">
+                    <span className="block text-[10px] font-semibold text-muted-foreground uppercase">
                         Active Streak
                     </span>
-                    <span className="font-mono text-lg font-bold text-white">
+                    <span className="font-mono text-lg font-bold text-foreground dark:text-white">
                         {current_streak}
                     </span>
-                    <span className="block text-[10px] font-medium text-amber-400">
+                    <span className="block text-[10px] font-medium text-amber-600 dark:text-amber-400">
                         {today_attempts > 0 ? '• Active' : '• Action Needed'}
                     </span>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
-                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
+                <div className="rounded-lg border border-border bg-card p-2.5 dark:border-slate-800 dark:bg-slate-900/60">
+                    <span className="block text-[10px] font-semibold text-muted-foreground uppercase">
                         Personal Best
                     </span>
-                    <span className="font-mono text-lg font-bold text-white">
+                    <span className="font-mono text-lg font-bold text-foreground dark:text-white">
                         {longest_streak}
                     </span>
-                    <span className="block text-[10px] text-slate-400">
+                    <span className="block text-[10px] text-muted-foreground">
                         Days Longest
                     </span>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
-                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
+                <div className="rounded-lg border border-border bg-card p-2.5 dark:border-slate-800 dark:bg-slate-900/60">
+                    <span className="block text-[10px] font-semibold text-muted-foreground uppercase">
                         30-Day Volume
                     </span>
-                    <span className="font-mono text-lg font-bold text-white">
+                    <span className="font-mono text-lg font-bold text-foreground dark:text-white">
                         {total_30d_attempts}
                     </span>
-                    <span className="block text-[10px] text-slate-400">
+                    <span className="block text-[10px] text-muted-foreground">
                         MCQs Total
                     </span>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5">
-                    <span className="block text-[10px] font-semibold text-slate-400 uppercase">
+                <div className="rounded-lg border border-border bg-card p-2.5 dark:border-slate-800 dark:bg-slate-900/60">
+                    <span className="block text-[10px] font-semibold text-muted-foreground uppercase">
                         Consistency
                     </span>
-                    <span className="font-mono text-lg font-bold text-white">
+                    <span className="font-mono text-lg font-bold text-foreground dark:text-white">
                         {targetCompletionRate}%
                     </span>
-                    <span className="block text-[10px] text-slate-400">
+                    <span className="block text-[10px] text-muted-foreground">
                         {targetMetDays} / 30 Target Days
                     </span>
                 </div>
             </div>
 
             {/* Target Selector Bar */}
-            <div className="flex items-center justify-between border-t border-b border-slate-800/80 py-2 text-xs">
-                <span className="text-slate-400">Set Daily MCQ Target:</span>
+            <div className="flex items-center justify-between border-t border-b border-border py-2 text-xs dark:border-slate-800/80">
+                <span className="text-muted-foreground">Set Daily MCQ Target:</span>
                 <div className="flex items-center space-x-1.5 font-mono">
                     {targetPresets.map((preset) => (
                         <button
@@ -264,7 +264,7 @@ export function StudyStreakHeatmap({
                             className={`cursor-pointer rounded px-2.5 py-1 text-xs transition ${
                                 dailyTarget === preset
                                     ? 'bg-cyan-600 font-bold text-white shadow'
-                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white'
                             }`}
                         >
                             {preset}
@@ -275,17 +275,17 @@ export function StudyStreakHeatmap({
 
             {/* 30-Day Activity Punchcard Grid */}
             <div className="mt-4">
-                <div className="mb-2 flex items-center justify-between text-[11px] font-medium text-slate-400">
+                <div className="mb-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
                     <span>30-Day Practice Activity Punchcard</span>
                     <div className="flex items-center space-x-1.5">
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-muted-foreground">
                             Inactive
                         </span>
-                        <span className="h-2.5 w-2.5 rounded-sm border border-slate-700 bg-slate-800"></span>
-                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-900"></span>
-                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-600"></span>
-                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-400"></span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="h-2.5 w-2.5 rounded-sm border border-border bg-muted"></span>
+                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-200 dark:bg-cyan-900"></span>
+                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-500 dark:bg-cyan-600"></span>
+                        <span className="h-2.5 w-2.5 rounded-sm bg-cyan-600 dark:bg-cyan-400"></span>
+                        <span className="text-[10px] text-muted-foreground">
                             ≥{dailyTarget} MCQs
                         </span>
                     </div>
@@ -299,16 +299,16 @@ export function StudyStreakHeatmap({
                         const isToday = day.is_today;
 
                         let cellClass =
-                            'bg-slate-900/60 border border-slate-800/80 text-slate-500';
+                            'bg-muted/40 border border-border text-muted-foreground dark:bg-slate-900/60 dark:border-slate-800/80 dark:text-slate-500';
                         if (isToday) {
                             cellClass =
-                                'bg-cyan-950/60 border-2 border-cyan-400 text-cyan-300 font-bold shadow-sm ring-2 ring-cyan-500/20';
+                                'bg-cyan-50 border-2 border-cyan-500 text-cyan-800 font-bold shadow-sm ring-2 ring-cyan-500/20 dark:bg-cyan-950/60 dark:border-cyan-400 dark:text-cyan-300';
                         } else if (isDayTargetMet) {
                             cellClass = 'bg-cyan-500 text-slate-950 font-bold';
                         } else if (day.attempts_count >= dailyTarget * 0.5) {
                             cellClass = 'bg-cyan-600 text-white font-semibold';
                         } else if (day.attempts_count > 0) {
-                            cellClass = 'bg-cyan-900 text-cyan-300 font-medium';
+                            cellClass = 'bg-cyan-100 text-cyan-800 font-medium dark:bg-cyan-900 dark:text-cyan-300';
                         }
 
                         return (
@@ -320,7 +320,7 @@ export function StudyStreakHeatmap({
                             >
                                 {day.day_number}
                                 {isToday && (
-                                    <span className="block font-sans text-[8px] text-cyan-400 uppercase">
+                                    <span className="block font-sans text-[8px] text-cyan-600 dark:text-cyan-400 uppercase">
                                         Today
                                     </span>
                                 )}
@@ -331,10 +331,10 @@ export function StudyStreakHeatmap({
             </div>
 
             {/* Streak Callout Action */}
-            <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-4">
-                <div className="flex items-center space-x-2 text-xs text-slate-300">
+            <div className="mt-4 flex items-center justify-between border-t border-border pt-4 dark:border-slate-800">
+                <div className="flex items-center space-x-2 text-xs text-foreground/80 dark:text-slate-300">
                     <span
-                        className={`h-2 w-2 rounded-full ${today_attempts > 0 ? 'bg-emerald-400' : 'bg-amber-400'}`}
+                        className={`h-2 w-2 rounded-full ${today_attempts > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`}
                     ></span>
                     <span>
                         {today_attempts > 0

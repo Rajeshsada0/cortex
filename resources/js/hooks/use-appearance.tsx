@@ -31,14 +31,20 @@ const setCookie = (name: string, value: string, days = 365): void => {
 
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
-        return 'dark';
+        return 'light';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'dark';
+    return (localStorage.getItem('appearance') as Appearance) || 'light';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance !== 'light';
+    if (appearance === 'dark') {
+        return true;
+    }
+    if (appearance === 'system') {
+        return prefersDark();
+    }
+    return false;
 };
 
 const applyTheme = (appearance: Appearance): void => {
@@ -76,8 +82,8 @@ export function initializeTheme(): void {
     }
 
     if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
+        localStorage.setItem('appearance', 'light');
+        setCookie('appearance', 'light');
     }
 
     currentAppearance = getStoredAppearance();

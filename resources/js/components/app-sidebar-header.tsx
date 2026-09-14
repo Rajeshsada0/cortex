@@ -5,6 +5,7 @@ import type { BreadcrumbItem as BreadcrumbItemType, Auth } from '@/types';
 import { PlaySquare, Plus, Shield, Bell, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PathwaySelector } from '@/components/cortex/pathway-selector';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function AppSidebarHeader({
     breadcrumbs = [],
@@ -156,13 +157,15 @@ export function AppSidebarHeader({
     return (
         <header className="border-cortex-border bg-cortex-bg flex h-14 shrink-0 items-center justify-between border-b px-4 transition-[width,height] ease-linear sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
-                <SidebarTrigger className="-ml-1 text-slate-400 hover:text-white" />
-                <div className="h-4 w-px bg-slate-800" />
+                <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+                <div className="h-4 w-px bg-border" />
                 <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} />
             </div>
 
             {user && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                    <ThemeToggle />
+
                     {isAdmin ? (
                         <>
                             <div className="hidden items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-600 sm:flex dark:text-purple-400">
@@ -189,7 +192,7 @@ export function AppSidebarHeader({
 
                             <button
                                 type="button"
-                                className="relative rounded-xl border border-slate-700/80 bg-[#0d1627] p-2 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
+                                className="relative rounded-xl border border-border bg-card p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 title="Notifications"
                             >
                                 <Bell className="size-4" />

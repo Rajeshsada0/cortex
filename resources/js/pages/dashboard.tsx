@@ -317,26 +317,26 @@ export default function Dashboard({
                 data-purpose="top-metrics-row"
             >
                 {/* Metric 1: Daily Target */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
+                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         <span>Daily Target</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-cyan-800 bg-cyan-950 text-cyan-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-400">
                             <Target className="h-3.5 w-3.5" />
                         </div>
                     </div>
                     <div className="mt-2 mb-3">
                         <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-white">
+                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
                                 {studyStreak?.today_attempts ?? 0}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-muted-foreground">
                                 / {user.daily_mcq_target || 100} MCQs
                             </span>
                         </div>
                         {/* Progress Bar */}
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                             <div
-                                className="h-1.5 rounded-full bg-cyan-400 transition-all"
+                                className="h-1.5 rounded-full bg-cyan-500 transition-all"
                                 style={{
                                     width: `${Math.min(
                                         100,
@@ -352,39 +352,39 @@ export default function Dashboard({
                             />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-2 text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
                         <span>Capacity:</span>
-                        <span className="font-medium text-slate-300">
+                        <span className="font-medium text-foreground dark:text-slate-300">
                             {user.daily_study_hours || 6} hrs/day
                         </span>
                     </div>
                 </div>
 
                 {/* Metric 2: Spaced Repetition */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
+                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         <span>Spaced Repetition</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-amber-800/60 bg-amber-950/70 text-amber-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/70 dark:text-amber-400">
                             <Repeat className="h-3.5 w-3.5" />
                         </div>
                     </div>
                     <div className="mt-2 mb-3">
                         <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-amber-400">
+                            <span className="font-mono text-2xl font-extrabold text-amber-600 dark:text-amber-400">
                                 {dueCardsCount}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-muted-foreground">
                                 Cards Due
                             </span>
                         </div>
-                        <p className="mt-1 text-[11px] text-slate-500">
+                        <p className="mt-1 text-[11px] text-muted-foreground">
                             Ready for consolidation
                         </p>
                     </div>
-                    <div className="border-t border-slate-800 pt-2 text-[11px]">
+                    <div className="border-t border-border pt-2 text-[11px]">
                         <Link
                             href="/spaced-repetition"
-                            className="inline-flex items-center font-medium text-amber-400 hover:text-amber-300"
+                            className="inline-flex items-center font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                         >
                             Review Due Deck →
                         </Link>
@@ -392,30 +392,30 @@ export default function Dashboard({
                 </div>
 
                 {/* Metric 3: Clinical Notebook */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
+                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         <span>Clinical Notebook</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-purple-800 bg-purple-950 text-purple-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-400">
                             <Bookmark className="h-3.5 w-3.5" />
                         </div>
                     </div>
                     <div className="mt-2 mb-3">
                         <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-white">
+                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
                                 {bookmarkedCount}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-muted-foreground">
                                 Flagged
                             </span>
                         </div>
-                        <p className="mt-1 text-[11px] text-slate-500">
+                        <p className="mt-1 text-[11px] text-muted-foreground">
                             High-yield pearls saved
                         </p>
                     </div>
-                    <div className="border-t border-slate-800 pt-2 text-[11px]">
+                    <div className="border-t border-border pt-2 text-[11px]">
                         <Link
                             href="/bookmarks"
-                            className="inline-flex items-center font-medium text-purple-400 hover:text-purple-300"
+                            className="inline-flex items-center font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
                         >
                             Open Notebook →
                         </Link>
@@ -423,23 +423,23 @@ export default function Dashboard({
                 </div>
 
                 {/* Metric 4: Total Solved */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
+                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         <span>Total Solved</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-emerald-800 bg-emerald-950 text-emerald-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
                             <CheckCircle2 className="h-3.5 w-3.5" />
                         </div>
                     </div>
                     <div className="mt-2 mb-3">
                         <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-white">
+                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
                                 {totalAttempts}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-muted-foreground">
                                 / {totalQuestions} Active
                             </span>
                         </div>
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                             <div
                                 className="h-1.5 rounded-full bg-emerald-500 transition-all"
                                 style={{
@@ -448,9 +448,9 @@ export default function Dashboard({
                             />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-2 text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
                         <span>Progress:</span>
-                        <span className="font-medium text-emerald-400">
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">
                             {totalQuestions > 0
                                 ? Math.round(
                                       (totalAttempts / totalQuestions) * 100,
@@ -462,31 +462,31 @@ export default function Dashboard({
                 </div>
 
                 {/* Metric 5: Mock Exam Hall */}
-                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-600">
-                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                <div className="bg-cortex-card border-cortex-border card-glow flex flex-col justify-between rounded-xl border p-4 transition hover:border-slate-300 dark:hover:border-slate-600">
+                    <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         <span>Mock Exam Hall</span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-indigo-800 bg-indigo-950 text-indigo-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-400">
                             <Award className="h-3.5 w-3.5" />
                         </div>
                     </div>
                     <div className="mt-2 mb-3">
                         <div className="flex items-baseline space-x-1">
-                            <span className="font-mono text-2xl font-extrabold text-white">
+                            <span className="font-mono text-2xl font-extrabold text-foreground dark:text-white">
                                 {grandMocksCount}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-muted-foreground">
                                 Grand Mocks
                             </span>
                         </div>
-                        <p className="mt-1 text-[11px] text-slate-500">
+                        <p className="mt-1 text-[11px] text-muted-foreground">
                             Full 200Q AIIMS Pattern
                         </p>
                     </div>
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-2 text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
                         <span>{completedSessionsCount} Sessions</span>
                         <Link
                             href="/mock-exam"
-                            className="font-medium text-indigo-400 hover:text-indigo-300"
+                            className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
                             Hall →
                         </Link>
@@ -534,17 +534,17 @@ export default function Dashboard({
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <div className="flex items-center space-x-2">
-                            <h3 className="text-lg font-bold tracking-wide text-white">
+                            <h3 className="text-lg font-bold tracking-wide text-foreground dark:text-white">
                                 19-SUBJECT CURRICULUM MASTERY
                             </h3>
-                            <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">
+                            <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground dark:bg-slate-800 dark:text-slate-300">
                                 {subjects.length} Subjects
                             </span>
-                            <span className="rounded border border-cyan-800 bg-cyan-950 px-2 py-0.5 font-mono text-xs text-cyan-400">
+                            <span className="rounded border border-cyan-200 bg-cyan-50 px-2 py-0.5 font-mono text-xs text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-400">
                                 Avg Mastery: {avgMastery}%
                             </span>
                         </div>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-muted-foreground">
                             Pre-Clinical, Para-Clinical, and Clinical curriculum
                             tracking with instant MCQ drills
                         </p>
@@ -553,16 +553,16 @@ export default function Dashboard({
                         {/* Search Bar */}
                         <div className="relative">
                             <input
-                                className="w-48 rounded-lg border border-slate-700 bg-slate-900 py-1.5 pr-3 pl-8 text-xs text-white transition placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
+                                className="w-48 rounded-lg border border-border bg-background py-1.5 pr-3 pl-8 text-xs text-foreground transition placeholder:text-muted-foreground focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                 placeholder="Filter subjects..."
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <Search className="absolute top-2.5 left-2.5 h-3.5 w-3.5 text-slate-400" />
+                            <Search className="absolute top-2.5 left-2.5 h-3.5 w-3.5 text-muted-foreground" />
                         </div>
                         <Link
-                            className="inline-flex items-center text-xs font-semibold text-cyan-400 hover:text-cyan-300"
+                            className="inline-flex items-center text-xs font-semibold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                             href="/directory"
                         >
                             View Full Directory →
@@ -571,7 +571,7 @@ export default function Dashboard({
                 </div>
 
                 {/* Subject Classification Filter Pills */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center justify-between border-b border-border pb-3 dark:border-slate-800">
                     <div className="flex items-center space-x-2 text-xs">
                         {(
                             [
@@ -590,15 +590,15 @@ export default function Dashboard({
                                 onClick={() => setPhaseFilter(tab.id)}
                                 className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                                     phaseFilter === tab.id
-                                        ? 'border border-cyan-500/30 bg-cyan-500/20 text-cyan-300'
-                                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
+                                        ? 'border border-cyan-500/40 bg-cyan-50 text-cyan-800 dark:border-cyan-500/30 dark:bg-cyan-500/20 dark:text-cyan-300'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80 dark:bg-slate-800/50 dark:text-slate-400 dark:hover:bg-slate-800'
                                 }`}
                             >
                                 {tab.label}
                             </button>
                         ))}
                     </div>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                         {showAllSubjects
                             ? `Showing All ${filteredSubjects.length} Subjects`
                             : `Showing ${displayedSubjects.length} High-Yield Subjects`}
@@ -613,36 +613,36 @@ export default function Dashboard({
                             return (
                                 <div
                                     key={sub.id}
-                                    className="border-cortex-border group card-glow flex flex-col justify-between rounded-xl border bg-slate-900/80 p-4 transition hover:border-cyan-500/40"
+                                    className="border-cortex-border group card-glow flex flex-col justify-between rounded-xl border bg-card p-4 transition hover:border-cyan-500/40 dark:bg-slate-900/80"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between">
                                             <span
                                                 className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase ${
                                                     info.category === 'PRE'
-                                                        ? 'border-emerald-800 bg-emerald-950 text-emerald-300'
+                                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                                         : info.category ===
                                                             'PARA'
-                                                          ? 'border-amber-800 bg-amber-950 text-amber-300'
-                                                          : 'border-blue-800 bg-blue-950 text-blue-300'
+                                                          ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                                          : 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
                                                 }`}
                                             >
                                                 {info.phase}
                                             </span>
-                                            <span className="font-mono text-xs font-bold text-slate-400 transition group-hover:text-cyan-400">
+                                            <span className="font-mono text-xs font-bold text-muted-foreground transition group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
                                                 {sub.mastery_percentage}%
                                                 Mastery
                                             </span>
                                         </div>
 
-                                        <h4 className="mt-2 truncate text-base font-bold text-white transition group-hover:text-cyan-300">
+                                        <h4 className="mt-2 truncate text-base font-bold text-foreground transition group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-300">
                                             {sub.name}
                                         </h4>
 
-                                        <div className="mt-3 space-y-2 border-t border-slate-800/80 pt-3 text-xs text-slate-400">
+                                        <div className="mt-3 space-y-2 border-t border-border pt-3 text-xs text-muted-foreground dark:border-slate-800/80">
                                             <div className="flex justify-between">
                                                 <span>Q-Bank Coverage:</span>
-                                                <span className="font-mono font-medium text-slate-300">
+                                                <span className="font-mono font-medium text-foreground dark:text-slate-300">
                                                     {sub.attempted_count} /{' '}
                                                     {sub.questions_count} (
                                                     {sub.coverage_percentage}%)
@@ -650,11 +650,11 @@ export default function Dashboard({
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Accuracy Mastery:</span>
-                                                <span className="font-mono font-medium text-slate-300">
+                                                <span className="font-mono font-medium text-foreground dark:text-slate-300">
                                                     {sub.mastery_percentage}%
                                                 </span>
                                             </div>
-                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                                                 <div
                                                     className="h-1.5 rounded-full bg-cyan-500 transition-all"
                                                     style={{
@@ -665,8 +665,8 @@ export default function Dashboard({
                                         </div>
                                     </div>
 
-                                    <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-3">
-                                        <span className="text-[11px] text-slate-500">
+                                    <div className="mt-4 flex items-center justify-between border-t border-border pt-3 dark:border-slate-800">
+                                        <span className="text-[11px] text-muted-foreground">
                                             {getSubtopicsCount(
                                                 sub.slug,
                                                 sub.id,
@@ -675,7 +675,7 @@ export default function Dashboard({
                                         </span>
                                         <Link
                                             href={`/qbank/runner?mode=TUTOR&subject_id=${sub.id}`}
-                                            className="inline-flex items-center text-xs font-semibold text-cyan-400 group-hover:underline hover:text-cyan-300"
+                                            className="inline-flex items-center text-xs font-semibold text-cyan-600 group-hover:underline hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                                         >
                                             Drill MCQs →
                                         </Link>
@@ -686,7 +686,7 @@ export default function Dashboard({
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <p className="text-xs font-semibold text-slate-400">
+                        <p className="text-xs font-semibold text-muted-foreground">
                             No subjects found matching "{searchQuery}".
                         </p>
                         <Button
@@ -696,7 +696,7 @@ export default function Dashboard({
                                 setSearchQuery('');
                                 setPhaseFilter('ALL');
                             }}
-                            className="mt-2 text-xs text-cyan-400 hover:text-cyan-300"
+                            className="mt-2 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                         >
                             Reset filters
                         </Button>
@@ -708,7 +708,7 @@ export default function Dashboard({
                     <button
                         type="button"
                         onClick={() => setShowAllSubjects(!showAllSubjects)}
-                        className="inline-flex cursor-pointer items-center text-xs font-medium text-slate-400 transition hover:text-cyan-400"
+                        className="inline-flex cursor-pointer items-center text-xs font-medium text-muted-foreground transition hover:text-cyan-600 dark:hover:text-cyan-400"
                     >
                         {showAllSubjects
                             ? 'Collapse to High-Yield Subjects ↑'
