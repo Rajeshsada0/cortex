@@ -25,13 +25,13 @@ export function Breadcrumbs({
                             <BreadcrumbLink asChild>
                                 <Link
                                     href="/dashboard"
-                                    className="flex items-center text-slate-400 transition-colors hover:text-white"
+                                    className="flex items-center text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                                 >
                                     <Home className="size-3.5" />
                                 </Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
-                        <BreadcrumbSeparator className="text-slate-600">
+                        <BreadcrumbSeparator className="text-slate-400 dark:text-slate-600">
                             <span>/</span>
                         </BreadcrumbSeparator>
                         {breadcrumbs.map((item, index) => {
@@ -41,14 +41,14 @@ export function Breadcrumbs({
                                 <Fragment key={index}>
                                     <BreadcrumbItem>
                                         {isLast ? (
-                                            <BreadcrumbPage className="font-semibold text-white">
+                                            <BreadcrumbPage className="font-semibold text-slate-900 dark:text-white">
                                                 {item.title}
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
                                                 <Link
                                                     href={item.href}
-                                                    className="text-slate-400 transition-colors hover:text-white"
+                                                    className="text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                                                 >
                                                     {item.title}
                                                 </Link>
@@ -56,7 +56,7 @@ export function Breadcrumbs({
                                         )}
                                     </BreadcrumbItem>
                                     {!isLast && (
-                                        <BreadcrumbSeparator className="text-slate-600">
+                                        <BreadcrumbSeparator className="text-slate-400 dark:text-slate-600">
                                             <span>/</span>
                                         </BreadcrumbSeparator>
                                     )}

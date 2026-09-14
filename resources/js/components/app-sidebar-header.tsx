@@ -176,7 +176,7 @@ export function AppSidebarHeader({
                                 <Link href="/admin/questions/create">
                                     <Button
                                         size="sm"
-                                        className="hidden h-8 gap-1.5 bg-[#102A43] text-xs font-semibold text-white shadow-xs sm:flex dark:bg-[#55BDEB] dark:text-neutral-950"
+                                        className="hidden h-8 gap-1.5 bg-cyan-600 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 sm:flex dark:bg-[#55BDEB] dark:text-neutral-950 dark:hover:opacity-90"
                                     >
                                         <Plus className="size-3.5" />
                                         <span>New MCQ</span>
