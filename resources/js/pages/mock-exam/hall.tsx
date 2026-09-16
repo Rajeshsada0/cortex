@@ -529,14 +529,19 @@ export default function MockExamHall({
 
             {/* Main Hall Layout */}
             <main className="flex w-full flex-1 flex-col items-start gap-6 p-4 sm:p-6 lg:grid lg:grid-cols-12">
-                {/* Left Area: Clinical Stem & Media */}
-                <div className="flex flex-col gap-4 lg:col-span-8">
+                {/* Left Area: Clinical Stem, Media & Study Takeaway */}
+                <div className="flex flex-col gap-4 lg:col-span-7">
                     {/* Clinical Vignette (Anti-scraping user-select disabled) */}
                     <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-6 shadow-sm">
                         <div className="border-border flex items-center justify-between border-b pb-2">
-                            <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
-                                {currentQuestion.code}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
+                                    {currentQuestion.code}
+                                </span>
+                                <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-[10px] font-semibold uppercase">
+                                    {currentQuestion.difficulty}
+                                </span>
+                            </div>
                             <span className="text-muted-foreground text-[10px] font-bold uppercase">
                                 High-Stakes Simulation
                             </span>
@@ -555,7 +560,27 @@ export default function MockExamHall({
                         />
                     )}
 
-                    {/* Answer Choices */}
+                    {/* High-Yield Learning Objective Card in Study Mode */}
+                    {isStudyMode &&
+                        answers[currentQuestion.id] &&
+                        (currentQuestion.learning_objective ||
+                            currentQuestion.foundation_explanation) && (
+                            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-xs dark:bg-cyan-950/30">
+                                <div className="mb-1 flex items-center gap-1.5 font-bold text-cyan-700 dark:text-cyan-300">
+                                    <Lightbulb className="size-4 text-cyan-600 dark:text-cyan-400" />
+                                    Clinical Takeaway &amp; Learning Objective
+                                </div>
+                                <p className="leading-relaxed font-normal text-foreground opacity-90">
+                                    {currentQuestion.learning_objective ||
+                                        currentQuestion.foundation_explanation}
+                                </p>
+                            </div>
+                        )}
+                </div>
+
+                {/* Right Area: Answer Choices (Select Single Best Answer), Navigation & Question Palette */}
+                <div className="flex flex-col gap-4 lg:col-span-5">
+                    {/* Answer Choices: Select Single Best Answer */}
                     <div className="border-border bg-card flex flex-col gap-2 rounded-2xl border p-5 shadow-sm">
                         <div className="mb-1 flex items-center justify-between">
                             <span className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
@@ -664,28 +689,10 @@ export default function MockExamHall({
                                 );
                             })}
                         </div>
-
-                        {/* High-Yield Learning Objective Card in Study Mode */}
-                        {isStudyMode &&
-                            answers[currentQuestion.id] &&
-                            (currentQuestion.learning_objective ||
-                                currentQuestion.foundation_explanation) && (
-                                <div className="mt-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-xs dark:bg-cyan-950/30">
-                                    <div className="mb-1 flex items-center gap-1.5 font-bold text-cyan-700 dark:text-cyan-300">
-                                        <Lightbulb className="size-4 text-cyan-600 dark:text-cyan-400" />
-                                        Clinical Takeaway &amp; Learning
-                                        Objective
-                                    </div>
-                                    <p className="leading-relaxed font-normal text-foreground opacity-90">
-                                        {currentQuestion.learning_objective ||
-                                            currentQuestion.foundation_explanation}
-                                    </p>
-                                </div>
-                            )}
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex items-center justify-between pt-2">
+                    <div className="border-border bg-card flex items-center justify-between rounded-xl border p-3 shadow-xs">
                         <Button
                             type="button"
                             variant="outline"
@@ -724,10 +731,8 @@ export default function MockExamHall({
                             Next <ChevronRight className="size-4" />
                         </Button>
                     </div>
-                </div>
 
-                {/* Right Area: Question Palette Matrix */}
-                <div className="flex flex-col gap-4 lg:col-span-4">
+                    {/* Right Area: Question Palette Matrix */}
                     <QuestionPalette
                         questions={questions}
                         currentIndex={currentIndex}
