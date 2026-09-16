@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domain\QuestionBank\QuestionImportService;
 use App\Http\Controllers\Controller;
+use App\Models\ExamPathway;
 use App\Models\Question;
 use App\Models\QuestionExamRelevance;
 use App\Models\QuestionOption;
@@ -249,9 +250,14 @@ class AdminQuestionWebController extends Controller
     public function importView(): Response
     {
         $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+        $pathways = ExamPathway::where('is_active', true)
+            ->orderBy('order_index')
+            ->orderBy('id')
+            ->get(['id', 'code', 'name', 'full_name', 'region', 'badge_color']);
 
         return Inertia::render('admin/questions/import', [
             'subjects' => $subjects,
+            'pathways' => $pathways,
             'importResults' => session('import_results'),
         ]);
     }
@@ -265,6 +271,9 @@ class AdminQuestionWebController extends Controller
             'file' => 'required|file|max:153600',
             'status' => 'nullable|in:active,draft',
             'subject_id' => 'nullable|exists:subjects,id',
+            'pathways' => 'nullable|array',
+            'pathways.*' => 'string',
+            'pathway_mode' => 'nullable|in:fallback,override',
         ], [
             'file.max' => 'The question file size must not exceed 150MB.',
             'file.required' => 'Please select a CSV or JSON question file to upload.',
@@ -273,11 +282,15 @@ class AdminQuestionWebController extends Controller
 
         $publishAsActive = ($validated['status'] ?? 'active') === 'active';
         $defaultSubjectId = ! empty($validated['subject_id']) ? (int) $validated['subject_id'] : null;
+        $defaultPathways = $validated['pathways'] ?? [];
+        $pathwayMode = $validated['pathway_mode'] ?? 'fallback';
 
         $results = $importService->import(
             file: $request->file('file'),
             publishAsActive: $publishAsActive,
-            defaultSubjectId: $defaultSubjectId
+            defaultSubjectId: $defaultSubjectId,
+            defaultPathways: $defaultPathways,
+            pathwayMode: $pathwayMode
         );
 
         $msg = "Bulk import completed: {$results['imported']} questions imported successfully.";

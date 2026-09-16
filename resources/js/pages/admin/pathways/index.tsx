@@ -17,6 +17,7 @@ import {
     AlertTriangle,
     Globe,
     Check,
+    Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -231,6 +232,12 @@ export default function PathwaysIndex({
                         <Link href="/admin/questions/create">
                             <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-bold">
                                 Author Questions
+                            </Button>
+                        </Link>
+                        <Link href="/admin/questions/import">
+                            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-bold hover:border-[#0066FF] hover:text-[#0066FF]">
+                                <Upload className="size-3.5 text-[#0066FF]" />
+                                <span>Import Questions</span>
                             </Button>
                         </Link>
                         <Button

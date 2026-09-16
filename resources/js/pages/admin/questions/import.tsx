@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -13,6 +13,8 @@ import {
     Layers,
     FileCheck,
     AlertTriangle,
+    Compass,
+    Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -23,6 +25,15 @@ interface SubjectItem {
     id: number;
     name: string;
     topics: Array<{ id: number; subject_id: number; name: string }>;
+}
+
+export interface ExamPathwayItem {
+    id: number;
+    code: string;
+    name: string;
+    full_name?: string;
+    region?: string;
+    badge_color?: string;
 }
 
 interface ImportError {
@@ -37,15 +48,18 @@ interface ImportResults {
     failed: number;
     errors: ImportError[];
     created_codes: string[];
+    pathways_summary?: Record<string, number>;
 }
 
 interface ImportProps {
     subjects: SubjectItem[];
+    pathways?: ExamPathwayItem[];
     importResults?: ImportResults | null;
 }
 
 export default function QuestionsImport({
     subjects,
+    pathways = [],
     importResults,
 }: ImportProps) {
     const [dragOver, setDragOver] = useState(false);
@@ -53,15 +67,49 @@ export default function QuestionsImport({
         null,
     );
 
+    const initialExams = useMemo(() => {
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const examParam = urlParams.get('exam');
+            if (examParam && examParam !== 'ALL') {
+                return [examParam];
+            }
+        }
+        return [];
+    }, []);
+
     const { data, setData, post, processing, errors, reset } = useForm<{
         file: File | null;
         status: 'active' | 'draft';
         subject_id: string;
+        pathways: string[];
+        pathway_mode: 'fallback' | 'override';
     }>({
         file: null,
         status: 'active',
         subject_id: '',
+        pathways: initialExams,
+        pathway_mode: 'fallback',
     });
+
+    const togglePathway = (code: string) => {
+        setData(
+            'pathways',
+            data.pathways.includes(code)
+                ? data.pathways.filter((c) => c !== code)
+                : [...data.pathways, code],
+        );
+    };
+
+    const handleSelectAllPathways = () => {
+        if (pathways && pathways.length > 0) {
+            setData('pathways', pathways.map((p) => p.code));
+        }
+    };
+
+    const handleClearPathways = () => {
+        setData('pathways', []);
+    };
 
     const handleFileChange = (file: File | null) => {
         if (!file) return;
@@ -225,6 +273,34 @@ export default function QuestionsImport({
                                                     )}
                                                 </div>
                                             )}
+
+                                        {importResults.pathways_summary &&
+                                            Object.keys(
+                                                importResults.pathways_summary,
+                                            ).length > 0 && (
+                                                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                                                    <span className="text-muted-foreground mr-1 flex items-center gap-1 text-[11px] font-bold">
+                                                        <Compass className="size-3 text-[#0066FF]" />
+                                                        <span>
+                                                            Assigned Pathways:
+                                                        </span>
+                                                    </span>
+                                                    {Object.entries(
+                                                        importResults.pathways_summary,
+                                                    ).map(([pathwayCode, count]) => (
+                                                        <Badge
+                                                            key={pathwayCode}
+                                                            variant="outline"
+                                                            className="gap-1 border-blue-200 bg-blue-50/60 font-mono text-[10px] font-bold text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300"
+                                                        >
+                                                            <span>{pathwayCode}</span>
+                                                            <span className="opacity-70">
+                                                                ({count} Qs)
+                                                            </span>
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
 
@@ -372,6 +448,136 @@ export default function QuestionsImport({
                                         {errors.file}
                                     </p>
                                 )}
+                            </div>
+
+                            {/* Target Exam Pathways Section */}
+                            <div className="border-border/70 space-y-3.5 border-t pt-4">
+                                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <Compass className="size-4 text-[#0066FF]" />
+                                            <Label className="text-foreground text-xs font-bold">
+                                                Target Exam Pathways
+                                            </Label>
+                                            {data.pathways.length > 0 && (
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="bg-blue-50 font-mono text-[10px] font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                                                >
+                                                    {data.pathways.length} selected
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-muted-foreground mt-0.5 text-[11px]">
+                                            Assign imported questions to specific national curriculum blueprints.
+                                        </p>
+                                    </div>
+
+                                    {/* Quick Action buttons */}
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleSelectAllPathways}
+                                            className="h-7 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
+                                        >
+                                            Select All
+                                        </Button>
+                                        <span className="text-border text-xs">|</span>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleClearPathways}
+                                            className="h-7 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
+                                        >
+                                            Clear
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Pathway chips */}
+                                <div className="flex flex-wrap gap-2">
+                                    {pathways && pathways.length > 0 ? (
+                                        pathways.map((ep) => {
+                                            const selected = data.pathways.includes(ep.code);
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    key={ep.code}
+                                                    onClick={() => togglePathway(ep.code)}
+                                                    className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                                                        selected
+                                                            ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] shadow-xs dark:bg-blue-950/60'
+                                                            : 'border-border bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`flex size-3.5 items-center justify-center rounded-full transition-colors ${
+                                                            selected
+                                                                ? 'bg-[#0066FF] text-white'
+                                                                : 'border border-neutral-400'
+                                                        }`}
+                                                    >
+                                                        {selected && <Check className="size-2.5 stroke-[3]" />}
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{ep.name}</span>
+                                                        <span className="font-mono text-[10px] opacity-60">
+                                                            ({ep.code})
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-muted-foreground text-xs italic">
+                                            No active exam pathways configured.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Assignment Strategy Mode (Fallback vs. Override) */}
+                                <div className="bg-muted/20 border-border/80 rounded-xl border p-3">
+                                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <span className="text-foreground block text-[11px] font-bold">
+                                                Assignment Strategy
+                                            </span>
+                                            <p className="text-muted-foreground text-[10px]">
+                                                {data.pathway_mode === 'fallback'
+                                                    ? 'Questions will inherit selected pathways when their file row leaves relevant_exams blank.'
+                                                    : 'Force assigns selected pathways to ALL questions, completely overriding any exams in the file.'}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-1.5 rounded-lg bg-card p-1 border border-border">
+                                            <button
+                                                type="button"
+                                                onClick={() => setData('pathway_mode', 'fallback')}
+                                                className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
+                                                    data.pathway_mode === 'fallback'
+                                                        ? 'bg-[#0066FF] text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                Fallback Mode
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setData('pathway_mode', 'override')}
+                                                className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
+                                                    data.pathway_mode === 'override'
+                                                        ? 'bg-[#0066FF] text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                Override All
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Import Settings */}
@@ -567,10 +773,19 @@ export default function QuestionsImport({
                                             : High-yield mnemonic pearl
                                         </li>
                                         <li>
-                                            <code className="text-foreground font-mono">
-                                                relevant_exams
-                                            </code>
-                                            : MECEE_PG, INI_CET, USMLE_STEP1
+                                            <div className="flex items-center gap-1.5">
+                                                <code className="text-foreground font-mono">
+                                                    relevant_exams
+                                                </code>
+                                                <span className="font-semibold text-[10px] text-emerald-600 dark:text-emerald-400">
+                                                    (Optional if selected)
+                                                </span>
+                                            </div>
+                                            <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                                {pathways && pathways.length > 0
+                                                    ? `Active codes: ${pathways.map((p) => p.code).join(', ')}`
+                                                    : 'MECEE_PG, INI_CET, NMC, NEET_PG, USMLE_STEP1, COMBINED'}
+                                            </p>
                                         </li>
                                     </ul>
                                 </div>
@@ -581,13 +796,10 @@ export default function QuestionsImport({
                         <div className="rounded-2xl border border-sky-300 bg-sky-50 p-4 text-xs dark:border-sky-800 dark:bg-sky-950/40">
                             <div className="mb-1 flex items-center gap-1.5 font-bold text-sky-900 dark:text-sky-200">
                                 <HelpCircle className="size-3.5 text-sky-600 dark:text-sky-400" />
-                                <span>Tip for Quick Testing</span>
+                                <span>Tip for Quick Importing</span>
                             </div>
                             <p className="text-[11px] leading-relaxed text-sky-800 dark:text-sky-300">
-                                Download the <strong>Sample CSV</strong> or{' '}
-                                <strong>Sample JSON</strong> from the top right
-                                to get pre-formatted clinical vignettes ready to
-                                upload immediately.
+                                You can select your <strong>Target Exam Pathways</strong> in the form to automatically tag all imported questions without needing an explicit <code className="font-mono">relevant_exams</code> column.
                             </p>
                         </div>
                     </div>

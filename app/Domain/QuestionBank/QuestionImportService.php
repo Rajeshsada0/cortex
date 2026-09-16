@@ -18,9 +18,15 @@ class QuestionImportService
     /**
      * Import questions from an uploaded file (CSV or JSON).
      *
-     * @return array{total: int, imported: int, failed: int, errors: array<array{row: int|string, identifier: string, messages: array<string>}>, created_codes: array<string>}
+     * @return array{total: int, imported: int, failed: int, errors: array<array{row: int|string, identifier: string, messages: array<string>}>, created_codes: array<string>, pathways_summary?: array<string, int>}
      */
-    public function import(UploadedFile $file, bool $publishAsActive = true, ?int $defaultSubjectId = null): array
+    public function import(
+        UploadedFile $file,
+        bool $publishAsActive = true,
+        ?int $defaultSubjectId = null,
+        array $defaultPathways = [],
+        string $pathwayMode = 'fallback'
+    ): array
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(600);
@@ -37,20 +43,27 @@ class QuestionImportService
                     ['row' => 0, 'identifier' => 'File', 'messages' => ['The uploaded file is empty.']],
                 ],
                 'created_codes' => [],
+                'pathways_summary' => [],
             ];
         }
 
         if ($extension === 'json') {
-            return $this->importFromJson($content, $publishAsActive, $defaultSubjectId);
+            return $this->importFromJson($content, $publishAsActive, $defaultSubjectId, $defaultPathways, $pathwayMode);
         }
 
-        return $this->importFromCsv($content, $publishAsActive, $defaultSubjectId);
+        return $this->importFromCsv($content, $publishAsActive, $defaultSubjectId, $defaultPathways, $pathwayMode);
     }
 
     /**
      * Import questions from CSV string.
      */
-    public function importFromCsv(string $csvContent, bool $publishAsActive = true, ?int $defaultSubjectId = null): array
+    public function importFromCsv(
+        string $csvContent,
+        bool $publishAsActive = true,
+        ?int $defaultSubjectId = null,
+        array $defaultPathways = [],
+        string $pathwayMode = 'fallback'
+    ): array
     {
         // Strip UTF-8 BOM if present
         $csvContent = preg_replace('/^\xEF\xBB\xBF/', '', $csvContent);
@@ -121,13 +134,19 @@ class QuestionImportService
         }
         fclose($stream);
 
-        return $this->processMappedItems($rows, $publishAsActive, $defaultSubjectId, 'csv');
+        return $this->processMappedItems($rows, $publishAsActive, $defaultSubjectId, 'csv', $defaultPathways, $pathwayMode);
     }
 
     /**
      * Import questions from JSON string.
      */
-    public function importFromJson(string $jsonContent, bool $publishAsActive = true, ?int $defaultSubjectId = null): array
+    public function importFromJson(
+        string $jsonContent,
+        bool $publishAsActive = true,
+        ?int $defaultSubjectId = null,
+        array $defaultPathways = [],
+        string $pathwayMode = 'fallback'
+    ): array
     {
         $decoded = json_decode($jsonContent, true);
         if (! is_array($decoded)) {
@@ -139,6 +158,7 @@ class QuestionImportService
                     ['row' => 1, 'identifier' => 'JSON', 'messages' => ['Invalid JSON format. Please ensure valid JSON structure.']],
                 ],
                 'created_codes' => [],
+                'pathways_summary' => [],
             ];
         }
 
@@ -161,21 +181,30 @@ class QuestionImportService
             }
         }
 
-        return $this->processMappedItems($rows, $publishAsActive, $defaultSubjectId, 'json');
+        return $this->processMappedItems($rows, $publishAsActive, $defaultSubjectId, 'json', $defaultPathways, $pathwayMode);
     }
 
     /**
      * Process mapped rows and insert them into DB.
      *
      * @param  array<array{row_number: int, data: array<string, mixed>}>  $items
-     * @return array{total: int, imported: int, failed: int, errors: array<array{row: int|string, identifier: string, messages: array<string>}>, created_codes: array<string>}
+     * @param  array<string>  $defaultPathways
+     * @return array{total: int, imported: int, failed: int, errors: array<array{row: int|string, identifier: string, messages: array<string>}>, created_codes: array<string>, pathways_summary: array<string, int>}
      */
-    protected function processMappedItems(array $items, bool $publishAsActive, ?int $defaultSubjectId, string $sourceType): array
+    protected function processMappedItems(
+        array $items,
+        bool $publishAsActive,
+        ?int $defaultSubjectId,
+        string $sourceType,
+        array $defaultPathways = [],
+        string $pathwayMode = 'fallback'
+    ): array
     {
         $imported = 0;
         $failed = 0;
         $errors = [];
         $createdCodes = [];
+        $pathwaysSummary = [];
 
         // Preload subjects and topics for fast in-memory matching
         $subjects = Subject::with('topics.subtopics')->get();
@@ -184,7 +213,14 @@ class QuestionImportService
             $rowNum = $entry['row_number'];
             $raw = $entry['data'];
 
-            $validation = $this->validateAndNormalizeItem($raw, $subjects, $defaultSubjectId, $sourceType);
+            $validation = $this->validateAndNormalizeItem(
+                $raw,
+                $subjects,
+                $defaultSubjectId,
+                $sourceType,
+                $defaultPathways,
+                $pathwayMode
+            );
 
             if (! empty($validation['errors'])) {
                 $failed++;
@@ -243,6 +279,9 @@ class QuestionImportService
 
                 $imported++;
                 $createdCodes[] = $createdQuestion->code;
+                foreach ($validation['relevant_exams'] as $examCode) {
+                    $pathwaysSummary[$examCode] = ($pathwaysSummary[$examCode] ?? 0) + 1;
+                }
             } catch (\Throwable $e) {
                 $failed++;
                 $errors[] = [
@@ -259,6 +298,7 @@ class QuestionImportService
             'failed' => $failed,
             'errors' => $errors,
             'created_codes' => $createdCodes,
+            'pathways_summary' => $pathwaysSummary,
         ];
     }
 
@@ -267,9 +307,17 @@ class QuestionImportService
      *
      * @param  array<string, mixed>  $data
      * @param  Collection<int, Subject>  $subjects
+     * @param  array<string>  $defaultPathways
      * @return array<string, mixed>
      */
-    protected function validateAndNormalizeItem(array $data, $subjects, ?int $defaultSubjectId, string $sourceType): array
+    protected function validateAndNormalizeItem(
+        array $data,
+        $subjects,
+        ?int $defaultSubjectId,
+        string $sourceType,
+        array $defaultPathways = [],
+        string $pathwayMode = 'fallback'
+    ): array
     {
         $errors = [];
 
@@ -450,30 +498,51 @@ class QuestionImportService
         }
 
         // 11. Relevant Exams
-        $examsInput = $get(['relevant_exams', 'exams', 'exam', 'pathways', 'relevantexams'], 'COMBINED');
         $dbExams = \App\Models\ExamPathway::pluck('code')->map(fn ($c) => strtoupper($c))->toArray();
         $validExams = array_unique(array_merge(['MECEE_PG', 'INI_CET', 'NEET_PG', 'USMLE_STEP1', 'USMLE_STEP2CK', 'COMBINED'], $dbExams));
-        $relevantExams = [];
 
-        if (is_array($examsInput)) {
-            foreach ($examsInput as $e) {
-                $up = strtoupper(trim((string) $e));
-                if (in_array($up, $validExams)) {
-                    $relevantExams[] = $up;
-                }
-            }
-        } else {
-            $parts = explode(',', (string) $examsInput);
-            foreach ($parts as $p) {
-                $up = strtoupper(trim($p));
-                if (in_array($up, $validExams)) {
-                    $relevantExams[] = $up;
-                }
+        // Sanitize default pathways from request
+        $cleanDefaultPathways = [];
+        foreach ($defaultPathways as $dp) {
+            $up = strtoupper(trim((string) $dp));
+            if (in_array($up, $validExams)) {
+                $cleanDefaultPathways[] = $up;
             }
         }
+        $cleanDefaultPathways = array_values(array_unique($cleanDefaultPathways));
 
-        if (empty($relevantExams)) {
-            $relevantExams = ['COMBINED'];
+        $relevantExams = [];
+
+        if ($pathwayMode === 'override' && ! empty($cleanDefaultPathways)) {
+            $relevantExams = $cleanDefaultPathways;
+        } else {
+            $examsInput = $get(['relevant_exams', 'exams', 'exam', 'pathways', 'relevantexams']);
+            if ($examsInput !== null && $examsInput !== '') {
+                if (is_array($examsInput)) {
+                    foreach ($examsInput as $e) {
+                        $up = strtoupper(trim((string) $e));
+                        if (in_array($up, $validExams)) {
+                            $relevantExams[] = $up;
+                        }
+                    }
+                } else {
+                    $parts = explode(',', (string) $examsInput);
+                    foreach ($parts as $p) {
+                        $up = strtoupper(trim($p));
+                        if (in_array($up, $validExams)) {
+                            $relevantExams[] = $up;
+                        }
+                    }
+                }
+            }
+
+            if (empty($relevantExams)) {
+                if (! empty($cleanDefaultPathways)) {
+                    $relevantExams = $cleanDefaultPathways;
+                } else {
+                    $relevantExams = ['COMBINED'];
+                }
+            }
         }
 
         return [
