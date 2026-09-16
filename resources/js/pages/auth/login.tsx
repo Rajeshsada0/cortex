@@ -12,7 +12,7 @@ import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import PasskeyVerify from '@/components/passkey-verify';
-import { Target, Zap, Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 
 type Props = {
     status?: string;
@@ -25,32 +25,6 @@ export default function Login({ status, canResetPassword }: Props) {
             <Head title="Candidate Login — Cortex Medical" />
 
             <PasskeyVerify />
-
-            {/* Target Curriculum & 1-Click Demo Banner */}
-            <div className="mb-6 rounded-2xl border border-sky-200/80 bg-gradient-to-r from-cyan-50/90 to-sky-50/80 p-3.5">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
-                            <Target className="size-4.5" />
-                        </div>
-                        <div>
-                            <h4 className="text-xs font-bold text-slate-900">
-                                Target Postgraduate Curriculum
-                            </h4>
-                            <p className="text-[11px] text-slate-600">
-                                MECEE-PG, INI-CET &amp; USMLE clinical prep.
-                            </p>
-                        </div>
-                    </div>
-                    <Link
-                        href="/demo-login"
-                        className="flex items-center gap-1 shrink-0 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm hover:brightness-105 transition-all"
-                    >
-                        <Zap className="size-3 fill-current" />
-                        <span>1-Click Demo</span>
-                    </Link>
-                </div>
-            </div>
 
             <Form
                 {...store.form()}

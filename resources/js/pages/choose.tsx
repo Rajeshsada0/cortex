@@ -84,16 +84,6 @@ export default function Choose({
                     </nav>
 
                     <div className="flex items-center gap-3">
-                        <Link href="/demo-login">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="hidden border-[#0066FF]/40 bg-[#0066FF]/10 text-xs font-bold text-[#0066FF] shadow-sm transition-all hover:bg-[#0066FF]/20 sm:inline-flex dark:text-sky-400"
-                            >
-                                <Zap className="mr-1 size-3.5 animate-pulse text-[#0066FF] dark:text-sky-400" />
-                                1-Click Demo
-                            </Button>
-                        </Link>
                         {currentUser ? (
                             <Link href="/dashboard">
                                 <Button
@@ -294,12 +284,7 @@ export default function Choose({
                         >
                             About MedAI
                         </Link>
-                        <Link
-                            href="/demo-login"
-                            className="hover:text-foreground"
-                        >
-                            Demo Login
-                        </Link>
+
                     </div>
                 </div>
             </footer>

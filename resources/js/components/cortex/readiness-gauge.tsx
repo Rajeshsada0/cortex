@@ -396,34 +396,7 @@ export function ReadinessGauge({
                     </div>
                 </div>
 
-                {/* Remediation Warning Banner */}
-                <div
-                    className={`mt-4 w-full rounded-xl border p-4 text-center ${
-                        displayScore >= 75
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-slate-300'
-                            : displayScore >= 50
-                              ? 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-slate-300'
-                              : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-slate-300'
-                    }`}
-                >
-                    <span
-                        className={`mb-1 block text-xs font-bold tracking-wider uppercase ${
-                            displayScore >= 75
-                                ? 'text-emerald-700 dark:text-emerald-400'
-                                : displayScore >= 50
-                                  ? 'text-amber-700 dark:text-amber-400'
-                                  : 'text-rose-700 dark:text-rose-400'
-                        }`}
-                    >
-                        {assessment.tier}
-                    </span>
-                    <p className="text-xs">
-                        <strong className="text-foreground dark:text-white">
-                            {assessment.prob}:
-                        </strong>{' '}
-                        {assessment.desc}
-                    </p>
-                </div>
+
 
                 {/* Next Tier Target Callout */}
                 <div className="border-cortex-border mt-3 flex w-full items-center justify-between rounded-xl border bg-muted/50 px-4 py-2.5 text-xs dark:bg-slate-900/60">
@@ -542,11 +515,8 @@ export function ReadinessGauge({
                                 </div>
                             )}
 
-                            {/* Alert / Details when expanded or accuracy is low */}
-                            {!isSimulating &&
-                                (isExpanded ||
-                                    (key === 'recent_accuracy' &&
-                                        val < 60)) && (
+                            {/* Alert / Details when expanded */}
+                            {!isSimulating && isExpanded && (
                                     <div className="flex items-center justify-between pt-1 text-[11px] text-amber-700 dark:text-amber-300/90">
                                         <span className="flex items-center">
                                             <svg

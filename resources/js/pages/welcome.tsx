@@ -92,16 +92,7 @@ export default function Welcome() {
                     <div className="flex items-center gap-2.5 sm:gap-3">
                         <ThemeToggle />
 
-                        <Link href="/demo-login">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="hidden border-cyan-500/40 bg-cyan-500/10 text-xs font-bold text-cyan-700 dark:text-cyan-400 shadow-sm transition-all hover:bg-cyan-500/20 sm:inline-flex"
-                            >
-                                <Zap className="mr-1 size-3.5 animate-pulse text-cyan-500 dark:text-cyan-400" />
-                                1-Click Demo (Dr. Cortex)
-                            </Button>
-                        </Link>
+
 
                         {auth?.user ? (
                             <Link
@@ -202,16 +193,7 @@ export default function Welcome() {
                                     </div>
                                 </Link>
 
-                                {/* 1-Click Demo */}
-                                <Link
-                                    href="/demo-login"
-                                    className="group shrink-0"
-                                >
-                                    <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border border-border bg-card px-3.5 text-xs font-bold whitespace-nowrap text-foreground shadow-sm transition-all duration-200 hover:bg-muted dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-800 sm:px-4 sm:text-[13px]">
-                                        <Zap className="size-4 shrink-0 text-amber-500 dark:text-amber-400" />
-                                        <span>1-Click Demo</span>
-                                    </div>
-                                </Link>
+
 
                                 {/* Secondary Button: 19 Subjects Drill */}
                                 <Link
@@ -871,15 +853,7 @@ export default function Welcome() {
                     </div>
 
                     <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
-                        <Link href="/demo-login">
-                            <Button
-                                size="lg"
-                                className="h-12 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-cyan-400 px-7 text-sm font-extrabold text-slate-950 shadow-xl shadow-cyan-500/25 transition-all hover:scale-105 hover:from-cyan-400 hover:to-sky-300"
-                            >
-                                <Zap className="mr-1.5 size-4 fill-slate-950 text-slate-950" />
-                                Start With Instant Dr. Cortex Demo
-                            </Button>
-                        </Link>
+
                         <Link href="/register">
                             <Button
                                 size="lg"

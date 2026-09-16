@@ -133,10 +133,6 @@ export function PerformanceQuadrant({
                         <span className="font-mono text-[10px] text-emerald-800/80 dark:text-emerald-300/80">
                             High Accuracy + High Conf.
                         </span>
-                        <p className="mt-2 text-xs text-foreground/80 dark:text-slate-300">
-                            {quadrants.mastered?.description ||
-                                'Solidified clinical knowledge ready for the real exam.'}
-                        </p>
                     </div>
                     <div className="mt-3 flex items-center justify-between border-t border-emerald-200 pt-2 text-[10px] text-muted-foreground dark:border-emerald-900/40">
                         <span>High accuracy recall</span>
@@ -164,10 +160,6 @@ export function PerformanceQuadrant({
                         <span className="font-mono text-[10px] text-rose-800/80 dark:text-rose-300/80">
                             Incorrect + High Conf.
                         </span>
-                        <p className="mt-2 text-xs text-foreground/80 dark:text-slate-300">
-                            {quadrants.hazardous?.description ||
-                                'Dangerous misconceptions that cause severe negative marks in INI-CET.'}
-                        </p>
                     </div>
                     <div className="mt-3 flex items-center justify-between border-t border-rose-200 pt-2 text-[10px] dark:border-rose-900/40">
                         <span className="font-semibold text-rose-600 dark:text-rose-400">
@@ -176,7 +168,7 @@ export function PerformanceQuadrant({
                         <span
                             className={
                                 quadrants.hazardous?.count > 0
-                                    ? 'font-semibold text-rose-600 dark:text-rose-400'
+                                     ? 'font-semibold text-rose-600 dark:text-rose-400'
                                     : 'text-emerald-600 dark:text-emerald-400'
                             }
                         >
@@ -202,10 +194,6 @@ export function PerformanceQuadrant({
                         <span className="font-mono text-[10px] text-amber-800/80 dark:text-amber-300/80">
                             Correct + Low/Med Conf.
                         </span>
-                        <p className="mt-2 text-xs text-foreground/80 dark:text-slate-300">
-                            {quadrants.unstable?.description ||
-                                'Correctly guessed or intuitive recall that needs SRS consolidation.'}
-                        </p>
                     </div>
                     <div className="mt-3 flex items-center justify-between border-t border-amber-200 pt-2 text-[10px] text-muted-foreground dark:border-amber-900/40">
                         <span>Spaced consolidation</span>
@@ -230,10 +218,6 @@ export function PerformanceQuadrant({
                         <span className="font-mono text-[10px] text-muted-foreground dark:text-slate-400">
                             Incorrect + Low/Med Conf.
                         </span>
-                        <p className="mt-2 text-xs text-foreground/80 dark:text-slate-300">
-                            {quadrants.gap?.description ||
-                                'Identified weak areas requiring targeted study in curriculum.'}
-                        </p>
                     </div>
                     <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[10px] text-muted-foreground dark:border-slate-800">
                         <span>Targeted study drill</span>

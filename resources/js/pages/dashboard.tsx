@@ -16,8 +16,6 @@ import {
     SlidersHorizontal,
     Activity,
     Compass,
-    Flame,
-    TrendingUp,
     RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,14 +33,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReadinessGauge } from '@/components/cortex/readiness-gauge';
 import { PerformanceQuadrant } from '@/components/cortex/performance-quadrant';
-import {
-    NationalRankPredictor,
-    RankPredictionData,
-} from '@/components/cortex/national-rank-predictor';
-import {
-    StudyStreakHeatmap,
-    StudyStreakData,
-} from '@/components/cortex/study-streak-heatmap';
+import { RankPredictionData } from '@/components/cortex/national-rank-predictor';
+import { StudyStreakData } from '@/components/cortex/study-streak-heatmap';
 import {
     Tooltip,
     TooltipContent,
@@ -52,16 +44,12 @@ import {
 
 export interface DashboardWidgetConfig {
     readiness_score: boolean;
-    cohort_rank: boolean;
     performance_quadrant: boolean;
-    study_streak: boolean;
 }
 
 const DEFAULT_WIDGET_CONFIG: DashboardWidgetConfig = {
     readiness_score: true,
-    cohort_rank: true,
     performance_quadrant: true,
-    study_streak: true,
 };
 
 interface DashboardProps {
@@ -143,9 +131,7 @@ export default function Dashboard({
         if (user.dashboard_preferences && typeof user.dashboard_preferences === 'object') {
             return {
                 readiness_score: user.dashboard_preferences.readiness_score ?? true,
-                cohort_rank: user.dashboard_preferences.cohort_rank ?? true,
                 performance_quadrant: user.dashboard_preferences.performance_quadrant ?? true,
-                study_streak: user.dashboard_preferences.study_streak ?? true,
             };
         }
         if (typeof window !== 'undefined') {
@@ -155,9 +141,7 @@ export default function Dashboard({
                     const parsed = JSON.parse(stored);
                     return {
                         readiness_score: parsed.readiness_score ?? true,
-                        cohort_rank: parsed.cohort_rank ?? true,
                         performance_quadrant: parsed.performance_quadrant ?? true,
-                        study_streak: parsed.study_streak ?? true,
                     };
                 }
             } catch {
@@ -213,9 +197,7 @@ export default function Dashboard({
     const handleEnableAll = () => {
         const allEnabled = {
             readiness_score: true,
-            cohort_rank: true,
             performance_quadrant: true,
-            study_streak: true,
         };
         setWidgetConfig(allEnabled);
         if (typeof window !== 'undefined') {
@@ -225,13 +207,10 @@ export default function Dashboard({
 
     const activeWidgetsCount = [
         widgetConfig.readiness_score,
-        widgetConfig.cohort_rank,
         widgetConfig.performance_quadrant,
-        widgetConfig.study_streak,
     ].filter(Boolean).length;
 
-    const hasCol1 = widgetConfig.readiness_score || widgetConfig.performance_quadrant;
-    const hasCol2 = widgetConfig.cohort_rank || widgetConfig.study_streak;
+    const hasAnyWidget = widgetConfig.readiness_score || widgetConfig.performance_quadrant;
 
     const handleSaveDate = async () => {
         if (!targetDateInput) return;
@@ -746,52 +725,29 @@ export default function Dashboard({
                 ) : (
                     <div
                         id="readiness-section"
-                        className="grid grid-cols-1 gap-6 lg:grid-cols-12"
+                        className={cn(
+                            'grid grid-cols-1 gap-6',
+                            widgetConfig.readiness_score && widgetConfig.performance_quadrant
+                                ? 'lg:grid-cols-2'
+                                : 'lg:grid-cols-1',
+                        )}
                     >
-                        {/* Left Column: Readiness Score & Performance Matrix */}
-                        {hasCol1 && (
-                            <div
-                                className={cn(
-                                    'flex flex-col gap-6',
-                                    hasCol2 ? 'lg:col-span-6' : 'lg:col-span-12',
-                                )}
-                            >
-                                {widgetConfig.readiness_score && (
-                                    <ReadinessGauge
-                                        score={readiness.readiness_score}
-                                        components={readiness.components}
-                                        targetExamDate={user.target_exam_date ?? undefined}
-                                        daysUntilExam={user.days_until_exam}
-                                        pathwayName={user.pathway_label}
-                                        dueCardsCount={dueCardsCount}
-                                    />
-                                )}
-
-                                {widgetConfig.performance_quadrant && (
-                                    <PerformanceQuadrant
-                                        quadrants={quadrants.quadrants}
-                                        answerSwitching={quadrants.answer_switching}
-                                    />
-                                )}
-                            </div>
+                        {widgetConfig.readiness_score && (
+                            <ReadinessGauge
+                                score={readiness.readiness_score}
+                                components={readiness.components}
+                                targetExamDate={user.target_exam_date ?? undefined}
+                                daysUntilExam={user.days_until_exam}
+                                pathwayName={user.pathway_label}
+                                dueCardsCount={dueCardsCount}
+                            />
                         )}
 
-                        {/* Right Column: National Rank Predictor & Daily Study Streak */}
-                        {hasCol2 && (
-                            <div
-                                className={cn(
-                                    'flex flex-col gap-6',
-                                    hasCol1 ? 'lg:col-span-6' : 'lg:col-span-12',
-                                )}
-                            >
-                                {widgetConfig.cohort_rank && (
-                                    <NationalRankPredictor prediction={rankPrediction} />
-                                )}
-
-                                {widgetConfig.study_streak && (
-                                    <StudyStreakHeatmap streakData={studyStreak} />
-                                )}
-                            </div>
+                        {widgetConfig.performance_quadrant && (
+                            <PerformanceQuadrant
+                                quadrants={quadrants.quadrants}
+                                answerSwitching={quadrants.answer_switching}
+                            />
                         )}
                     </div>
                 )}
@@ -815,9 +771,6 @@ export default function Dashboard({
                                     Avg: {avgMastery}%
                                 </span>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                Pre-Clinical, Para-Clinical, and Clinical syllabus progress
-                            </p>
                         </div>
 
                         <div className="flex items-center space-x-3">
@@ -908,8 +861,7 @@ export default function Dashboard({
                                             </h3>
 
                                             <div className="mt-3 space-y-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
-                                                <div className="flex justify-between text-[11px]">
-                                                    <span>Coverage</span>
+                                                <div className="flex justify-end text-[11px]">
                                                     <span className="font-mono font-medium text-foreground">
                                                         {sub.attempted_count} / {sub.questions_count} ({sub.coverage_percentage}%)
                                                     </span>
@@ -1034,30 +986,7 @@ export default function Dashboard({
                             />
                         </div>
 
-                        {/* 2. Cohort Rank & Percentile */}
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                    <TrendingUp className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold text-foreground">
-                                        Cohort Rank & Percentile
-                                    </div>
-                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                        Estimated national rank, percentile curve, and cutoff gap benchmarks.
-                                    </p>
-                                </div>
-                            </div>
-                            <Switch
-                                checked={widgetConfig.cohort_rank}
-                                onCheckedChange={(val) =>
-                                    handleToggleWidget('cohort_rank', val)
-                                }
-                            />
-                        </div>
-
-                        {/* 3. Performance vs. Confidence */}
+                        {/* 2. Performance vs. Confidence */}
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -1076,29 +1005,6 @@ export default function Dashboard({
                                 checked={widgetConfig.performance_quadrant}
                                 onCheckedChange={(val) =>
                                     handleToggleWidget('performance_quadrant', val)
-                                }
-                            />
-                        </div>
-
-                        {/* 4. DAILY STUDY STREAK */}
-                        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-3.5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                    <Flame className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold text-foreground">
-                                        DAILY STUDY STREAK
-                                    </div>
-                                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                        Yearly activity heatmap, current & longest study streaks, and daily question goal.
-                                    </p>
-                                </div>
-                            </div>
-                            <Switch
-                                checked={widgetConfig.study_streak}
-                                onCheckedChange={(val) =>
-                                    handleToggleWidget('study_streak', val)
                                 }
                             />
                         </div>
