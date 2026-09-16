@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClinicalScenario;
 use App\Models\Question;
 use App\Models\QuestionAttempt;
 use App\Models\QuestionExamRelevance;
@@ -66,6 +67,7 @@ class AdminDashboardWebController extends Controller
                 'total_users' => $totalUsers,
                 'total_attempts' => $totalAttempts,
                 'total_sessions' => $totalSessions,
+                'total_csq_scenarios' => ClinicalScenario::count(),
             ],
             'difficulty_breakdown' => $difficultyBreakdown,
             'pathway_breakdown' => $pathwayBreakdown,

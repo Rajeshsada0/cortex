@@ -3,12 +3,14 @@ import { Link } from '@inertiajs/react';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 import { ShieldCheck, Lock, Zap, Stethoscope, Dna, HeartPulse } from 'lucide-react';
+import { useSettings } from '@/hooks/use-settings';
 
 export default function AuthSimpleLayout({
     children,
     title,
     description,
 }: AuthLayoutProps) {
+    const settings = useSettings();
     return (
         <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#06306b] via-[#041e46] to-[#02132d] p-4 selection:bg-cyan-500/30 sm:p-6 lg:p-8">
             {/* Ambient medical background graphics */}
@@ -159,21 +161,29 @@ export default function AuthSimpleLayout({
                             href={home()}
                             className="group inline-flex items-center gap-3 transition-transform hover:scale-[1.02]"
                         >
-                            <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-400 via-cyan-400 to-blue-600 text-white shadow-lg shadow-cyan-500/30">
-                                <Zap className="size-6 fill-current text-white" />
+                            <div className="flex size-12 items-center justify-center rounded-2xl border border-white/25 bg-white/10 p-1.5 shadow-lg shadow-cyan-500/20 backdrop-blur-md">
+                                <img
+                                    src={settings.site_logo || '/images/cortex-logo.png'}
+                                    alt={settings.app_name}
+                                    className="size-9 object-contain drop-shadow-md"
+                                />
                             </div>
                             <div className="text-left leading-none">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xl font-black tracking-wider text-white">
-                                        CORTEX<span className="text-cyan-400">MED</span>
+                                        {settings.app_name}
                                     </span>
-                                    <span className="rounded-full border border-cyan-400/40 bg-cyan-950/70 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-300">
-                                        v4.2
-                                    </span>
+                                    {settings.app_version && (
+                                        <span className="rounded-full border border-cyan-400/40 bg-cyan-950/70 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-300">
+                                            {settings.app_version}
+                                        </span>
+                                    )}
                                 </div>
-                                <p className="mt-1.5 text-xs font-medium text-sky-200/80">
-                                    Candidate Readiness Portal
-                                </p>
+                                {settings.app_tagline && (
+                                    <p className="mt-1.5 text-xs font-medium text-sky-200/80">
+                                        {settings.app_tagline}
+                                    </p>
+                                )}
                             </div>
                         </Link>
 

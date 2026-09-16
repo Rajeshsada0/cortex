@@ -24,10 +24,13 @@ export default function AuthCardLayout({
             <div className="flex w-full max-w-md flex-col gap-6">
                 <Link
                     href={home()}
-                    className="flex items-center gap-2 self-center font-medium"
+                    className="flex flex-col items-center gap-2 self-center font-medium"
                 >
-                    <div className="flex h-9 w-9 items-center justify-center">
-                        <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
+                    <div className="flex size-12 items-center justify-center rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-1.5 shadow-xs dark:bg-cyan-950/40">
+                        <AppLogoIcon className="size-9" />
+                    </div>
+                    <div className="flex items-center gap-1 text-base font-black tracking-wider text-slate-900 dark:text-white">
+                        CORTEX<span className="text-cyan-600 dark:text-cyan-400">MED</span>
                     </div>
                 </Link>
 

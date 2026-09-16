@@ -156,7 +156,7 @@ export default function QuestionsImport({
         <>
             <Head title="Bulk Question Importer — Cortex Admin" />
 
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 {/* Header with back button */}
                 <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
                     <div>

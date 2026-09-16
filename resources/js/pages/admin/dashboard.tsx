@@ -17,9 +17,12 @@ import {
     Sparkles,
     SlidersHorizontal,
     Activity,
+    Stethoscope,
+    Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useSettings } from '@/hooks/use-settings';
 
 interface KPIProps {
     total_questions: number;
@@ -31,6 +34,7 @@ interface KPIProps {
     total_users: number;
     total_attempts: number;
     total_sessions: number;
+    total_csq_scenarios?: number;
 }
 
 interface SubjectSummary {
@@ -89,21 +93,36 @@ export default function AdminDashboard({
         );
     };
 
+    const settings = useSettings();
+
     return (
         <>
-            <Head title="Faculty Admin Console — Cortex Medical" />
+            <Head title={`Faculty Admin Console — ${settings.app_name}`} />
 
             <div className="flex w-full max-w-full flex-col gap-8 p-4 sm:p-6 lg:p-8">
                 {/* Header Banner */}
                 <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
                     <div>
                         <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
-                            <Activity className="size-3.5 text-sky-600 dark:text-sky-400" />
-                            <span>Faculty Medical Administration Suite</span>
+                            <img
+                                src={settings.site_logo || '/images/cortex-logo.png'}
+                                alt={settings.app_name}
+                                className="size-3.5 object-contain"
+                            />
+                            <span>{settings.app_name} System Administration</span>
                         </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            Cortex Content &amp; Curriculum Admin
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-11 items-center justify-center rounded-2xl border border-sky-500/30 bg-sky-500/10 p-1.5 shadow-xs dark:bg-sky-950/40">
+                                <img
+                                    src={settings.site_logo || '/images/cortex-logo.png'}
+                                    alt={settings.app_name}
+                                    className="size-8 object-contain drop-shadow-xs"
+                                />
+                            </div>
+                            <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
+                                {settings.app_name} Admin Suite
+                            </h1>
+                        </div>
                         <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
                             Author clinical vignette questions, calibrate 3-tier
                             rationales, organize 19-subject curriculum, and
@@ -111,11 +130,29 @@ export default function AdminDashboard({
                         </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-3">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+                        <Link href="/admin/settings">
+                            <Button
+                                variant="outline"
+                                className="border-border gap-1.5 text-xs font-bold hover:border-sky-500/40 hover:bg-sky-500/5 hover:text-sky-600 dark:hover:text-sky-400"
+                            >
+                                <Globe className="size-3.5 text-sky-600 dark:text-sky-400" />
+                                Global Settings
+                            </Button>
+                        </Link>
                         <Link href="/admin/questions/create">
                             <Button className="gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]">
                                 <Plus className="size-4" />
                                 New Clinical MCQ
+                            </Button>
+                        </Link>
+                        <Link href="/admin/csq">
+                            <Button
+                                variant="outline"
+                                className="border-border gap-1.5 text-xs font-bold hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-600 dark:hover:text-cyan-400"
+                            >
+                                <Stethoscope className="size-3.5 text-cyan-600 dark:text-cyan-400" />
+                                CSQ Stations
                             </Button>
                         </Link>
                         <Link href="/admin/subjects">

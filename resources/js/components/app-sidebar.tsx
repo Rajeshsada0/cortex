@@ -14,6 +14,8 @@ import {
     Users,
     PlaySquare,
     Award,
+    Stethoscope,
+    Globe,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -57,6 +59,11 @@ const mainNavItems: NavItem[] = [
         icon: Landmark,
     },
     {
+        title: 'CSQ Mock Exam',
+        href: '/csq',
+        icon: Stethoscope,
+    },
+    {
         title: 'Spaced Repetition',
         href: '/spaced-repetition',
         icon: Repeat,
@@ -85,6 +92,11 @@ const adminNavItems: NavItem[] = [
         icon: HelpCircle,
     },
     {
+        title: 'Clinical Scenarios (CSQ)',
+        href: '/admin/csq',
+        icon: Stethoscope,
+    },
+    {
         title: 'Subject Curriculum',
         href: '/admin/subjects',
         icon: BookOpen,
@@ -103,6 +115,11 @@ const adminNavItems: NavItem[] = [
         title: 'Candidate Directory',
         href: '/admin/users',
         icon: Users,
+    },
+    {
+        title: 'Global Settings',
+        href: '/admin/settings',
+        icon: Globe,
     },
 ];
 

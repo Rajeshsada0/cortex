@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminCsqWebController;
 use App\Http\Controllers\Admin\AdminDashboardWebController;
 use App\Http\Controllers\Admin\AdminPathwayWebController;
 use App\Http\Controllers\Admin\AdminQuestionWebController;
+use App\Http\Controllers\Admin\AdminSettingsWebController;
 use App\Http\Controllers\Admin\AdminSubjectWebController;
 use App\Http\Controllers\Admin\AdminTopicWebController;
 use App\Http\Controllers\Admin\AdminUserWebController;
 use App\Http\Controllers\Web\BookmarkWebController;
+use App\Http\Controllers\Web\CsqWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\DirectoryWebController;
 use App\Http\Controllers\Web\MockExamWebController;
@@ -70,6 +73,11 @@ Route::middleware(['auth', 'candidate'])->group(function () {
 
     // Clinical Bookmarks & Notes Notebook
     Route::get('/bookmarks', [BookmarkWebController::class, 'index'])->name('bookmarks.index');
+
+    // Clinical Scenario Question (CSQ) Computerized Mock Examination
+    Route::get('/csq', [CsqWebController::class, 'index'])->name('csq.index');
+    Route::get('/csq/runner', [CsqWebController::class, 'runner'])->name('csq.runner');
+    Route::post('/csq/submit', [CsqWebController::class, 'submit'])->name('csq.submit');
 });
 
 // Admin Console & Content Management System
@@ -109,9 +117,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('/pathways/{pathway}', [AdminPathwayWebController::class, 'update'])->name('pathways.update');
     Route::delete('/pathways/{pathway}', [AdminPathwayWebController::class, 'destroy'])->name('pathways.destroy');
 
+    // Clinical Scenario Questions (CSQ) Stations
+    Route::get('/csq', [AdminCsqWebController::class, 'index'])->name('csq.index');
+    Route::get('/csq/create', [AdminCsqWebController::class, 'create'])->name('csq.create');
+    Route::post('/csq', [AdminCsqWebController::class, 'store'])->name('csq.store');
+    Route::get('/csq/{csq}/edit', [AdminCsqWebController::class, 'edit'])->name('csq.edit');
+    Route::put('/csq/{csq}', [AdminCsqWebController::class, 'update'])->name('csq.update');
+    Route::delete('/csq/{csq}', [AdminCsqWebController::class, 'destroy'])->name('csq.destroy');
+    Route::post('/csq/{csq}/toggle-active', [AdminCsqWebController::class, 'toggleActive'])->name('csq.toggle-active');
+
     // User Directory & Role Assignment
     Route::get('/users', [AdminUserWebController::class, 'index'])->name('users.index');
     Route::post('/users/{user}/toggle-admin', [AdminUserWebController::class, 'toggleAdmin'])->name('users.toggle-admin');
+
+    // Super Admin Global Platform Settings
+    Route::get('/settings', [AdminSettingsWebController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [AdminSettingsWebController::class, 'update'])->name('settings.update');
+    Route::post('/settings/reset-logo', [AdminSettingsWebController::class, 'resetLogo'])->name('settings.reset-logo');
+    Route::post('/settings/reset-favicon', [AdminSettingsWebController::class, 'resetFavicon'])->name('settings.reset-favicon');
 
     // 1-Click Storage Link Generator for Live Deployments
     Route::get('/storage-link', function () {

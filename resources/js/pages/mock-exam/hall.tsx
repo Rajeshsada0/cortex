@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { ClinicalImageViewer } from '@/components/cortex/clinical-image-viewer';
 import { QuestionPalette } from '@/components/cortex/question-palette';
 import { toast } from 'sonner';
+import { useSettings } from '@/hooks/use-settings';
 
 interface QuestionOptionData {
     id: string;
@@ -58,6 +59,7 @@ export default function MockExamHall({
     questions: rawQuestions,
     attempts = [],
 }: MockHallProps) {
+    const settings = useSettings();
     const questions: QuestionData[] = Array.isArray(rawQuestions)
         ? rawQuestions
         : (rawQuestions as any)?.data || [];
@@ -417,6 +419,11 @@ export default function MockExamHall({
             {/* Top Bar: Exam Info, Blur Warning, Countdown Timer, and Actions */}
             <header className="border-border bg-card/95 sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 backdrop-blur-md">
                 <div className="flex items-center gap-3">
+                    <img
+                        src={settings.site_logo || '/images/cortex-logo.png'}
+                        alt={settings.app_name}
+                        className="size-7 object-contain drop-shadow-xs"
+                    />
                     <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-cyan-700 dark:text-cyan-300">
                         GRAND MOCK MODE
                     </span>

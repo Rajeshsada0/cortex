@@ -17,6 +17,7 @@ import {
     Activity,
     Compass,
     RotateCcw,
+    Stethoscope,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useSettings } from '@/hooks/use-settings';
 
 export interface DashboardWidgetConfig {
     readiness_score: boolean;
@@ -113,6 +115,7 @@ export default function Dashboard({
     totalQuestions,
     totalAttempts,
 }: DashboardProps) {
+    const settings = useSettings();
     const [phaseFilter, setPhaseFilter] = useState<
         'ALL' | 'PRE' | 'PARA' | 'CLINICAL'
     >('ALL');
@@ -369,9 +372,18 @@ export default function Dashboard({
                                 </span>
                             </div>
 
-                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                Welcome back, {user.name}
-                            </h1>
+                            <div className="flex items-center gap-3 pt-0.5">
+                                <div className="flex size-10 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-1.5 shadow-xs dark:bg-cyan-950/40">
+                                    <img
+                                        src={settings.site_logo || '/images/cortex-logo.png'}
+                                        alt={settings.app_name}
+                                        className="size-7 object-contain drop-shadow-xs"
+                                    />
+                                </div>
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                                    Welcome back, {user.name}
+                                </h1>
+                            </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -696,6 +708,52 @@ export default function Dashboard({
                         </div>
                     </div>
                 </section>
+
+                {/* Clinical Scenario Question (CSQ) Mock Exam Spotlight */}
+                <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-card to-blue-950/20 p-5 shadow-xs transition hover:border-cyan-500/50">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3.5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                <Stethoscope className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-700 uppercase tracking-wider dark:text-cyan-300">
+                                        NMC Special
+                                    </span>
+                                    <h3 className="text-sm font-bold text-foreground sm:text-base">
+                                        Clinical Scenario Question (CSQ) Mock Examination
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-muted-foreground max-w-2xl">
+                                    Computerized clinical case examination featuring high-yield stations with real-time diagnostic vitals, 5 linked MCQs, and 30-minute countdown timer.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Link href="/csq">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 rounded-xl border-border text-xs font-semibold"
+                                >
+                                    Overview
+                                </Button>
+                            </Link>
+                            <Link href="/csq/runner">
+                                <Button
+                                    size="sm"
+                                    className="h-9 gap-1.5 rounded-xl bg-cyan-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400"
+                                >
+                                    <PlaySquare className="h-3.5 w-3.5" />
+                                    <span>Launch CSQ Exam</span>
+                                    <ArrowRight className="h-3 w-3" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Core Analytics Section with Dynamic Widget Customization */}
                 {activeWidgetsCount === 0 ? (

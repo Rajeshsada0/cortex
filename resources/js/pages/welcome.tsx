@@ -30,9 +30,11 @@ import AppLogo from '@/components/app-logo';
 import { MedicalDivider } from '@/components/cortex/medical-divider';
 import { MedicalBackgroundElements } from '@/components/cortex/medical-background-elements';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useSettings } from '@/hooks/use-settings';
 
 export default function Welcome() {
     const { auth } = usePage().props as any;
+    const settings = useSettings();
 
     // Interactive preview state
     const [selectedOption, setSelectedOption] = useState<string | null>('C');
@@ -42,7 +44,7 @@ export default function Welcome() {
 
     return (
         <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground selection:bg-cyan-500/30">
-            <Head title="Cortex Medical — Postgraduate Doctor Entrance Preparation (MECEE-PG • INI-CET • USMLE)" />
+            <Head title={settings.seo_meta_title || `${settings.app_name} — Postgraduate Doctor Entrance Preparation`} />
 
             {/* Persistent Ambient Medical Background Elements */}
             <MedicalBackgroundElements />
@@ -868,12 +870,17 @@ export default function Welcome() {
 
             {/* Footer */}
             <footer className="relative z-10 mt-auto border-t border-border bg-card/80 py-8 text-xs text-muted-foreground backdrop-blur-sm dark:border-slate-800/80 dark:bg-[#050811] dark:text-slate-400">
-                <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
-                    <div className="flex items-center gap-2 font-bold text-foreground dark:text-white">
-                        <Activity className="size-4 animate-pulse text-cyan-600 dark:text-cyan-400" />
-                        <span>CORTEX MEDICAL ENTRANCE PLATFORM</span>
+                <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-4 sm:flex-row sm:px-6 lg:px-8">
+                    <div className="flex items-center gap-2.5 font-bold text-foreground dark:text-white">
+                        <img
+                            src={settings.site_logo || '/images/cortex-logo.png'}
+                            alt={settings.app_name}
+                            className="size-6 object-contain"
+                        />
+                        <span>{settings.app_name.toUpperCase()} MEDICAL ENTRANCE PLATFORM</span>
                     </div>
-                    <div className="flex gap-6">
+
+                    <div className="flex flex-wrap justify-center gap-6">
                         <Link
                             href="/qbank/runner"
                             className="transition-colors hover:text-cyan-600 dark:hover:text-cyan-400"
@@ -899,9 +906,79 @@ export default function Welcome() {
                             Spaced Repetition
                         </Link>
                     </div>
-                    <span>
-                        © 2026 Cortex Med. High-Stakes Doctor Entrance
-                        Simulation Engine.
+
+                    {/* Social Media Links */}
+                    <div className="flex items-center gap-3">
+                        {settings.social_facebook && (
+                            <a
+                                href={settings.social_facebook}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Facebook"
+                                className="flex size-7 items-center justify-center rounded-full border border-border bg-card text-[#1877F2] transition-transform hover:scale-110 shadow-xs"
+                            >
+                                <span className="text-xs font-black">f</span>
+                            </a>
+                        )}
+                        {settings.social_twitter && (
+                            <a
+                                href={settings.social_twitter}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Twitter / X"
+                                className="flex size-7 items-center justify-center rounded-full border border-border bg-card text-foreground transition-transform hover:scale-110 shadow-xs"
+                            >
+                                <span className="text-[11px] font-black">𝕏</span>
+                            </a>
+                        )}
+                        {settings.social_instagram && (
+                            <a
+                                href={settings.social_instagram}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Instagram"
+                                className="flex size-7 items-center justify-center rounded-full border border-border bg-card text-rose-500 transition-transform hover:scale-110 shadow-xs"
+                            >
+                                <span className="text-[10px]">📸</span>
+                            </a>
+                        )}
+                        {settings.social_youtube && (
+                            <a
+                                href={settings.social_youtube}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="YouTube"
+                                className="flex size-7 items-center justify-center rounded-full border border-border bg-card text-[#FF0000] transition-transform hover:scale-110 shadow-xs"
+                            >
+                                <span className="text-[10px] font-black">▶</span>
+                            </a>
+                        )}
+                        {settings.social_linkedin && (
+                            <a
+                                href={settings.social_linkedin}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="LinkedIn"
+                                className="flex size-7 items-center justify-center rounded-full border border-border bg-card text-[#0A66C2] transition-transform hover:scale-110 shadow-xs"
+                            >
+                                <span className="text-[11px] font-black">in</span>
+                            </a>
+                        )}
+                        {settings.social_telegram && (
+                            <a
+                                href={settings.social_telegram}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Telegram"
+                                className="flex size-7 items-center justify-center rounded-full border border-border bg-card text-[#24A1DE] transition-transform hover:scale-110 shadow-xs"
+                            >
+                                <span className="text-[10px]">✈</span>
+                            </a>
+                        )}
+                    </div>
+
+                    <span className="text-center sm:text-right">
+                        {settings.footer_text}
                     </span>
                 </div>
             </footer>

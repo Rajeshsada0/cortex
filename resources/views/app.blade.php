@@ -33,9 +33,34 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $sysAppName = \App\Models\SystemSetting::get('app_name', config('app.name', 'Cortex Med'));
+            $sysFavicon = \App\Models\SystemSetting::get('site_favicon', '/favicon.ico');
+            $sysMetaTitle = \App\Models\SystemSetting::get('seo_meta_title', $sysAppName);
+            $sysMetaDesc = \App\Models\SystemSetting::get('seo_meta_description', 'High-Stakes Postgraduate Doctor Entrance Simulation Engine.');
+            $sysMetaKeywords = \App\Models\SystemSetting::get('seo_meta_keywords', 'MBBS, NMCLE, MECEE-PG, INI-CET, USMLE');
+            $sysOgImage = \App\Models\SystemSetting::get('seo_og_image', '/images/cortex-logo.png');
+        @endphp
+
+        <meta name="description" content="{{ $sysMetaDesc }}">
+        <meta name="keywords" content="{{ $sysMetaKeywords }}">
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:title" content="{{ $sysMetaTitle }}">
+        <meta property="og:description" content="{{ $sysMetaDesc }}">
+        <meta property="og:image" content="{{ str_starts_with($sysOgImage, 'http') ? $sysOgImage : url($sysOgImage) }}">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ url()->current() }}">
+        <meta name="twitter:title" content="{{ $sysMetaTitle }}">
+        <meta name="twitter:description" content="{{ $sysMetaDesc }}">
+        <meta name="twitter:image" content="{{ str_starts_with($sysOgImage, 'http') ? $sysOgImage : url($sysOgImage) }}">
+
+        <link rel="icon" href="{{ $sysFavicon }}" sizes="any">
+        <link rel="apple-touch-icon" href="{{ $sysFavicon }}">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +71,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $sysMetaTitle }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased bg-background text-foreground">
