@@ -23,6 +23,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { QuizReadyModal } from '@/components/cortex/quiz-ready-modal';
+import { ChooseTopicsModal } from '@/components/cortex/choose-topics-modal';
 
 interface SubtopicData {
     name: string;
@@ -110,14 +112,64 @@ export default function DirectoryIndex({ user, subjects }: DirectoryProps) {
         );
     }, [subjects, searchQuery]);
 
+    // Modals state
+    const [isQuizReadyOpen, setIsQuizReadyOpen] = useState(false);
+    const [isChooseTopicsOpen, setIsChooseTopicsOpen] = useState(false);
+    const [quizSubjectName, setQuizSubjectName] = useState('Anatomy');
+    const [quizTopicName, setQuizTopicName] = useState<string | undefined>();
+    const [quizQuestionsCount, setQuizQuestionsCount] = useState(40);
+    const [quizSubjectId, setQuizSubjectId] = useState<number | undefined>();
+    const [quizTopicId, setQuizTopicId] = useState<number | undefined>();
+    const [quizTopicsCount, setQuizTopicsCount] = useState(1);
+    const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+
     const startSubjectPractice = (subjectId: number) => {
-        router.visit(`/qbank/runner?subject_id=${subjectId}&limit=10`);
+        const sub = subjects.find((s) => s.id === subjectId);
+        setQuizSubjectId(subjectId);
+        setQuizTopicId(undefined);
+        setQuizTopicName(undefined);
+        setQuizSubjectName(sub?.name || 'Subject');
+        setQuizQuestionsCount(sub?.total_questions && sub.total_questions > 0 ? sub.total_questions : 40);
+        setQuizTopicsCount(sub?.topics?.length || 1);
+        setIsQuizReadyOpen(true);
     };
 
     const startTopicPractice = (subjectId: number, topicId: number) => {
-        router.visit(
-            `/qbank/runner?subject_id=${subjectId}&topic_id=${topicId}&limit=10`,
-        );
+        const sub = subjects.find((s) => s.id === subjectId);
+        const top = sub?.topics?.find((t) => t.id === topicId);
+        setQuizSubjectId(subjectId);
+        setQuizTopicId(topicId);
+        setQuizTopicName(top?.name);
+        setQuizSubjectName(sub?.name || 'Subject');
+        setQuizQuestionsCount(top?.questions_count && top.questions_count > 0 ? top.questions_count : 40);
+        setQuizTopicsCount(1);
+        setIsQuizReadyOpen(true);
+    };
+
+    const handleApplyChosenTopics = (data: {
+        selectedTopicIds: number[];
+        totalQuestions: number;
+        subjectName: string;
+        topicsCount: number;
+        topicName?: string;
+    }) => {
+        setSelectedTopicIds(data.selectedTopicIds);
+        setQuizQuestionsCount(data.totalQuestions);
+        setQuizSubjectName(data.subjectName);
+        setQuizTopicsCount(data.topicsCount);
+        setQuizTopicName(data.topicName);
+        if (data.selectedTopicIds.length > 0) {
+            setQuizTopicId(data.selectedTopicIds[0]);
+        }
+        setIsChooseTopicsOpen(false);
+        setIsQuizReadyOpen(true);
+    };
+
+    const handleStartQuiz = () => {
+        let url = `/qbank/runner?limit=10`;
+        if (quizSubjectId) url += `&subject_id=${quizSubjectId}`;
+        if (quizTopicId) url += `&topic_id=${quizTopicId}`;
+        router.visit(url);
     };
 
     return (
@@ -144,8 +196,18 @@ export default function DirectoryIndex({ user, subjects }: DirectoryProps) {
                             </h1>
                         </div>
 
-                        {/* Search & Layout Toggles */}
+                        {/* Search, Select Topics & Layout Toggles */}
                         <div className="flex items-center gap-2.5">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsChooseTopicsOpen(true)}
+                                className="h-9 rounded-xl border-[#0066FF]/40 text-xs font-bold text-[#0066FF] hover:bg-[#0066FF]/10 hidden sm:inline-flex"
+                            >
+                                SELECT TOPICS
+                            </Button>
+
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                 <input
@@ -642,6 +704,33 @@ export default function DirectoryIndex({ user, subjects }: DirectoryProps) {
                         </div>
                     </div>
                 )}
+
+                {/* Modal 1: Your Quiz is Ready Modal */}
+                <QuizReadyModal
+                    isOpen={isQuizReadyOpen}
+                    onClose={() => setIsQuizReadyOpen(false)}
+                    subjectName={quizSubjectName}
+                    topicName={quizTopicName}
+                    topicsCount={quizTopicsCount}
+                    questionsCount={quizQuestionsCount}
+                    subjectId={quizSubjectId}
+                    topicId={quizTopicId}
+                    selectedTopicIds={selectedTopicIds}
+                    onEdit={() => {
+                        setIsQuizReadyOpen(false);
+                        setIsChooseTopicsOpen(true);
+                    }}
+                    onStartQuiz={handleStartQuiz}
+                />
+
+                {/* Modal 2: Choose Topics Modal */}
+                <ChooseTopicsModal
+                    isOpen={isChooseTopicsOpen}
+                    onClose={() => setIsChooseTopicsOpen(false)}
+                    initialSubjectId={quizSubjectId}
+                    initialTopicIds={selectedTopicIds}
+                    onApply={handleApplyChosenTopics}
+                />
             </div>
         </TooltipProvider>
     );

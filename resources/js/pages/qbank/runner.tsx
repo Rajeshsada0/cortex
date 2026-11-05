@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -19,6 +19,8 @@ import {
     Award,
     Check,
     ArrowRight,
+    Pause,
+    LayoutGrid,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -128,6 +130,8 @@ export default function MCQRunner({
     // Personal Note modal
     const [noteContent, setNoteContent] = useState('');
     const [showNoteModal, setShowNoteModal] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [showPaletteModal, setShowPaletteModal] = useState(false);
 
     // Timer
     const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -193,12 +197,12 @@ export default function MCQRunner({
 
     // Track active question timer
     useEffect(() => {
-        if (isBlockFinished || (activeMode === 'TUTOR' && isSubmitted)) return;
+        if (isPaused || isBlockFinished || (activeMode === 'TUTOR' && isSubmitted)) return;
         const interval = setInterval(() => {
             setSecondsElapsed((prev) => prev + 1);
         }, 1000);
         return () => clearInterval(interval);
-    }, [isSubmitted, isBlockFinished, activeMode, currentIndex]);
+    }, [isPaused, isSubmitted, isBlockFinished, activeMode, currentIndex]);
 
     // Handle Option Selection
     const handleSelectOption = (key: string) => {
@@ -511,95 +515,119 @@ export default function MCQRunner({
         <div className="flex min-h-[90vh] w-full flex-col gap-4 p-3 sm:p-5 lg:p-6">
             <Head title={`MCQ Runner — ${currentQuestion.code}`} />
 
-            {/* Runner Top Navigation Bar */}
-            <div className="border-border bg-card flex flex-wrap items-center justify-between gap-2.5 rounded-xl border p-3 shadow-sm">
+            {/* Runner Top Navigation Bar matching Image 1 */}
+            <div className="flex items-center justify-between gap-3">
+                {/* Left Pill: < 1/108 */}
+                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-xs dark:border-slate-800 dark:bg-card">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
+                            else router.visit('/subjects');
+                        }}
+                        className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
+                        title="Previous Question"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {currentIndex + 1}/{questions.length}
+                    </span>
+                </div>
+
+                {/* Right Pill: ⏱ 0:08 | 🔖 | ⏸ | ⊞ */}
+                <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-1.5 shadow-xs dark:border-slate-800 dark:bg-card">
+                    {/* Timer */}
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <Clock className="h-3.5 w-3.5 text-slate-500" />
+                        <span className="font-mono">
+                            {Math.floor(secondsElapsed / 60)}:
+                            {(secondsElapsed % 60).toString().padStart(2, '0')}
+                        </span>
+                    </div>
+
+                    <div className="h-3.5 w-[1px] bg-slate-200 dark:bg-slate-700" />
+
+                    {/* Bookmark */}
+                    <button
+                        type="button"
+                        onClick={toggleBookmark}
+                        className={`transition-colors ${
+                            bookmarkedQuestions.has(currentQuestion.id)
+                                ? 'text-amber-500'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                        title="Bookmark question"
+                    >
+                        <Bookmark
+                            className={`h-4 w-4 ${
+                                bookmarkedQuestions.has(currentQuestion.id) ? 'fill-amber-400' : ''
+                            }`}
+                        />
+                    </button>
+
+                    <div className="h-3.5 w-[1px] bg-slate-200 dark:bg-slate-700" />
+
+                    {/* Pause */}
+                    <button
+                        type="button"
+                        onClick={() => setIsPaused(true)}
+                        className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                        title="Pause Quiz"
+                    >
+                        <Pause className="h-4 w-4" />
+                    </button>
+
+                    <div className="h-3.5 w-[1px] bg-slate-200 dark:bg-slate-700" />
+
+                    {/* Question Palette Grid */}
+                    <button
+                        type="button"
+                        onClick={() => setShowPaletteModal((prev) => !prev)}
+                        className={`transition-colors ${
+                            showPaletteModal
+                                ? 'text-[#0066FF]'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                        }`}
+                        title="Question Palette Grid"
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Context Sub-Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs">
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span className="rounded bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-[#55BDEB]">
+                    <span className="rounded bg-[#102A43] px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#55BDEB]">
                         {currentQuestion.code}
                     </span>
                     <Badge variant="outline" className="font-mono text-[10px]">
-                        {activeMode === 'TIMED'
-                            ? 'Timed Exam Block'
-                            : 'Tutor Mode'}
+                        {activeMode === 'TIMED' ? 'Timed Exam Block' : 'Tutor Mode'}
                     </Badge>
                     <span className="text-muted-foreground hidden text-xs sm:inline">
-                        {currentQuestion.subject?.name} •{' '}
-                        {currentQuestion.topic?.name}
+                        {currentQuestion.subject?.name} • {currentQuestion.topic?.name}
                     </span>
                     <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-[10px] font-semibold uppercase">
                         {currentQuestion.difficulty}
                     </span>
                 </div>
 
-                {/* Right controls: Timer and Quick Navigation */}
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <div className="border-border bg-muted/30 flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs">
-                        <Clock className="text-muted-foreground size-3.5" />
-                        <span>
-                            {Math.floor(secondsElapsed / 60)}:
-                            {(secondsElapsed % 60).toString().padStart(2, '0')}
-                        </span>
-                    </div>
-
+                <div className="flex items-center gap-2">
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={toggleMark}
-                        className={`h-8 gap-1 text-xs ${
+                        className={`h-7 gap-1 px-2 text-xs ${
                             markedQuestions.has(currentQuestion.id)
-                                ? 'border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                                : ''
+                                ? 'text-indigo-600 dark:text-indigo-400'
+                                : 'text-slate-500'
                         }`}
-                        title="Keyboard Shortcut: M"
                     >
-                        <Flag className="size-3.5" />
-                        <span className="hidden sm:inline">
-                            {markedQuestions.has(currentQuestion.id)
-                                ? 'Marked'
-                                : 'Mark (M)'}
-                        </span>
+                        <Flag className="size-3" />
+                        <span>{markedQuestions.has(currentQuestion.id) ? 'Marked' : 'Mark'}</span>
                     </Button>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={currentIndex === 0}
-                        onClick={() => setCurrentIndex((prev) => prev - 1)}
-                        className="h-8 w-8 p-0"
-                        title="Previous Question (Left Arrow)"
-                    >
-                        <ChevronLeft className="size-4" />
-                    </Button>
-
-                    <span className="text-foreground text-xs font-bold">
-                        {currentIndex + 1} / {questions.length}
-                    </span>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={currentIndex === questions.length - 1}
-                        onClick={() => setCurrentIndex((prev) => prev + 1)}
-                        className="h-8 w-8 p-0"
-                        title="Next Question (Right Arrow)"
-                    >
-                        <ChevronRight className="size-4" />
-                    </Button>
-
-                    {/* Finish Timed Block Button */}
-                    {activeMode === 'TIMED' && !isBlockFinished && (
-                        <Button
-                            size="sm"
-                            onClick={handleFinishTimedBlock}
-                            disabled={isSubmitting}
-                            className="ml-2 h-8 bg-amber-600 text-xs font-bold text-white hover:bg-amber-700"
-                        >
-                            {isSubmitting ? 'Grading...' : 'Finish Block'}
-                        </Button>
-                    )}
                 </div>
             </div>
 
@@ -924,6 +952,120 @@ export default function MCQRunner({
                     )}
                 </div>
             </div>
+
+            {/* Sticky Bottom Action Bar matching Image 1: Prominent blue SKIP / Next button */}
+            <div className="sticky bottom-0 z-30 -mx-3 -mb-3 sm:-mx-5 sm:-mb-5 lg:-mx-6 lg:-mb-6 border-t border-slate-200/90 bg-white/95 p-3.5 sm:p-4 backdrop-blur-md shadow-lg dark:border-slate-800 dark:bg-card/95">
+                <div className="mx-auto max-w-4xl">
+                    {!isSubmitted && activeMode === 'TUTOR' ? (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                if (currentIndex < questions.length - 1) {
+                                    setCurrentIndex((prev) => prev + 1);
+                                    toast.info('Skipped question');
+                                } else {
+                                    toast.info('Completed all questions in this session');
+                                }
+                            }}
+                            className="h-12 w-full rounded-xl bg-[#0066FF] text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:bg-blue-600 active:scale-[0.99] transition-all"
+                        >
+                            Skip
+                        </Button>
+                    ) : currentIndex < questions.length - 1 ? (
+                        <Button
+                            type="button"
+                            onClick={() => setCurrentIndex((prev) => prev + 1)}
+                            className="h-12 w-full rounded-xl bg-[#0066FF] text-sm font-bold uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:bg-blue-600 active:scale-[0.99] transition-all"
+                        >
+                            Next Question →
+                        </Button>
+                    ) : activeMode === 'TIMED' && !isBlockFinished ? (
+                        <Button
+                            type="button"
+                            onClick={handleFinishTimedBlock}
+                            disabled={isSubmitting}
+                            className="h-12 w-full rounded-xl bg-emerald-600 text-sm font-bold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 active:scale-[0.99] transition-all"
+                        >
+                            {isSubmitting ? 'Grading...' : 'Submit Session & Report'}
+                        </Button>
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={() => router.visit('/subjects')}
+                            className="h-12 w-full rounded-xl bg-emerald-600 text-sm font-bold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 active:scale-[0.99] transition-all"
+                        >
+                            Finish Practice & Return
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            {/* Quiz Paused Modal */}
+            {isPaused && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 text-center shadow-2xl dark:border-slate-800 dark:bg-card">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-950/70 dark:text-amber-400">
+                            <Pause className="h-7 w-7 fill-amber-500/40" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                            Quiz Paused
+                        </h3>
+                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            Your timer is frozen. Take a breath and resume when you are ready.
+                        </p>
+                        <div className="mt-6 flex flex-col gap-2.5">
+                            <Button
+                                type="button"
+                                onClick={() => setIsPaused(false)}
+                                className="h-11 rounded-xl bg-[#0066FF] text-xs font-bold uppercase tracking-wider text-white hover:bg-blue-600 shadow-md shadow-blue-500/25"
+                            >
+                                Resume Quiz
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => router.visit('/subjects')}
+                                className="h-11 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                            >
+                                Exit to Subjects
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Question Palette Modal (Triggered by ⊞) */}
+            {showPaletteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-card max-h-[85vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                Question Palette
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowPaletteModal(false)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 dark:border-slate-700"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="py-4">
+                            <QuestionPalette
+                                questions={questions}
+                                currentIndex={currentIndex}
+                                answers={answers}
+                                markedQuestions={markedQuestions}
+                                visitedQuestions={visitedQuestions}
+                                onSelectQuestion={(idx) => {
+                                    setCurrentIndex(idx);
+                                    setShowPaletteModal(false);
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Clinical Note Modal */}
             {showNoteModal && (

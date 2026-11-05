@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CortexCurriculumSeeder::class,
             CortexQuestionSeeder::class,
+            MedicalDirectorySeeder::class,
             SystemSettingSeeder::class,
         ]);
     }

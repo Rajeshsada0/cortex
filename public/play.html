@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Play - Medical Gaming Hub</title>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              peach: '#FFE7DC',
+              lavender: '#EFEAFF',
+              accentBlue: '#2272F2',
+            }
+          },
+          boxShadow: {
+            'soft': '0 8px 24px -4px rgba(22, 28, 45, 0.08), 0 2px 6px -1px rgba(22, 28, 45, 0.04)',
+            'float': '0 12px 32px -4px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
+            'nav': '0 -4px 20px rgba(0, 0, 0, 0.04)'
+          }
+        }
+      }
+    }
+  </script>
+<!-- Style for Custom Gradients & Micro-patterns -->
+<style data-purpose="custom-gradients">
+    .bg-top-glow {
+      background: linear-gradient(180deg, #FFEFEA 0%, #FFF7F4 120px, #FFFFFF 260px);
+    }
+    .hero-card-gradient {
+      background: linear-gradient(135deg, #F3F0FF 0%, #ECE8FE 60%, #E3DEFE 100%);
+    }
+    .probe-card-gradient {
+      background: linear-gradient(145deg, #EEF7FE 0%, #D8ECFD 100%);
+    }
+    .patient-card-gradient {
+      background: linear-gradient(145deg, #EDF4FE 0%, #DDEBFC 100%);
+    }
+    .warm-card-gradient {
+      background: linear-gradient(145deg, #FFF6EC 0%, #FBEFDF 100%);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-[#F8F9FC] text-slate-900 font-sans antialiased min-h-screen flex justify-center selection:bg-blue-100">
+<!-- Mobile Viewport Container (iOS Form Factor) -->
+<div class="w-full max-w-[430px] bg-white min-h-screen pb-36 relative flex flex-col shadow-2xl overflow-x-hidden">
+<!-- Top Warm Gradient Header Overlay -->
+<div class="absolute top-0 left-0 right-0 h-96 bg-top-glow pointer-events-none z-0"></div>
+<!-- BEGIN: AppHeader -->
+<section class="relative z-10 px-5 pt-4 pb-3.5 flex items-center gap-2.5">
+<!-- Orange puzzle logo icon -->
+<div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF6B4A] to-[#FF8C6B] flex items-center justify-center shadow-sm shadow-orange-300">
+<svg class="w-5 h-5 text-white fill-current" viewbox="0 0 24 24">
+<path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5a2.5 2.5 0 0 1 0 5H2v4c0 1.1.9 2 2 2h3.8v-1.5a2.5 2.5 0 0 1 5 0V21H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"></path>
+</svg>
+</div>
+<h1 class="text-2xl font-black tracking-tight text-slate-800">Play</h1>
+</section>
+<!-- END: AppHeader -->
+<!-- Main Scrollable Content Container -->
+<main class="relative z-10 px-4 space-y-6">
+<!-- BEGIN: FeaturedCarousel -->
+<section class="pt-1" data-purpose="featured-carousel">
+<!-- Featured Card Container -->
+<div class="hero-card-gradient rounded-3xl p-4.5 pt-5 pb-5 relative shadow-sm border border-white/60 overflow-hidden">
+<!-- Subtle decorative floating ambient blobs -->
+<div class="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-indigo-200/40 blur-2xl pointer-events-none"></div>
+<div class="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-purple-200/40 blur-2xl pointer-events-none"></div>
+<!-- Decorative subtle floating starlets -->
+<div class="absolute top-12 left-10 w-1.5 h-1.5 rounded-full bg-purple-400/50"></div>
+<div class="absolute top-28 right-8 w-2 h-2 rounded-full bg-pink-400/40"></div>
+<div class="absolute bottom-20 left-12 w-1.5 h-1.5 rounded-full bg-indigo-400/40"></div>
+<div class="absolute top-1/2 left-4 w-1 h-1 rounded-full bg-purple-500/30"></div>
+<!-- Game Preview Stage: Stacked Diagnostic Bars -->
+<div class="w-full max-w-[290px] mx-auto space-y-2.5 my-2">
+<!-- Row 1: ECG Waveform -->
+<div class="bg-[#FFEFE7] border border-[#FFDEC9] rounded-2xl p-2.5 px-3 flex items-center justify-between shadow-xs">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-red-500 flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M3 12h3.5l2-6 3.5 12 2-6H21" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<!-- Clue Bars -->
+<div class="space-y-1.5">
+<div class="w-24 h-2.5 bg-[#FFD3BD] rounded-full"></div>
+<div class="w-16 h-2 bg-[#FFE3D4] rounded-full"></div>
+</div>
+</div>
+<div class="w-6 h-6 rounded-full bg-[#FFE3D4] flex items-center justify-center text-[#E65100]">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+<!-- Row 2: Thermometer -->
+<div class="bg-[#EAF3FF] border border-[#D5E6FE] rounded-2xl p-2.5 px-3 flex items-center justify-between shadow-xs">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-red-400 flex-shrink-0">
+<!-- Thermometer Icon -->
+<svg class="w-5 h-5 text-red-400" fill="currentColor" viewbox="0 0 24 24">
+<path d="M15 13V5a3 3 0 0 0-6 0v8a5 5 0 1 0 6 0zm-3-10a1 1 0 0 1 1 1v5h-2V4a1 1 0 0 1 1-1z"></path>
+</svg>
+</div>
+<div class="space-y-1.5">
+<div class="w-24 h-2.5 bg-[#BEDCFD] rounded-full"></div>
+<div class="w-16 h-2 bg-[#D5E7FD] rounded-full"></div>
+</div>
+</div>
+<div class="w-6 h-6 rounded-full bg-[#D5E7FD] flex items-center justify-center text-[#1E70E8]">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+<!-- Row 3: Blood Drop -->
+<div class="bg-[#EBF7F2] border border-[#D1EFE2] rounded-2xl p-2.5 px-3 flex items-center justify-between shadow-xs">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-red-500 flex-shrink-0">
+<svg class="w-5 h-5 fill-current text-rose-500" viewbox="0 0 24 24">
+<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+</svg>
+</div>
+<div class="space-y-1.5">
+<div class="w-24 h-2.5 bg-[#BFEBD6] rounded-full"></div>
+<div class="w-16 h-2 bg-[#D7F4E6] rounded-full"></div>
+</div>
+</div>
+<div class="w-6 h-6 rounded-full bg-[#D7F4E6] flex items-center justify-center text-[#147953]">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+<!-- Row 4: Solved Heart (Success) -->
+<div class="bg-[#FFF4E4] border border-[#FFE7C4] rounded-2xl p-2.5 px-3 flex items-center justify-between shadow-xs">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-red-500 flex-shrink-0 text-base">
+                  🫀
+                </div>
+<div class="space-y-1.5">
+<div class="w-24 h-2.5 bg-[#FFDEAB] rounded-full"></div>
+<div class="w-16 h-2 bg-[#FFEECE] rounded-full"></div>
+</div>
+</div>
+<div class="w-6 h-6 rounded-full bg-[#DCFCE7] flex items-center justify-center text-emerald-600">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Bottom Card Controls & Title -->
+<div class="mt-4 flex items-center justify-between pt-2">
+<div>
+<h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Medle</h2>
+<p class="text-[13px] text-slate-500 font-medium mt-0.5">Guess it before the hints run out</p>
+</div>
+<!-- Blue Play Button -->
+<button aria-label="Play Medle" class="w-11 h-11 rounded-full bg-[#1872F4] hover:bg-blue-600 active:scale-95 transition-transform flex items-center justify-center shadow-md shadow-blue-400/40 text-white flex-shrink-0">
+<svg class="w-4 h-4 translate-x-0.5 fill-current" viewbox="0 0 24 24">
+<path d="M8 5v14l11-7z"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Carousel Pagination Dots -->
+<div class="flex justify-center items-center space-x-1.5 mt-3">
+<div class="w-5 h-1.5 rounded-full bg-[#1872F4]"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+</div>
+</section>
+<!-- END: FeaturedCarousel -->
+<!-- BEGIN: CrackTheClues -->
+<section class="space-y-2.5" data-purpose="crack-the-clues">
+<h2 class="text-[17px] font-extrabold text-slate-900 tracking-tight">Crack the clues</h2>
+<div class="grid grid-cols-2 gap-3.5">
+<!-- Game Card: Probe -->
+<div class="flex flex-col group">
+<div class="probe-card-gradient aspect-square rounded-2xl flex items-center justify-center relative overflow-hidden shadow-xs border border-blue-100/60 p-4">
+<!-- Magnifying Glass Illustration -->
+<div class="relative w-24 h-24 flex items-center justify-center">
+<!-- 3D Magnifier -->
+<div class="w-16 h-16 rounded-full border-4 border-blue-400 bg-white/80 shadow-inner flex items-center justify-center relative">
+<span class="text-2xl font-black text-[#FF6433]">?</span>
+</div>
+<!-- Handle -->
+<div class="absolute -bottom-1 -right-0 w-3.5 h-9 bg-gradient-to-b from-[#FF5C39] to-[#E03A14] rounded-full rotate-[-45deg] origin-top shadow-md"></div>
+<!-- Confetti dots -->
+<div class="w-1.5 h-1.5 rounded-full bg-amber-400 absolute top-2 left-3"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-teal-400 absolute bottom-3 left-4"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-indigo-400 absolute top-4 right-1"></div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#6C47FF] flex items-center justify-center text-white text-[9px] shadow-xs">
+                  🔍
+                </span>
+<span class="font-bold text-[14px] text-slate-900">Probe</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Solve clues, reveal the concept</p>
+</div>
+</div>
+<!-- Game Card: Clinical Rounds -->
+<div class="flex flex-col group">
+<div class="patient-card-gradient aspect-square rounded-2xl flex items-center justify-center relative overflow-hidden shadow-xs border border-blue-100/60 p-2">
+<!-- Hospital Patient Illustration -->
+<div class="relative flex flex-col items-center">
+<!-- Pulse Line Overhead -->
+<svg class="w-20 h-5 text-blue-400 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 100 24">
+<path d="M0 12h35l5-8 8 16 5-8h47" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<!-- Patient in Bed -->
+<div class="relative w-24 h-24 flex items-center justify-center">
+<!-- Head -->
+<div class="w-11 h-12 bg-[#FFDFCA] rounded-full border border-orange-200 z-10 flex flex-col items-center pt-1.5 shadow-xs">
+<!-- Hair -->
+<div class="w-10 h-4 bg-[#4A3222] rounded-t-full -mt-2"></div>
+<!-- Eyes & Smile -->
+<div class="flex space-x-2.5 mt-1.5">
+<div class="w-1 h-1 rounded-full bg-[#4A3222]"></div>
+<div class="w-1 h-1 rounded-full bg-[#4A3222]"></div>
+</div>
+<div class="w-2.5 h-0.5 bg-rose-400 rounded-full mt-1"></div>
+</div>
+<!-- Pillow & Bed Frame -->
+<div class="absolute inset-x-1 bottom-1 h-14 bg-white/90 rounded-t-2xl border-t border-slate-200 z-0 shadow-xs"></div>
+<!-- Cyan Hospital Gown/Sheet -->
+<div class="absolute inset-x-2 bottom-0 h-9 bg-blue-300 rounded-t-xl z-20 flex justify-center items-center">
+<div class="w-4 h-2 bg-amber-200/80 rounded-t-md"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#5B4DF5] flex items-center justify-center text-white text-[9px] shadow-xs">
+                  🩺
+                </span>
+<span class="font-bold text-[14px] text-slate-900">Clinical Rounds</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Diagnose and treat patients</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: CrackTheClues -->
+<!-- BEGIN: TestYourRecall -->
+<section class="space-y-2.5" data-purpose="test-your-recall">
+<h2 class="text-[17px] font-extrabold text-slate-900 tracking-tight">Test your recall</h2>
+<div class="grid grid-cols-2 gap-3.5">
+<!-- Game Card: Synapses -->
+<div class="flex flex-col group">
+<div class="hero-card-gradient aspect-square rounded-2xl flex items-center justify-center relative overflow-hidden shadow-xs border border-purple-100/60 p-3">
+<!-- 2x2 Jigsaw Organ Grid -->
+<div class="grid grid-cols-2 gap-1.5 bg-white/60 p-2 rounded-2xl shadow-xs backdrop-blur-xs">
+<!-- Stomach -->
+<div class="w-9 h-9 rounded-xl bg-orange-100/90 flex items-center justify-center text-base">
+                  🫃
+                </div>
+<!-- Lungs -->
+<div class="w-9 h-9 rounded-xl bg-sky-100/90 flex items-center justify-center text-base">
+                  🫁
+                </div>
+<!-- Kidneys -->
+<div class="w-9 h-9 rounded-xl bg-emerald-100/90 flex items-center justify-center text-base">
+                  🩺
+                </div>
+<!-- Liver -->
+<div class="w-9 h-9 rounded-xl bg-amber-100/90 flex items-center justify-center text-base">
+                  🍗
+                </div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#6442ED] flex items-center justify-center text-white text-[10px]">
+<svg class="w-2.5 h-2.5 fill-current" viewbox="0 0 16 16">
+<rect height="6" rx="1" width="6" x="1" y="1"></rect>
+<rect height="6" rx="1" width="6" x="9" y="1"></rect>
+<rect height="6" rx="1" width="6" x="1" y="9"></rect>
+<rect height="6" rx="1" width="6" x="9" y="9"></rect>
+</svg>
+</span>
+<span class="font-bold text-[14px] text-slate-900">Synapses</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Find the four hidden groups</p>
+</div>
+</div>
+<!-- Game Card: Medle (Mini version) -->
+<div class="flex flex-col group">
+<div class="hero-card-gradient aspect-square rounded-2xl flex items-center justify-center relative overflow-hidden shadow-xs border border-purple-100/60 p-3">
+<!-- Mini Symptom List -->
+<div class="w-full space-y-1.5 px-2">
+<div class="h-4 bg-[#FFEFE7] border border-[#FFDEC9] rounded-lg flex items-center px-1.5 justify-between">
+<div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+<div class="w-10 h-1 bg-[#FFD3BD] rounded"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-orange-300"></div>
+</div>
+<div class="h-4 bg-[#EAF3FF] border border-[#D5E6FE] rounded-lg flex items-center px-1.5 justify-between">
+<div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+<div class="w-10 h-1 bg-[#BEDCFD] rounded"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-blue-300"></div>
+</div>
+<div class="h-4 bg-[#EBF7F2] border border-[#D1EFE2] rounded-lg flex items-center px-1.5 justify-between">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+<div class="w-10 h-1 bg-[#BFEBD6] rounded"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-300"></div>
+</div>
+<div class="h-4 bg-[#FFF4E4] border border-[#FFE7C4] rounded-lg flex items-center px-1.5 justify-between">
+<div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+<div class="w-10 h-1 bg-[#FFDEAB] rounded"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+</div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#248BFA] flex items-center justify-center text-white font-black text-[9px]">
+                  ?
+                </span>
+<span class="font-bold text-[14px] text-slate-900">Medle</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Guess it before the hints run out</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: TestYourRecall -->
+<!-- BEGIN: SpotTheSign -->
+<section class="space-y-2.5 pb-4" data-purpose="spot-the-sign">
+<h2 class="text-[17px] font-extrabold text-slate-900 tracking-tight">Spot the sign</h2>
+<!-- Full Width Game Card: Image Rush -->
+<div class="flex flex-col group">
+<div class="warm-card-gradient h-48 rounded-2xl flex items-center justify-center relative overflow-hidden shadow-xs border border-orange-100/50">
+<!-- Ambient Swoosh -->
+<div class="absolute -left-6 top-10 w-24 h-24 bg-orange-200/30 rounded-full blur-xl"></div>
+<!-- 3D Anatomical Heart with motion dashes -->
+<div class="relative flex items-center justify-center">
+<!-- Left Speed Swooshes -->
+<div class="absolute -left-10 flex flex-col space-y-2">
+<div class="w-6 h-1 rounded-full bg-orange-300/60 -rotate-12"></div>
+<div class="w-8 h-1 rounded-full bg-orange-400/60"></div>
+<div class="w-4 h-1 rounded-full bg-orange-300/50 rotate-12"></div>
+</div>
+<!-- Heart Graphic -->
+<div class="text-7xl transform hover:scale-105 transition-transform drop-shadow-md select-none">
+                🫀
+              </div>
+<!-- Right Subtle Stars -->
+<div class="absolute -right-8 flex flex-col space-y-3">
+<div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+<div class="w-1 h-1 rounded-full bg-orange-400"></div>
+</div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#3891F8] flex items-center justify-center text-white text-[10px]">
+                ⏱️
+              </span>
+<span class="font-bold text-[14px] text-slate-900">Image Rush</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Identify medical images ASAP</p>
+</div>
+</div>
+<!-- 2-Column Grid: Anatomy Explorer & Here and There -->
+<div class="grid grid-cols-2 gap-3.5 pt-1">
+<!-- Game Card: Anatomy Explorer -->
+<div class="flex flex-col group">
+<div class="warm-card-gradient aspect-square rounded-2xl flex items-center justify-center relative overflow-hidden shadow-xs border border-orange-100/50 p-2">
+<!-- Human Skeleton Figure -->
+<div class="relative flex flex-col items-center">
+<!-- Glowing halo over skull -->
+<div class="w-10 h-10 rounded-full border border-orange-300/80 bg-white/40 flex items-center justify-center shadow-xs">
+<span class="text-lg">💀</span>
+</div>
+<!-- Skeleton Ribcage & Pelvis Representation -->
+<div class="w-4 h-6 border-x-2 border-dashed border-amber-800/40 mt-0.5"></div>
+<div class="w-6 h-3 border-2 border-amber-800/40 rounded-b-md"></div>
+<div class="flex space-x-2 mt-0.5">
+<div class="w-1 h-8 bg-amber-800/30 rounded-full"></div>
+<div class="w-1 h-8 bg-amber-800/30 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#FF843E] flex items-center justify-center text-white text-[10px]">
+                  💀
+                </span>
+<span class="font-bold text-[14px] text-slate-900">Anatomy Explorer</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Explore models, master structures</p>
+</div>
+</div>
+<!-- Game Card: Here and There -->
+<div class="flex flex-col group">
+<div class="warm-card-gradient aspect-square rounded-2xl flex flex-col items-center justify-center relative overflow-hidden shadow-xs border border-orange-100/50 p-2">
+<!-- 3D Brain Model -->
+<div class="text-4xl drop-shadow-sm select-none mb-2">
+                🧠
+              </div>
+<!-- Action Cross / Check Feedback Buttons -->
+<div class="flex space-x-3 items-center">
+<div class="w-5 h-5 rounded-full border-1.5 border-rose-500 flex items-center justify-center text-rose-500 text-[10px] font-black bg-white/70">
+                  ✕
+                </div>
+<div class="w-5 h-5 rounded-full border-1.5 border-emerald-500 flex items-center justify-center text-emerald-500 text-[10px] font-black bg-white/70">
+                  ✓
+                </div>
+</div>
+</div>
+<!-- Details -->
+<div class="mt-2 space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-md bg-[#A5683F] flex items-center justify-center text-white text-[10px]">
+                  ↔️
+                </span>
+<span class="font-bold text-[14px] text-slate-900">Here and There</span>
+</div>
+<p class="text-[12px] text-slate-500 font-medium leading-tight">Swipe left or right to call it</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: SpotTheSign -->
+</main>
+<!-- BEGIN: FloatingAssistant -->
+<!-- Floating Ask Rezzy Pill fixed above the bottom nav -->
+<div class="fixed bottom-20 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-[398px] z-40">
+<button class="w-full bg-white/95 backdrop-blur-md rounded-full py-2.5 px-3.5 flex items-center space-x-3 shadow-float border border-slate-200/80 active:scale-[0.99] transition-transform">
+<!-- Friendly Doctor Rezzy Mascot -->
+<div class="w-8 h-8 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center relative shadow-xs flex-shrink-0">
+<span class="text-lg">🤖</span>
+<div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></div>
+</div>
+<!-- Input Placeholder -->
+<span class="text-[14px] font-semibold text-slate-700 tracking-tight flex-1 text-left">Ask Rezzy anything</span>
+</button>
+</div>
+<!-- END: FloatingAssistant -->
+<!-- BEGIN: BottomNavigation -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 backdrop-blur-md border-t border-slate-100 px-3 py-2 z-30 shadow-nav">
+<div class="flex items-center justify-around">
+<!-- Tab 1: Quiz -->
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-700 py-1 px-2" href="#quiz">
+<div class="w-6 h-6 flex items-center justify-center mb-0.5">
+<svg class="w-5 h-5 text-slate-500" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.67z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-semibold tracking-tight text-slate-500">Quiz</span>
+</a>
+<!-- Tab 2: Lessons -->
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-700 py-1 px-2" href="#lessons">
+<div class="w-6 h-6 flex items-center justify-center mb-0.5">
+<svg class="w-5 h-5 text-slate-500" fill="currentColor" viewbox="0 0 24 24">
+<path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-semibold tracking-tight text-slate-500">Lessons</span>
+</a>
+<!-- Tab 3: Home -->
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-700 py-1 px-2" href="#home">
+<div class="w-6 h-6 flex items-center justify-center mb-0.5">
+<svg class="w-5 h-5 text-slate-500" fill="currentColor" viewbox="0 0 24 24">
+<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-semibold tracking-tight text-slate-500">Home</span>
+</a>
+<!-- Tab 4: Flashcards -->
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-700 py-1 px-2" href="#flashcards">
+<div class="w-6 h-6 flex items-center justify-center mb-0.5">
+<svg class="w-5 h-5 text-slate-500" fill="currentColor" viewbox="0 0 24 24">
+<path d="M4 4h16v12H4z M2 8h2v10h14v2H2z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-semibold tracking-tight text-slate-500">Flashcards</span>
+</a>
+<!-- Tab 5: Play (Active) -->
+<a class="flex flex-col items-center justify-center py-1 px-3" href="#play">
+<div class="w-13 h-7 bg-blue-100/80 rounded-full flex items-center justify-center mb-0.5 px-3">
+<svg class="w-5 h-5 text-[#1872F4] fill-current" viewbox="0 0 24 24">
+<path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5a2.5 2.5 0 0 1 0 5H2v4c0 1.1.9 2 2 2h3.8v-1.5a2.5 2.5 0 0 1 5 0V21H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-bold tracking-tight text-[#1872F4]">Play</span>
+</a>
+</div>
+</nav>
+<!-- END: BottomNavigation -->
+</div>
+</body></html>

@@ -22,6 +22,7 @@ class SubjectResource extends JsonResource
                 'name' => $t->name,
                 'slug' => $t->slug,
                 'high_yield_priority' => $t->high_yield_priority,
+                'questions_count' => $t->questions_count ?? $t->questions()->where('is_active', true)->count(),
             ])),
         ];
     }

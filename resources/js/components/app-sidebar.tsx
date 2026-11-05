@@ -16,6 +16,7 @@ import {
     Award,
     Stethoscope,
     Globe,
+    Puzzle,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -62,6 +63,16 @@ const mainNavItems: NavItem[] = [
         title: 'CSQ Mock Exam',
         href: '/csq',
         icon: Stethoscope,
+    },
+    {
+        title: 'Flashcards',
+        href: '/flashcards',
+        icon: Layers,
+    },
+    {
+        title: 'Play Hub',
+        href: '/play',
+        icon: Puzzle,
     },
     {
         title: 'Spaced Repetition',

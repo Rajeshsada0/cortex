@@ -573,7 +573,7 @@ export default function Dashboard({
                         <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
                             <span className="text-muted-foreground">Flashcards</span>
                             <Link
-                                href="/spaced-repetition"
+                                href="/flashcards"
                                 className="inline-flex items-center font-semibold text-amber-600 hover:underline dark:text-amber-400"
                             >
                                 Review →

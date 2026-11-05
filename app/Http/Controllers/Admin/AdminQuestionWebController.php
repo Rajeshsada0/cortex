@@ -74,6 +74,14 @@ class AdminQuestionWebController extends Controller
             ->withQueryString();
 
         $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+        if ($subjects->isEmpty()) {
+            try {
+                (new \Database\Seeders\CortexCurriculumSeeder())->run();
+                $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Curriculum auto-seed failed: ' . $e->getMessage());
+            }
+        }
         $pathways = \App\Models\ExamPathway::where('is_active', true)
             ->orderBy('order_index')
             ->orderBy('id')
@@ -249,7 +257,18 @@ class AdminQuestionWebController extends Controller
 
     public function importView(): Response
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
         $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+        if ($subjects->isEmpty()) {
+            try {
+                (new \Database\Seeders\CortexCurriculumSeeder())->run();
+                $subjects = Subject::with('topics:id,subject_id,name')->orderBy('order_index')->get(['id', 'name']);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Curriculum auto-seed failed: ' . $e->getMessage());
+            }
+        }
         $pathways = ExamPathway::where('is_active', true)
             ->orderBy('order_index')
             ->orderBy('id')
@@ -265,7 +284,15 @@ class AdminQuestionWebController extends Controller
     public function importProcess(Request $request, QuestionImportService $importService): RedirectResponse
     {
         ini_set('memory_limit', '1024M');
-        set_time_limit(600);
+        set_time_limit(1800);
+
+        if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_INI_SIZE) {
+            $maxPhpSize = ini_get('upload_max_filesize') ?: '256M';
+
+            return back()->withErrors([
+                'file' => "The uploaded file exceeds the server upload limit ({$maxPhpSize}). Please restart your server if you updated php.ini.",
+            ]);
+        }
 
         $validated = $request->validate([
             'file' => 'required|file|max:153600',
@@ -298,9 +325,19 @@ class AdminQuestionWebController extends Controller
             $msg .= " ({$results['failed']} failed).";
         }
 
+        // Avoid exhausting session / memory by storing a summary rather than potentially tens of thousands of codes/errors
+        $sessionResults = [
+            'total' => $results['total'] ?? 0,
+            'imported' => $results['imported'] ?? 0,
+            'failed' => $results['failed'] ?? 0,
+            'created_codes' => array_slice($results['created_codes'] ?? [], 0, 10),
+            'errors' => array_slice($results['errors'] ?? [], 0, 50),
+            'pathways_summary' => $results['pathways_summary'] ?? [],
+        ];
+
         return redirect()->route('admin.questions.import')
             ->with('success', $msg)
-            ->with('import_results', $results);
+            ->with('import_results', $sessionResults);
     }
 
     public function downloadTemplate(string $format, QuestionImportService $importService): StreamedResponse

@@ -22,6 +22,24 @@ class TestSessionController extends Controller
     ) {}
 
     /**
+     * List user's recent and completed test sessions with accurate question counts
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $sessions = TestSession::where('user_id', $user?->id)
+            ->withCount('attempts')
+            ->latest('created_at')
+            ->limit(30)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => TestSessionResource::collection($sessions),
+        ]);
+    }
+
+    /**
      * Start a new test session (Practice, Timed Block, or Grand Mock)
      */
     public function store(Request $request): JsonResponse
@@ -30,7 +48,7 @@ class TestSessionController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:150',
-            'session_type' => 'nullable|string|in:PRACTICE,TIMED_BLOCK,GRAND_MOCK',
+            'session_type' => 'nullable|string|in:PRACTICE,TIMED_BLOCK,GRAND_MOCK,MOCK',
             'exam_pathway' => [
                 'nullable',
                 'string',
@@ -47,10 +65,15 @@ class TestSessionController extends Controller
             'duration_minutes' => 'nullable|integer|min:1|max:480',
         ]);
 
+        $sessionType = $validated['session_type'] ?? 'PRACTICE';
+        if ($sessionType === 'MOCK') {
+            $sessionType = 'GRAND_MOCK';
+        }
+
         $result = $this->testSessionService->createSession(
             user: $user,
             title: $validated['title'],
-            sessionType: $validated['session_type'] ?? 'PRACTICE',
+            sessionType: $sessionType,
             examPathway: $validated['exam_pathway'] ?? $user->active_pathway,
             subjectId: $validated['subject_id'] ?? null,
             topicId: $validated['topic_id'] ?? null,

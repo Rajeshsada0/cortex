@@ -21,7 +21,7 @@ class TestSessionResource extends JsonResource
             'is_completed' => (bool) $this->is_completed,
             'started_at' => $this->started_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
-            'attempts_count' => $this->attempts()->count(),
+            'attempts_count' => (int) ($this->attempts_count ?? $this->attempts()->count()),
             'attempts' => $this->whenLoaded('attempts', fn () => $this->attempts->map(fn ($att) => [
                 'id' => $att->id,
                 'question_id' => $att->question_id,

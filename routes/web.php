@@ -12,6 +12,8 @@ use App\Http\Controllers\Web\BookmarkWebController;
 use App\Http\Controllers\Web\CsqWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\DirectoryWebController;
+use App\Http\Controllers\Web\FlashcardWebController;
+use App\Http\Controllers\Web\PlayWebController;
 use App\Http\Controllers\Web\MockExamWebController;
 use App\Http\Controllers\Web\QBankWebController;
 use App\Http\Controllers\Web\SpacedRepetitionWebController;
@@ -32,6 +34,14 @@ Route::get('/subjects/{slug}', [GuestPracticeWebController::class, 'subjectDetai
 Route::get('/about-medai', [GuestPracticeWebController::class, 'aboutMedAi'])->name('about-medai');
 Route::match(['get', 'post'], '/practice/guest-launch', [GuestPracticeWebController::class, 'launchGuestPractice'])->name('practice.guest-launch');
 
+// Medical Flashcards Learning Hub & Spaced Review Deck
+Route::get('/flashcards', FlashcardWebController::class)->name('flashcards.index');
+Route::get('/flashcards/cards', [FlashcardWebController::class, 'getCards'])->name('flashcards.cards');
+Route::post('/flashcards/review', [FlashcardWebController::class, 'reviewCard'])->name('flashcards.review');
+
+// Medical Gaming Hub & Clinical Recall Games (Medle, Synapses, Image Rush, Probe)
+Route::get('/play', PlayWebController::class)->name('play.index');
+
 // Standalone Printable / Downloadable Exam Report Scorecard
 Route::get('/download/{id}', [ExamReportDownloadController::class, 'download'])->name('exam.download');
 
@@ -49,9 +59,10 @@ Route::get('/demo-login', function () {
     return redirect()->route('dashboard');
 })->name('demo-login');
 
-Route::middleware(['auth', 'candidate'])->group(function () {
-    Route::get('/dashboard', DashboardWebController::class)->name('dashboard');
+// Unified Dashboard (Inertia Web + JSON API for Mobile Flutter App)
+Route::get('/dashboard', DashboardWebController::class)->name('dashboard');
 
+Route::middleware(['auth', 'candidate'])->group(function () {
     // Q-Bank & Interactive MCQ Runner
     Route::get('/qbank', [QBankWebController::class, 'index'])->name('qbank.index');
     Route::get('/qbank/runner', [QBankWebController::class, 'runner'])->name('qbank.runner');

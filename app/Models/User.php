@@ -104,6 +104,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(UserNoteBookmark::class);
     }
 
+    public function tokens(): HasMany
+    {
+        return $this->hasMany(PersonalAccessToken::class);
+    }
+
     public function libraryFolders(): HasMany
     {
         return $this->hasMany(LibraryFolder::class);

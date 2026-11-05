@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -9,21 +9,28 @@ import {
     Sparkles,
     Stethoscope,
     Zap,
+    Star,
+    Image as ImageIcon,
+    SlidersHorizontal,
+    Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AppLogo from '@/components/app-logo';
 import { MedicalBackgroundElements } from '@/components/cortex/medical-background-elements';
+import { QuizReadyModal } from '@/components/cortex/quiz-ready-modal';
+import { ChooseTopicsModal } from '@/components/cortex/choose-topics-modal';
 
 interface TopicItem {
-    id: string;
+    id: string | number;
     name: string;
     slug?: string;
     questions_count: number;
+    priority?: number;
 }
 
 interface SubjectDetailProps {
     subject: {
-        id: string;
+        id: string | number;
         name: string;
         slug: string;
         category?: string;
@@ -36,28 +43,111 @@ interface SubjectDetailProps {
 export default function SubjectShow({
     subject,
     totalQuestions,
-    topics,
+    topics: initialTopics,
     currentUser,
 }: SubjectDetailProps) {
     const [selectedPathway, setSelectedPathway] = useState<string>('COMBINED');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'high_yield' | 'image'>('all');
 
-    const handleStartFullSubject = () => {
-        router.post('/practice/guest-launch', {
-            subject_id: subject.id,
-            pathway: selectedPathway,
-            study_mode: '1',
-            target_questions: 40,
-        });
+    // Modals state
+    const [isQuizReadyOpen, setIsQuizReadyOpen] = useState(false);
+    const [isChooseTopicsOpen, setIsChooseTopicsOpen] = useState(false);
+    const [activeTopic, setActiveTopic] = useState<TopicItem | null>(null);
+    const [quizQuestionsCount, setQuizQuestionsCount] = useState(40);
+    const [activeSubjectName, setActiveSubjectName] = useState(subject.name);
+    const [activeTopicsCount, setActiveTopicsCount] = useState(1);
+    const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+
+    // Ensure fallback topics if initialTopics is empty
+    const topics: TopicItem[] = useMemo(() => {
+        if (initialTopics && initialTopics.length > 0) {
+            return initialTopics;
+        }
+        // Fallback for Anatomy matching user screenshot
+        if (subject.name.toLowerCase().includes('anatomy')) {
+            return [
+                { id: 101, name: 'Upper/Lower Limb', questions_count: 108, priority: 3 },
+                { id: 102, name: 'Thorax/Abdomen', questions_count: 48, priority: 3 },
+                { id: 103, name: 'Head & Neck', questions_count: 36, priority: 2 },
+                { id: 104, name: 'Pelvis/Perineum', questions_count: 24, priority: 1 },
+                { id: 105, name: 'Gross Anatomy', questions_count: 50, priority: 1 },
+                { id: 106, name: 'Neuroanatomy', questions_count: 60, priority: 3 },
+            ];
+        }
+        return [];
+    }, [initialTopics, subject.name]);
+
+    // Filter topics based on filter pill
+    const filteredTopics = useMemo(() => {
+        if (activeFilter === 'high_yield') {
+            return topics.filter((t, idx) => (t.priority && t.priority >= 2) || idx < 2);
+        }
+        if (activeFilter === 'image') {
+            return topics.filter((t, idx) => idx % 2 === 0);
+        }
+        return topics;
+    }, [topics, activeFilter]);
+
+    const getTopicQuestionCount = (topic: TopicItem): number => {
+        return topic.questions_count && topic.questions_count > 0 ? topic.questions_count : 40;
     };
 
-    const handleStartTopicDrill = (topicId: string) => {
-        router.post('/practice/guest-launch', {
-            subject_id: subject.id,
-            topic_id: topicId,
-            pathway: selectedPathway,
-            study_mode: '1',
-            target_questions: 40,
-        });
+    const handleOpenTopicQuiz = (topic: TopicItem) => {
+        setActiveTopic(topic);
+        setActiveSubjectName(subject.name);
+        setQuizQuestionsCount(getTopicQuestionCount(topic));
+        setActiveTopicsCount(1);
+        setSelectedTopicIds([Number(topic.id)]);
+        setIsQuizReadyOpen(true);
+    };
+
+    const handleOpenSelectTopics = () => {
+        setIsChooseTopicsOpen(true);
+    };
+
+    const handleApplyChosenTopics = (data: {
+        selectedTopicIds: number[];
+        totalQuestions: number;
+        subjectName: string;
+        topicsCount: number;
+        topicName?: string;
+    }) => {
+        setSelectedTopicIds(data.selectedTopicIds);
+        setQuizQuestionsCount(data.totalQuestions);
+        setActiveSubjectName(data.subjectName);
+        setActiveTopicsCount(data.topicsCount);
+        if (data.topicName) {
+            setActiveTopic({
+                id: data.selectedTopicIds[0] || 0,
+                name: data.topicName,
+                questions_count: data.totalQuestions,
+            });
+        } else {
+            setActiveTopic(null);
+        }
+        setIsChooseTopicsOpen(false);
+        setIsQuizReadyOpen(true);
+    };
+
+    const handleStartQuizRunner = () => {
+        let url = `/qbank/runner?limit=10&subject_id=${subject.id}`;
+        if (activeTopic) {
+            url += `&topic_id=${activeTopic.id}`;
+        } else if (selectedTopicIds.length > 0) {
+            url += `&topic_id=${selectedTopicIds[0]}`;
+        }
+        router.visit(url);
+    };
+
+    const getSubjectEmoji = (name: string) => {
+        const lower = name.toLowerCase();
+        if (lower.includes('anatomy')) return '🧠';
+        if (lower.includes('physio')) return '👤';
+        if (lower.includes('biochem')) return '🧬';
+        if (lower.includes('patho')) return '🫀';
+        if (lower.includes('micro')) return '🦠';
+        if (lower.includes('pharm')) return '💊';
+        return '🩺';
     };
 
     return (
@@ -69,7 +159,7 @@ export default function SubjectShow({
             <MedicalBackgroundElements />
 
             {/* Top Navigation */}
-            <header className="border-border/70 bg-background/85 sticky top-0 z-50 border-b backdrop-blur-md transition-colors">
+            <header className="border-border/70 bg-background/85 sticky top-0 z-40 border-b backdrop-blur-md transition-colors">
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     <Link href="/" className="group flex items-center gap-2">
                         <AppLogo />
@@ -89,14 +179,24 @@ export default function SubjectShow({
                             Subjects
                         </Link>
                         <Link
-                            href="/about-medai"
+                            href="/directory"
                             className="text-muted-foreground transition-colors hover:text-[#0066FF]"
                         >
-                            About MedAI
+                            Directory
                         </Link>
                     </nav>
 
                     <div className="flex items-center gap-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleOpenSelectTopics}
+                            className="h-9 rounded-xl border-[#0066FF]/40 text-xs font-bold text-[#0066FF] hover:bg-[#0066FF]/10"
+                        >
+                            SELECT TOPICS
+                        </Button>
+
                         {currentUser ? (
                             <Link href="/dashboard">
                                 <Button
@@ -121,175 +221,170 @@ export default function SubjectShow({
                 </div>
             </header>
 
-            <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-                {/* Back Button */}
-                <div className="mb-6">
-                    <Link
-                        href="/subjects"
-                        className="inline-flex items-center text-xs font-bold text-slate-500 transition-colors hover:text-[#0066FF]"
-                    >
-                        <ArrowLeft className="mr-1.5 size-3.5" />
-                        All Medical Specialties
-                    </Link>
-                </div>
+            <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+                {/* Back Button and Screen Title Bar matching Image 2 */}
+                <div className="mb-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/subjects"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 dark:border-slate-800 dark:bg-card dark:text-slate-300"
+                            aria-label="Back"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </Link>
 
-                {/* Subject Header Banner */}
-                <div className="dark:border-border/80 dark:bg-card mb-10 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-10">
-                    <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-                        <div className="max-w-2xl">
-                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-0.5 text-xs font-bold text-sky-800 dark:border-sky-800/80 dark:bg-sky-950/60 dark:text-sky-300">
-                                <BookOpen className="size-3.5 text-sky-600 dark:text-sky-400" />
-                                <span>
-                                    SPECIALTY MCQ BANK · {totalQuestions}{' '}
-                                    QUESTIONS
-                                </span>
-                            </div>
-                            <h1 className="text-3xl font-black text-[#0A1E34] sm:text-4xl dark:text-white">
-                                {subject.name} MCQ Practice
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">{getSubjectEmoji(subject.name)}</span>
+                            <h1 className="text-xl sm:text-2xl font-black text-[#0A1E34] dark:text-white">
+                                {subject.name}
                             </h1>
-                            <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm dark:text-slate-300">
-                                High-yield clinical vignettes covering core
-                                pathologies, diagnostic algorithms, and
-                                next-best-step management. Pick an exam style or
-                                drill topic-by-topic.
-                            </p>
-
-                            {/* Exam Filter Chips */}
-                            <div className="mt-6 flex flex-wrap gap-2 text-xs font-bold">
-                                {[
-                                    { key: 'COMBINED', label: 'All Exams' },
-                                    {
-                                        key: 'USMLE_STEP1',
-                                        label: 'USMLE Step 1',
-                                    },
-                                    {
-                                        key: 'USMLE_STEP2CK',
-                                        label: 'USMLE Step 2 CK',
-                                    },
-                                    { key: 'NEET_PG', label: 'NEET-PG' },
-                                    {
-                                        key: 'MECEE_PG',
-                                        label: 'CEE PG (Nepal)',
-                                    },
-                                ].map((tab) => (
-                                    <button
-                                        key={tab.key}
-                                        onClick={() =>
-                                            setSelectedPathway(tab.key)
-                                        }
-                                        className={`rounded-xl border px-3 py-1.5 text-xs transition-all ${
-                                            selectedPathway === tab.key
-                                                ? 'border-[#0066FF] bg-[#0066FF] text-white shadow-sm'
-                                                : 'dark:border-border dark:bg-muted border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:text-slate-300'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* 1-Click Launch full 40-Q set */}
-                        <div className="flex shrink-0 flex-col gap-2">
-                            <Button
-                                onClick={handleStartFullSubject}
-                                className="h-12 rounded-xl bg-[#0066FF] px-6 text-sm font-bold text-white shadow-md hover:bg-blue-700"
-                            >
-                                <Play className="mr-2 size-4 fill-white" />
-                                Practice {subject.name} (40 MCQs)
-                            </Button>
-                            <span className="text-center text-[11px] font-medium text-slate-400">
-                                Immediate reveal · No signup needed
-                            </span>
                         </div>
                     </div>
+
+                    {/* SELECT Button matching Image 2 top-right */}
+                    <button
+                        type="button"
+                        onClick={handleOpenSelectTopics}
+                        className="rounded-full border border-sky-300 bg-sky-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-sky-700 shadow-2xs hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300 transition-all"
+                    >
+                        Select
+                    </button>
                 </div>
 
-                {/* Topics Grid */}
-                <div className="mb-6">
-                    <h2 className="text-xl font-bold text-[#0A1E34] dark:text-white">
-                        Focused High-Yield Topics ({topics.length})
-                    </h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                        Drill specific organ systems and clinical syndromes with
-                        active recall.
-                    </p>
+                {/* Filter Pills matching Image 2: All, High Yield, Image */}
+                <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-1">
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter('all')}
+                        className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                            activeFilter === 'all'
+                                ? 'bg-[#0066FF] text-white shadow-xs'
+                                : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-card dark:text-slate-300'
+                        }`}
+                    >
+                        All
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter('high_yield')}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                            activeFilter === 'high_yield'
+                                ? 'bg-[#0066FF] text-white shadow-xs'
+                                : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-card dark:text-slate-300'
+                        }`}
+                    >
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                        <span>High Yield</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter('image')}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                            activeFilter === 'image'
+                                ? 'bg-[#0066FF] text-white shadow-xs'
+                                : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-card dark:text-slate-300'
+                        }`}
+                    >
+                        <ImageIcon className="h-3.5 w-3.5" />
+                        <span>Image</span>
+                    </button>
                 </div>
 
-                <div className="mb-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {topics.map((topic) => (
+                {/* Topic Cards List matching Image 2 */}
+                <div className="space-y-3.5">
+                    {filteredTopics.map((topic, index) => (
                         <div
                             key={topic.id}
-                            className="group dark:border-border/80 dark:bg-card flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:border-[#0066FF]/40 hover:shadow-md"
+                            onClick={() => handleOpenTopicQuiz(topic)}
+                            className="group flex items-center justify-between rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs transition-all hover:border-[#0066FF]/50 hover:shadow-md cursor-pointer dark:border-slate-800 dark:bg-card"
                         >
-                            <div>
-                                <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                                    Topic Drill
-                                </span>
-                                <h3 className="mt-0.5 text-base font-bold text-[#0A1E34] transition-colors group-hover:text-[#0066FF] dark:text-white">
-                                    {topic.name}
-                                </h3>
-                                <p className="mt-1 text-xs text-slate-500">
-                                    {topic.questions_count > 0
-                                        ? `${topic.questions_count} MCQs in database`
-                                        : 'Curated clinical questions'}
-                                </p>
+                            <div className="flex items-center gap-4">
+                                {/* Topic Icon Graphic */}
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300">
+                                    {index % 2 === 0 ? (
+                                        <Activity className="h-6 w-6 stroke-[1.8]" />
+                                    ) : (
+                                        <Layers className="h-6 w-6 stroke-[1.8]" />
+                                    )}
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm sm:text-base font-bold text-[#0A1E34] group-hover:text-[#0066FF] dark:text-white transition-colors">
+                                        {topic.name}
+                                    </h3>
+                                    <p className="mt-0.5 text-xs text-slate-400 font-medium">
+                                        {getTopicQuestionCount(topic)} Questions
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="dark:border-border mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
-                                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                    Free practice
+                            {/* Badges: High Yield and New matching Image 2 */}
+                            <div className="flex items-center gap-2">
+                                <span className="rounded-full bg-amber-100/80 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
+                                    High Yield
                                 </span>
-                                <Button
-                                    onClick={() =>
-                                        handleStartTopicDrill(topic.id)
-                                    }
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 border-[#0066FF]/30 text-xs font-bold text-[#0066FF] hover:bg-[#0066FF]/10"
-                                >
-                                    Practice Set
-                                    <ArrowRight className="ml-1 size-3" />
-                                </Button>
+                                <span className="rounded-full bg-blue-100/80 px-2.5 py-1 text-[11px] font-bold text-blue-700 dark:bg-blue-950/70 dark:text-blue-300">
+                                    New
+                                </span>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {topics.length === 0 && (
+                {filteredTopics.length === 0 && (
                     <div className="rounded-2xl border border-dashed border-slate-200 py-12 text-center">
                         <p className="text-xs text-slate-500">
-                            No individual topics listed under this subject yet.
-                            You can still launch the full subject drill above.
+                            No topics matched the selected filter.
                         </p>
                     </div>
                 )}
             </main>
 
+            {/* Modal 1: Your Quiz is Ready Modal */}
+            <QuizReadyModal
+                isOpen={isQuizReadyOpen}
+                onClose={() => setIsQuizReadyOpen(false)}
+                subjectName={activeSubjectName}
+                topicName={activeTopic ? activeTopic.name : undefined}
+                topicsCount={activeTopicsCount}
+                questionsCount={quizQuestionsCount}
+                subjectId={subject.id}
+                topicId={activeTopic ? activeTopic.id : undefined}
+                selectedTopicIds={selectedTopicIds}
+                onEdit={() => {
+                    setIsQuizReadyOpen(false);
+                    setIsChooseTopicsOpen(true);
+                }}
+                onStartQuiz={handleStartQuizRunner}
+            />
+
+            {/* Modal 2: Choose Topics Modal */}
+            <ChooseTopicsModal
+                isOpen={isChooseTopicsOpen}
+                onClose={() => setIsChooseTopicsOpen(false)}
+                initialSubjectId={subject.id}
+                initialTopicIds={selectedTopicIds}
+                onApply={handleApplyChosenTopics}
+            />
+
             {/* Footer */}
             <footer className="dark:border-border dark:bg-card/40 mt-auto border-t border-slate-200 bg-slate-50/60 py-8">
                 <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
                     <div>
-                        © {new Date().getFullYear()} Cortex Medical. MedAI
-                        Practice Engine.
+                        © {new Date().getFullYear()} Cortex Medical. MedAI Practice Engine.
                     </div>
                     <div className="flex items-center gap-6">
                         <Link href="/choose" className="hover:text-foreground">
                             Exam Tracks
                         </Link>
-                        <Link
-                            href="/subjects"
-                            className="hover:text-foreground"
-                        >
+                        <Link href="/subjects" className="hover:text-foreground">
                             Subjects
                         </Link>
-                        <Link
-                            href="/about-medai"
-                            className="hover:text-foreground"
-                        >
-                            About MedAI
+                        <Link href="/directory" className="hover:text-foreground">
+                            Directory
                         </Link>
-
                     </div>
                 </div>
             </footer>

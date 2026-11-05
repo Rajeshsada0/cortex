@@ -13,9 +13,9 @@ final class PerformanceQuadrantService
     public function getQuadrantBreakdown(User $user): array
     {
         $attempts = QuestionAttempt::where('user_id', $user->id)
-            ->with(['question.subject', 'question.topic'])
             ->latest('id')
             ->limit(200)
+            ->select(['id', 'question_id', 'confidence', 'is_correct', 'was_switched'])
             ->get();
 
         $total = $attempts->count();

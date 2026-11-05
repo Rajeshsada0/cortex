@@ -59,13 +59,13 @@ final class ReadinessScoreCalculator
         $attempts = QuestionAttempt::where('user_id', $user->id)
             ->latest('id')
             ->limit(500)
-            ->get();
+            ->pluck('is_correct');
 
         if ($attempts->isEmpty()) {
             return 0.50; // Neutral baseline for new user
         }
 
-        $correct = $attempts->where('is_correct', true)->count();
+        $correct = $attempts->filter()->count();
 
         return $correct / $attempts->count();
     }
@@ -159,19 +159,16 @@ final class ReadinessScoreCalculator
      */
     public function stabilityPenalty(User $user): float
     {
-        $attempts = QuestionAttempt::where('user_id', $user->id)->get();
-        if ($attempts->isEmpty()) {
+        $totalAttempts = QuestionAttempt::where('user_id', $user->id)->count();
+        if ($totalAttempts === 0) {
             return 0.10;
         }
 
-        $switchedAttempts = $attempts->where('was_switched', true);
-        if ($switchedAttempts->isEmpty()) {
-            return 0.05;
-        }
+        $harmfulSwitches = QuestionAttempt::where('user_id', $user->id)
+            ->where('was_switched', true)
+            ->where('is_correct', false)
+            ->count();
 
-        // Specifically penalize switching from what would have been correct to incorrect
-        $harmfulSwitches = $switchedAttempts->where('is_correct', false)->count();
-
-        return min(1.0, ($harmfulSwitches / $attempts->count()) * 3.0);
+        return min(1.0, ($harmfulSwitches / $totalAttempts) * 3.0);
     }
 }
