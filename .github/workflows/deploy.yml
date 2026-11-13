@@ -44,12 +44,21 @@ jobs:
       - name: 6. Configure SSH Keys
         env:
           SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          PASSPHRASE: ${{ secrets.CPANEL_SSH_PASSPHRASE }}
           HOST: ${{ secrets.CPANEL_HOST }}
           PORT: ${{ secrets.CPANEL_PORT || '22' }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa_raw
+          chmod 600 ~/.ssh/id_rsa_raw
+
+          # If encrypted with a cPanel password, decrypt it cleanly for automated authentication
+          if [ -n "$PASSPHRASE" ]; then
+            openssl rsa -in ~/.ssh/id_rsa_raw -out ~/.ssh/id_rsa -passin pass:"$PASSPHRASE" 2>/dev/null || cp ~/.ssh/id_rsa_raw ~/.ssh/id_rsa
+          else
+            cp ~/.ssh/id_rsa_raw ~/.ssh/id_rsa
+          fi
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p $PORT -H $HOST >> ~/.ssh/known_hosts 2>/dev/null || true
 
