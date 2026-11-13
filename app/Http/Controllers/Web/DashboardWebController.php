@@ -145,6 +145,8 @@ class DashboardWebController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'avatar' => $user->avatar,
+                'avatar_url' => $user->avatar_url,
                 'active_pathway' => $user->active_pathway ?? 'INI_CET',
                 'pathway_label' => $user->pathway_label,
                 'target_exam_date' => $user->target_exam_date?->toDateString(),
