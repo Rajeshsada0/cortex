@@ -19,10 +19,10 @@ jobs:
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 2. Setup PHP 8.3
+      - name: 2. Setup PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, zip
           coverage: none
 
@@ -34,7 +34,7 @@ jobs:
 
       - name: 4. Install PHP Dependencies (No Dev)
         run: |
-          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --ignore-platform-reqs
 
       - name: 5. Install NPM Packages & Build Production Assets
         run: |

@@ -18,6 +18,7 @@ use App\Models\UserNoteBookmark;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -63,18 +64,21 @@ class DashboardWebController extends Controller
             ->get()
             ->keyBy('subject_id');
 
-        $subjects = Subject::withCount([
-            'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),
-            'topics',
-        ])
+        $subjectTotals = Cache::remember("subject_q_counts_{$pathway}", 3600, function () use ($pathway) {
+            return Subject::withCount([
+                'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),
+            ])->pluck('questions_count', 'id')->toArray();
+        });
+
+        $subjects = Subject::withCount('topics')
             ->orderBy('order_index')
             ->get()
-            ->map(function ($s) use ($userAttemptsBySubject) {
+            ->map(function ($s) use ($userAttemptsBySubject, $subjectTotals) {
                 $stat = $userAttemptsBySubject->get($s->id);
                 $attempted = (int) ($stat?->attempted ?? 0);
                 $correct = (int) ($stat?->correct ?? 0);
 
-                $total = (int) $s->questions_count;
+                $total = (int) ($subjectTotals[$s->id] ?? 0);
                 $coverage = $total > 0 ? round(($attempted / $total) * 100) : 0;
                 $mastery = $attempted > 0 ? round(($correct / $attempted) * 100) : 0;
 
@@ -167,7 +171,7 @@ class DashboardWebController extends Controller
             'grandMocksCount' => $grandMocksCount,
             'completedSessionsCount' => $completedSessionsCount,
             'avgScorePercent' => $avgScorePercent,
-            'totalQuestions' => Question::where('is_active', true)->forExam($pathway)->count(),
+            'totalQuestions' => Cache::remember("pathway_total_q_{$pathway}", 3600, fn () => Question::where('is_active', true)->forExam($pathway)->count()),
             'totalAttempts' => QuestionAttempt::where('user_id', $user->id)
                 ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
                 ->count(),
