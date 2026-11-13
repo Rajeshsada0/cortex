@@ -92,6 +92,8 @@ class AdminPathwayWebController extends Controller
             'order_index' => $maxOrder + 1,
         ]);
 
+        \Illuminate\Support\Facades\Cache::forget('active_exam_pathways_shared');
+
         return redirect()->route('admin.pathways.index')
             ->with('success', "Exam Pathway '{$validated['name']}' created successfully.");
     }
@@ -138,6 +140,7 @@ class AdminPathwayWebController extends Controller
         }
 
         $pathway->update($data);
+        \Illuminate\Support\Facades\Cache::forget('active_exam_pathways_shared');
 
         return redirect()->route('admin.pathways.index')
             ->with('success', "Exam Pathway '{$pathway->name}' updated successfully.");
@@ -152,6 +155,7 @@ class AdminPathwayWebController extends Controller
 
         $name = $pathway->name;
         $pathway->delete();
+        \Illuminate\Support\Facades\Cache::forget('active_exam_pathways_shared');
 
         return redirect()->route('admin.pathways.index')
             ->with('success', "Exam Pathway '{$name}' deleted successfully.");

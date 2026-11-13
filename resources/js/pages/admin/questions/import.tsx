@@ -158,23 +158,20 @@ export default function QuestionsImport({
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 {/* Header with back button */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
+                <div className="border-border flex flex-col justify-between gap-3 border-b pb-4 sm:flex-row sm:items-center">
                     <div>
                         <Link
                             href="/admin/questions"
-                            className="text-muted-foreground hover:text-foreground mb-2 inline-flex items-center gap-1.5 text-xs font-semibold transition-colors"
+                            className="text-muted-foreground hover:text-foreground mb-1 inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
                         >
                             <ArrowLeft className="size-3.5" />
-                            <span>Back to MCQ Question Bank</span>
+                            <span>Question Bank</span>
                         </Link>
-                        <h1 className="text-foreground flex items-center gap-2.5 text-2xl font-black tracking-tight sm:text-3xl">
-                            <Upload className="size-7 text-[#0066FF]" />
-                            <span>Bulk MCQ Question Importer</span>
+                        <h1 className="text-foreground text-lg sm:text-xl font-bold tracking-tight">
+                            Bulk Question Import
                         </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Import dozens or hundreds of clinical vignettes with
-                            4 options and 3-tier clinical explanations via CSV
-                            or JSON.
+                        <p className="text-muted-foreground text-xs">
+                            Upload multiple questions via CSV or JSON file
                         </p>
                     </div>
 

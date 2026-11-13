@@ -34,12 +34,6 @@ export default function AboutMedAi() {
 
                     <nav className="hidden items-center gap-6 text-xs font-semibold md:flex">
                         <Link
-                            href="/choose"
-                            className="text-muted-foreground transition-colors hover:text-[#0066FF]"
-                        >
-                            Exam Tracks
-                        </Link>
-                        <Link
                             href="/subjects"
                             className="text-muted-foreground transition-colors hover:text-[#0066FF]"
                         >
@@ -54,12 +48,12 @@ export default function AboutMedAi() {
                     </nav>
 
                     <div className="flex items-center gap-3">
-                        <Link href="/choose">
+                        <Link href="/register">
                             <Button
                                 size="sm"
                                 className="h-9 bg-[#0066FF] text-xs font-bold text-white shadow-sm hover:bg-blue-700"
                             >
-                                Start Practice →
+                                Get Started →
                             </Button>
                         </Link>
                     </div>
@@ -88,7 +82,7 @@ export default function AboutMedAi() {
 
                 {/* Quick Action CTAs */}
                 <div className="dark:border-border mt-8 flex flex-wrap items-center gap-3 border-b border-slate-200 pb-8">
-                    <Link href="/choose">
+                    <Link href="/mock-exam">
                         <Button className="h-11 rounded-xl bg-[#0066FF] px-5 text-xs font-bold text-white shadow-md hover:bg-blue-700">
                             Start a Mock Exam
                             <ArrowRight className="ml-1.5 size-3.5" />
@@ -234,13 +228,13 @@ export default function AboutMedAi() {
                             Ready to test your clinical knowledge?
                         </h3>
                         <p className="mt-1 text-xs text-slate-300">
-                            No signup required. Start a free timed set in under
-                            5 seconds.
+                            Start high-stakes timed examination sets and track
+                            your diagnostic readiness.
                         </p>
                     </div>
-                    <Link href="/choose">
+                    <Link href="/mock-exam">
                         <Button className="h-11 shrink-0 rounded-xl bg-[#0066FF] px-6 text-xs font-bold text-white shadow-md hover:bg-blue-600">
-                            Pick an Exam Track
+                            Explore Mock Exams
                             <ArrowRight className="ml-2 size-4" />
                         </Button>
                     </Link>
@@ -255,8 +249,8 @@ export default function AboutMedAi() {
                         Practice Engine.
                     </div>
                     <div className="flex items-center gap-6">
-                        <Link href="/choose" className="hover:text-foreground">
-                            Exam Tracks
+                        <Link href="/mock-exam" className="hover:text-foreground">
+                            Mock Exams
                         </Link>
                         <Link
                             href="/subjects"

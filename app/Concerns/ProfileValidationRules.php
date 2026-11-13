@@ -18,6 +18,11 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'institution' => ['nullable', 'string', 'max:255'],
+            'medical_council_no' => ['nullable', 'string', 'max:100'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'avatar' => ['nullable'],
+            'remove_avatar' => ['nullable', 'boolean'],
             'active_pathway' => ['nullable', 'string'],
             'target_exam_date' => ['nullable', 'date'],
             'daily_study_hours' => ['nullable', 'integer', 'min:1', 'max:18'],

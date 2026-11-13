@@ -136,12 +136,12 @@ export default function AdminCsqForm({ scenario, pathways }: ScenarioFormProps) 
                         </Button>
                     </Link>
                     <div>
-                        <span className="text-xs font-semibold text-cyan-600 dark:text-cyan-400">
-                            Clinical Scenario Authoring
-                        </span>
-                        <h1 className="text-2xl font-black tracking-tight text-foreground">
-                            {isEditing ? 'Edit Clinical Scenario Station' : 'Create New CSQ Station'}
+                        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                            {isEditing ? 'Edit CSQ Station' : 'New CSQ Station'}
                         </h1>
+                        <p className="text-xs text-muted-foreground">
+                            Clinical case station authoring
+                        </p>
                     </div>
                 </div>
 

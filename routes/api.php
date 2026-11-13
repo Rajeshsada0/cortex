@@ -28,6 +28,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/users/me', [UserController::class, 'me'])->name('api.v1.users.me');
     Route::patch('/users/me', [UserController::class, 'updateProfile'])->name('api.v1.users.update-pathway');
     Route::match(['put', 'patch', 'post'], '/users/profile', [UserController::class, 'updateProfile'])->name('api.v1.users.update-profile');
+    Route::post('/users/avatar', [UserController::class, 'updateAvatar'])->name('api.v1.users.avatar.update');
+    Route::delete('/users/avatar', [UserController::class, 'deleteAvatar'])->name('api.v1.users.avatar.destroy');
 
     // 19 Medical Subjects & Progress
     Route::match(['get', 'post'], '/curriculum/seed', [SubjectController::class, 'seedCurriculum'])->name('api.v1.curriculum.seed');
@@ -72,5 +74,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/ai/chat', [\App\Http\Controllers\Api\V1\CortexAiController::class, 'chat'])->name('api.v1.ai.chat');
     Route::get('/ai/credits', [\App\Http\Controllers\Api\V1\CortexAiController::class, 'credits'])->name('api.v1.ai.credits');
     Route::post('/ai/credits/refill', [\App\Http\Controllers\Api\V1\CortexAiController::class, 'refillCredits'])->name('api.v1.ai.credits.refill');
+
+    // Support Inquiries & Community Ratings
+    Route::post('/support/inquiries', [\App\Http\Controllers\Api\V1\SupportInquiryController::class, 'store'])->name('api.v1.support.inquiries.store');
+    Route::post('/app-ratings', [\App\Http\Controllers\Api\V1\AppRatingController::class, 'store'])->name('api.v1.app-ratings.store');
+    Route::get('/app-ratings/summary', [\App\Http\Controllers\Api\V1\AppRatingController::class, 'summary'])->name('api.v1.app-ratings.summary');
 });
 

@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -24,11 +26,18 @@ class UserController extends Controller
                 'id' => $user?->id,
                 'name' => $user?->name,
                 'email' => $user?->email,
+                'avatar' => $user?->avatar,
+                'avatar_url' => $user?->avatar_url,
+                'institution' => $user?->institution,
+                'medical_council_no' => $user?->medical_council_no,
+                'phone' => $user?->phone,
+                'is_admin' => (bool) $user?->is_admin,
                 'active_pathway' => $user?->active_pathway ?? 'INI_CET',
                 'pathway_label' => $user?->pathway_label,
                 'target_exam_date' => $user?->target_exam_date?->toDateString(),
                 'daily_study_hours' => $user?->daily_study_hours ?? 6,
                 'daily_mcq_target' => $user?->daily_mcq_target ?? 100,
+                'ai_credits' => $user?->ai_credits ?? 50,
                 'dashboard_preferences' => $user?->dashboard_preferences,
                 'created_at' => $user?->created_at?->toIso8601String(),
             ],
@@ -105,6 +114,23 @@ class UserController extends Controller
             $user->dashboard_preferences = array_merge($current, $validated['dashboard_preferences']);
         }
 
+        if ($request->hasFile('avatar')) {
+            $request->validate([
+                'avatar' => 'image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            ]);
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+                Storage::disk('public')->delete($rawAvatar);
+            }
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->boolean('remove_avatar')) {
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+                Storage::disk('public')->delete($rawAvatar);
+            }
+            $user->avatar = null;
+        }
+
         $user->save();
 
         return response()->json([
@@ -114,14 +140,123 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'avatar' => $user->avatar,
+                'avatar_url' => $user->avatar_url,
+                'institution' => $user->institution,
+                'medical_council_no' => $user->medical_council_no,
+                'phone' => $user->phone,
+                'is_admin' => (bool) $user->is_admin,
                 'active_pathway' => $user->active_pathway,
                 'pathway_label' => $user->pathway_label,
                 'target_exam_date' => $user->target_exam_date?->toDateString(),
                 'daily_study_hours' => $user->daily_study_hours,
                 'daily_mcq_target' => $user->daily_mcq_target,
+                'ai_credits' => $user->ai_credits,
                 'dashboard_preferences' => $user->dashboard_preferences,
                 'created_at' => $user->created_at?->toIso8601String(),
             ],
+        ]);
+    }
+
+    /**
+     * Upload avatar image from web or Flutter mobile app
+     */
+    public function updateAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'Candidate user not found.'], 404);
+        }
+
+        // 1. Multipart file upload (Standard from Flutter / Web)
+        if ($request->hasFile('avatar')) {
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            ]);
+
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+                Storage::disk('public')->delete($rawAvatar);
+            }
+
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile picture uploaded successfully',
+                'avatar' => $user->avatar,
+                'avatar_url' => $user->avatar_url,
+                'user' => $user,
+            ]);
+        }
+
+        // 2. Base64 encoded string upload (commonly used in Flutter camera/gallery pickers)
+        if ($request->filled('avatar_base64')) {
+            $base64 = $request->input('avatar_base64');
+            $type = 'jpg';
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $type = strtolower($matches[1]);
+                $base64 = substr($base64, strpos($base64, ',') + 1);
+            }
+
+            $decoded = base64_decode($base64);
+            if ($decoded === false) {
+                return response()->json(['success' => false, 'message' => 'Invalid image base64 data.'], 422);
+            }
+
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+                Storage::disk('public')->delete($rawAvatar);
+            }
+
+            $filename = 'avatars/' . Str::random(40) . '.' . $type;
+            Storage::disk('public')->put($filename, $decoded);
+            $user->avatar = $filename;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile picture uploaded successfully',
+                'avatar' => $user->avatar,
+                'avatar_url' => $user->avatar_url,
+                'user' => $user,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Please provide an image file under "avatar" or a base64 encoded string under "avatar_base64".',
+        ], 422);
+    }
+
+    /**
+     * Delete user avatar photo
+     */
+    public function deleteAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+
+        if (! $user) {
+            return response()->json(['success' => false, 'message' => 'Candidate user not found.'], 404);
+        }
+
+        $rawAvatar = $user->getRawOriginal('avatar');
+        if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+            Storage::disk('public')->delete($rawAvatar);
+        }
+
+        $user->avatar = null;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture removed successfully',
+            'avatar' => null,
+            'avatar_url' => null,
+            'user' => $user,
         ]);
     }
 

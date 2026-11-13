@@ -18,6 +18,7 @@ import {
     Globe,
     Check,
     Upload,
+    Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -89,6 +90,32 @@ export default function PathwaysIndex({
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [activePathway, setActivePathway] = useState<PathwayInfo | null>(null);
+
+    // Filter States
+    const [searchQuery, setSearchQuery] = useState('');
+    const [regionFilter, setRegionFilter] = useState('ALL');
+
+    const regions = Array.from(
+        new Set(
+            Object.values(pathways)
+                .map((p) => p.region)
+                .filter(Boolean),
+        ),
+    );
+
+    const filteredPathways = Object.entries(pathways).filter(([_, p]) => {
+        if (regionFilter !== 'ALL' && p.region !== regionFilter) return false;
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            return (
+                p.name.toLowerCase().includes(q) ||
+                p.code.toLowerCase().includes(q) ||
+                p.fullName.toLowerCase().includes(q) ||
+                (p.region && p.region.toLowerCase().includes(q))
+            );
+        }
+        return true;
+    });
 
     // Create Form
     const createForm = useForm<PathwayFormData>({
@@ -211,33 +238,18 @@ export default function PathwaysIndex({
             <Head title="Exam Pathways & Blueprints — Cortex Admin" />
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-                {/* Header */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
-                    <div>
-                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-                            <Award className="size-4" />
-                            <span>
-                                Postgraduate Testing Standards &amp; Examination Blueprints
-                            </span>
-                        </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            Exam Pathway Blueprints
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Manage negative marking coefficients, question quotas, timing, and national curriculum rules.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2.5">
+                {/* Action Toolbar */}
+                <div className="flex items-center justify-end">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Link href="/admin/questions/create">
-                            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-bold">
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
                                 Author Questions
                             </Button>
                         </Link>
                         <Link href="/admin/questions/import">
-                            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-bold hover:border-[#0066FF] hover:text-[#0066FF]">
-                                <Upload className="size-3.5 text-[#0066FF]" />
-                                <span>Import Questions</span>
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium hover:border-[#0066FF] hover:text-[#0066FF]">
+                                <Upload className="size-3 text-[#0066FF]" />
+                                <span>Import</span>
                             </Button>
                         </Link>
                         <Button
@@ -247,30 +259,74 @@ export default function PathwaysIndex({
                                 createForm.clearErrors();
                                 setIsCreateOpen(true);
                             }}
-                            className="h-9 gap-1.5 bg-[#0066FF] px-3 text-xs font-bold text-white shadow-xs hover:bg-[#0052cc] dark:bg-cyan-600 dark:hover:bg-cyan-500"
+                            className="h-8 gap-1.5 bg-[#0066FF] px-3 text-xs font-semibold text-white shadow-xs hover:bg-[#0052cc] dark:bg-cyan-600 dark:hover:bg-cyan-500"
                         >
-                            <Plus className="size-4" />
-                            <span>Create New Blueprint</span>
+                            <Plus className="size-3.5" />
+                            <span>New Pathway</span>
                         </Button>
+                    </div>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border bg-card p-3.5 shadow-xs">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder="Search pathways by name, code, or country..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 text-xs rounded-xl"
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={regionFilter}
+                            onChange={(e) => setRegionFilter(e.target.value)}
+                            className="h-9 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        >
+                            <option value="ALL">All Regions ({Object.keys(pathways).length})</option>
+                            {regions.map((r) => (
+                                <option key={r} value={r}>
+                                    {r}
+                                </option>
+                            ))}
+                        </select>
+
+                        {(searchQuery || regionFilter !== 'ALL') && (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setRegionFilter('ALL');
+                                }}
+                                className="h-9 text-xs"
+                            >
+                                Clear
+                            </Button>
+                        )}
                     </div>
                 </div>
 
                 {/* Pathways Grid */}
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-                    {Object.entries(pathways).map(([key, p]) => {
-                        const coveragePct = Math.min(
-                            100,
-                            Math.round(
-                                (p.availableQuestions / p.totalQuestions) * 100,
-                            ),
-                        );
-                        return (
-                            <div
-                                key={key}
-                                className={`border-border bg-card flex flex-col justify-between rounded-2xl border p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700 ${
-                                    !p.isActive ? 'opacity-70' : ''
-                                }`}
-                            >
+                    {filteredPathways.length > 0 ? (
+                        filteredPathways.map(([key, p]) => {
+                            const coveragePct = Math.min(
+                                100,
+                                Math.round(
+                                    (p.availableQuestions / p.totalQuestions) * 100,
+                                ),
+                            );
+                            return (
+                                <div
+                                    key={key}
+                                    className={`border-border bg-card flex flex-col justify-between rounded-2xl border p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700 ${
+                                        !p.isActive ? 'opacity-70' : ''
+                                    }`}
+                                >
                                 <div>
                                     {/* Top Row: Code, System Badge, and Actions */}
                                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -421,7 +477,14 @@ export default function PathwaysIndex({
                                 </div>
                             </div>
                         );
-                    })}
+                    })
+                ) : (
+                    <div className="col-span-full rounded-2xl border border-dashed border-border p-12 text-center">
+                        <Award className="mx-auto size-8 text-muted-foreground/50 mb-2" />
+                        <h3 className="text-sm font-bold text-foreground">No matching exam pathways found</h3>
+                        <p className="text-xs text-muted-foreground mt-1">Try clearing or adjusting your search term or region filter.</p>
+                    </div>
+                )}
                 </div>
 
                 {/* Subject Distribution Matrix */}

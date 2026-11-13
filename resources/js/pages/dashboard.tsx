@@ -852,7 +852,7 @@ export default function Dashboard({
                     </div>
 
                     {/* Filter Pills */}
-                    <div className="flex items-center justify-between border-b border-border pb-3">
+                    <div className="flex items-center justify-between pb-1">
                         <div className="flex items-center space-x-2">
                             {(
                                 [

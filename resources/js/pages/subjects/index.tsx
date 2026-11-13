@@ -67,12 +67,6 @@ export default function SubjectsIndex({
 
                     <nav className="hidden items-center gap-6 text-xs font-semibold md:flex">
                         <Link
-                            href="/choose"
-                            className="text-muted-foreground transition-colors hover:text-[#0066FF]"
-                        >
-                            Exam Tracks
-                        </Link>
-                        <Link
                             href="/subjects"
                             className="font-bold text-[#0066FF] transition-colors dark:text-sky-400"
                         >
@@ -219,8 +213,8 @@ export default function SubjectsIndex({
                         Practice Engine.
                     </div>
                     <div className="flex items-center gap-6">
-                        <Link href="/choose" className="hover:text-foreground">
-                            Exam Tracks
+                        <Link href="/mock-exam" className="hover:text-foreground">
+                            Mock Exams
                         </Link>
                         <Link
                             href="/subjects"

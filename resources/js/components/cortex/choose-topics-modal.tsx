@@ -229,7 +229,7 @@ export function ChooseTopicsModal({
             const weakIds = new Set<number>();
             subjects.forEach((s) => {
                 s.topics
-                    .filter((t) => !t.is_locked && (t.is_high_yield || t.priority >= 3))
+                    .filter((t) => !t.is_locked && (t.is_high_yield || (t.priority ?? 0) >= 3))
                     .forEach((t) => weakIds.add(t.id));
             });
             setSelectedTopicIds(weakIds);

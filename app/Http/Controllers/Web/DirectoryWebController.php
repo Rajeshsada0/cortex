@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Question;
 use App\Models\QuestionAttempt;
 use App\Models\Subject;
 use App\Models\User;
@@ -18,6 +19,34 @@ class DirectoryWebController extends Controller
 
         $pathway = $user?->active_pathway ?? 'INI_CET';
 
+        // 1. Single aggregate query for user attempts by subject
+        $userAttemptsQuery = QuestionAttempt::where('question_attempts.user_id', $user->id)
+            ->join('questions', 'questions.id', '=', 'question_attempts.question_id')
+            ->where('questions.is_active', true);
+
+        if ($pathway && $pathway !== 'COMBINED') {
+            $userAttemptsQuery->join('question_exam_relevance', 'question_exam_relevance.question_id', '=', 'questions.id')
+                ->whereIn('question_exam_relevance.exam', [$pathway, 'COMBINED']);
+        }
+
+        $userAttemptsBySubject = $userAttemptsQuery
+            ->groupBy('questions.subject_id')
+            ->selectRaw('questions.subject_id, COUNT(DISTINCT question_attempts.question_id) as attempted, SUM(CASE WHEN question_attempts.is_correct = 1 THEN 1 ELSE 0 END) as correct')
+            ->get()
+            ->keyBy('subject_id');
+
+        // 2. Single aggregate query for questions count by topic
+        $topicQuestionCountsQuery = Question::where('is_active', true);
+        if ($pathway && $pathway !== 'COMBINED') {
+            $topicQuestionCountsQuery->forExam($pathway);
+        }
+        $topicQuestionCounts = $topicQuestionCountsQuery
+            ->whereNotNull('topic_id')
+            ->groupBy('topic_id')
+            ->selectRaw('topic_id, COUNT(*) as count')
+            ->pluck('count', 'topic_id');
+
+        // 3. Eager load subjects with topics and subtopics
         $subjects = Subject::with(['topics.subtopics'])
             ->withCount([
                 'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),
@@ -25,14 +54,11 @@ class DirectoryWebController extends Controller
             ])
             ->orderBy('order_index')
             ->get()
-            ->map(function ($subject) use ($user, $pathway) {
-                $attempts = QuestionAttempt::where('user_id', $user->id)
-                    ->whereHas('question', fn ($q) => $q->where('subject_id', $subject->id)->where('is_active', true)->forExam($pathway))
-                    ->get();
-
-                $attemptedCount = $attempts->unique('question_id')->count();
-                $correctCount = $attempts->where('is_correct', true)->count();
-                $totalQuestions = $subject->questions_count;
+            ->map(function ($subject) use ($userAttemptsBySubject, $topicQuestionCounts) {
+                $stat = $userAttemptsBySubject->get($subject->id);
+                $attemptedCount = (int) ($stat?->attempted ?? 0);
+                $correctCount = (int) ($stat?->correct ?? 0);
+                $totalQuestions = (int) $subject->questions_count;
 
                 return [
                     'id' => $subject->id,
@@ -51,7 +77,7 @@ class DirectoryWebController extends Controller
                         'slug' => $topic->slug,
                         'priority' => $topic->high_yield_priority,
                         'subtopics' => $topic->subtopics->pluck('name'),
-                        'questions_count' => $topic->questions()->where('is_active', true)->forExam($pathway)->count(),
+                        'questions_count' => (int) ($topicQuestionCounts[$topic->id] ?? 0),
                     ]),
                 ];
             });

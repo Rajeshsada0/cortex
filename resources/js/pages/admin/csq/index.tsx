@@ -51,6 +51,7 @@ interface AdminCsqIndexProps {
         pathway: string;
         discipline: string;
         search: string;
+        status?: string;
     };
     stats: {
         total_scenarios: number;
@@ -69,18 +70,25 @@ export default function AdminCsqIndex({
     const [search, setSearch] = useState(filters.search || '');
     const [pathwayFilter, setPathwayFilter] = useState(filters.pathway || 'ALL');
     const [disciplineFilter, setDisciplineFilter] = useState(filters.discipline || 'ALL');
+    const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
 
     // Delete confirmation dialog
     const [scenarioToDelete, setScenarioToDelete] = useState<ScenarioItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const applyFilters = (newPathway = pathwayFilter, newDiscipline = disciplineFilter, newSearch = search) => {
+    const applyFilters = (
+        newPathway = pathwayFilter,
+        newDiscipline = disciplineFilter,
+        newSearch = search,
+        newStatus = statusFilter
+    ) => {
         router.get(
             '/admin/csq',
             {
                 pathway: newPathway,
                 discipline: newDiscipline,
                 search: newSearch,
+                status: newStatus,
             },
             { preserveState: true, preserveScroll: true }
         );
@@ -88,7 +96,15 @@ export default function AdminCsqIndex({
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        applyFilters(pathwayFilter, disciplineFilter, search);
+        applyFilters(pathwayFilter, disciplineFilter, search, statusFilter);
+    };
+
+    const handleResetFilters = () => {
+        setSearch('');
+        setPathwayFilter('ALL');
+        setDisciplineFilter('ALL');
+        setStatusFilter('all');
+        router.get('/admin/csq');
     };
 
     const handleToggleActive = (scenario: ScenarioItem) => {
@@ -121,37 +137,79 @@ export default function AdminCsqIndex({
     };
 
     return (
-        <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            <Head title="CSQ Clinical Scenarios - Admin Portal" />
+        <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            <Head title="Clinical Scenarios (CSQ) — Faculty Admin Console" />
 
-            {/* Header */}
+            {/* Header Actions & Status Tabs */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-700 dark:text-cyan-400">
-                            <Stethoscope className="h-3.5 w-3.5" />
-                            Clinical Examination CMS
-                        </span>
-                    </div>
-                    <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                        Clinical Scenario Questions (CSQ)
-                    </h1>
-                    <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                        Manage clinical case stations, diagnostic markers, and 5-question sequential vignettes.
-                    </p>
+                {/* Quick Status Filter Tabs */}
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                    <button
+                        onClick={() => {
+                            setStatusFilter('all');
+                            applyFilters(pathwayFilter, disciplineFilter, search, 'all');
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                            statusFilter === 'all'
+                                ? 'border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300'
+                                : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                        }`}
+                    >
+                        <span>All Stations</span>
+                        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[10px]">
+                            {stats.total_scenarios}
+                        </Badge>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setStatusFilter('active');
+                            applyFilters(pathwayFilter, disciplineFilter, search, 'active');
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                            statusFilter === 'active'
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                        }`}
+                    >
+                        <span className="size-2 rounded-full bg-emerald-500" />
+                        <span>Active Published</span>
+                        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[10px]">
+                            {stats.active_scenarios}
+                        </Badge>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            setStatusFilter('draft');
+                            applyFilters(pathwayFilter, disciplineFilter, search, 'draft');
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                            statusFilter === 'draft'
+                                ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                                : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                        }`}
+                    >
+                        <span className="size-2 rounded-full bg-amber-500" />
+                        <span>Drafts / Inactive</span>
+                        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[10px]">
+                            {Math.max(0, stats.total_scenarios - stats.active_scenarios)}
+                        </Badge>
+                    </button>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                {/* Action Toolbar */}
+                <div className="flex shrink-0 items-center gap-2">
                     <Link href="/csq/runner">
-                        <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs font-semibold">
-                            <Eye className="h-3.5 w-3.5" />
-                            <span>Preview Exam Runner</span>
+                        <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg text-xs font-medium border-border/80 hover:bg-muted/60">
+                            <Eye className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                            <span>Preview Runner</span>
                         </Button>
                     </Link>
                     <Link href="/admin/csq/create">
-                        <Button size="sm" className="gap-1.5 rounded-xl bg-cyan-600 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400">
-                            <Plus className="h-4 w-4" />
-                            <span>New CSQ Station</span>
+                        <Button size="sm" className="h-8 gap-1.5 rounded-lg bg-cyan-600 text-xs font-semibold text-white shadow-xs hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400">
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>New Station</span>
                         </Button>
                     </Link>
                 </div>
@@ -219,7 +277,7 @@ export default function AdminCsqIndex({
                             value={pathwayFilter}
                             onChange={(e) => {
                                 setPathwayFilter(e.target.value);
-                                applyFilters(e.target.value, disciplineFilter, search);
+                                applyFilters(e.target.value, disciplineFilter, search, statusFilter);
                             }}
                             className="h-9 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500"
                         >
@@ -236,7 +294,7 @@ export default function AdminCsqIndex({
                             value={disciplineFilter}
                             onChange={(e) => {
                                 setDisciplineFilter(e.target.value);
-                                applyFilters(pathwayFilter, e.target.value, search);
+                                applyFilters(pathwayFilter, e.target.value, search, statusFilter);
                             }}
                             className="h-9 rounded-xl border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500"
                         >
@@ -248,7 +306,18 @@ export default function AdminCsqIndex({
                             ))}
                         </select>
 
-                        <Button type="submit" size="sm" variant="secondary" className="h-9 text-xs rounded-xl">
+                        {(search || pathwayFilter !== 'ALL' || disciplineFilter !== 'ALL' || statusFilter !== 'all') && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleResetFilters}
+                                className="h-9 text-xs rounded-xl"
+                            >
+                                Reset
+                            </Button>
+                        )}
+                        <Button type="submit" size="sm" className="h-9 text-xs rounded-xl bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:text-neutral-950 dark:hover:bg-cyan-400">
                             Filter
                         </Button>
                     </div>

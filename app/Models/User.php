@@ -34,12 +34,17 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Fillable([
     'name',
     'email',
+    'institution',
+    'medical_council_no',
+    'phone',
+    'avatar',
     'is_admin',
     'password',
     'active_pathway',
     'target_exam_date',
     'daily_study_hours',
     'daily_mcq_target',
+    'ai_credits',
     'dashboard_preferences',
 ])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -69,7 +74,26 @@ class User extends Authenticatable implements PasskeyUser
 
     protected $appends = [
         'pathway_label',
+        'avatar_url',
     ];
+
+    public function getAvatarAttribute(?string $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        return asset('storage/' . ltrim($value, '/'));
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar;
+    }
 
     public function getPathwayLabelAttribute(): string
     {

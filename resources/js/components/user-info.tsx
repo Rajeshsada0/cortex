@@ -10,7 +10,13 @@ export function UserInfo({
     showEmail?: boolean;
 }) {
     const getInitials = useInitials();
+    const isAdmin = Boolean((user as any)?.is_admin);
     const candidateId = `#AIIMS-${String(user.id || 1).padStart(4, '0')}`;
+    const subtitle = showEmail
+        ? user.email
+        : isAdmin
+          ? 'Faculty Administrator'
+          : `Candidate ${candidateId}`;
 
     return (
         <>
@@ -25,7 +31,7 @@ export function UserInfo({
                     {user.name}
                 </span>
                 <span className="truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                    Candidate {candidateId}
+                    {subtitle}
                 </span>
             </div>
         </>

@@ -438,21 +438,20 @@ export default function QuestionForm({
                         </Link>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-foreground text-xl font-black sm:text-2xl">
+                                <h1 className="text-foreground text-lg sm:text-xl font-bold tracking-tight">
                                     {isEdit
-                                        ? `Edit Clinical Vignette: ${question?.code}`
-                                        : 'Author New Clinical Vignette MCQ'}
+                                        ? `Edit Question ${question?.code}`
+                                        : 'New Question'}
                                 </h1>
                                 <Badge
                                     variant={isActive ? 'default' : 'secondary'}
-                                    className="text-[10px] font-bold"
+                                    className="text-[10px] font-semibold"
                                 >
-                                    {isActive ? 'Published Active' : 'Draft'}
+                                    {isActive ? 'Active' : 'Draft'}
                                 </Badge>
                             </div>
-                            <p className="text-muted-foreground mt-0.5 text-xs">
-                                High-Yield Postgraduate Medical Vignette
-                                Authoring Suite
+                            <p className="text-muted-foreground text-xs">
+                                Author question stem, options, and explanations
                             </p>
                         </div>
                     </div>

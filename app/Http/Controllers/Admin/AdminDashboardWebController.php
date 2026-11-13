@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppRating;
 use App\Models\ClinicalScenario;
 use App\Models\Question;
 use App\Models\QuestionAttempt;
 use App\Models\QuestionExamRelevance;
 use App\Models\Subject;
 use App\Models\Subtopic;
+use App\Models\SupportInquiry;
 use App\Models\TestSession;
 use App\Models\Topic;
 use App\Models\User;
@@ -31,11 +33,15 @@ class AdminDashboardWebController extends Controller
         $totalAttempts = QuestionAttempt::count();
         $totalSessions = TestSession::count();
 
-        // Difficulty counts
+        // Difficulty counts - single grouped query
+        $diffCounts = Question::selectRaw('difficulty, count(*) as count')
+            ->groupBy('difficulty')
+            ->pluck('count', 'difficulty');
+
         $difficultyBreakdown = [
-            'EASY' => Question::where('difficulty', 'EASY')->count(),
-            'MEDIUM' => Question::where('difficulty', 'MEDIUM')->count(),
-            'HARD' => Question::where('difficulty', 'HARD')->count(),
+            'EASY' => (int) ($diffCounts['EASY'] ?? 0),
+            'MEDIUM' => (int) ($diffCounts['MEDIUM'] ?? 0),
+            'HARD' => (int) ($diffCounts['HARD'] ?? 0),
         ];
 
         // Pathway distribution
@@ -44,6 +50,11 @@ class AdminDashboardWebController extends Controller
         foreach ($activePathways as $p) {
             $pathwayBreakdown[$p->code] = $p->getAvailableQuestionsCount();
         }
+
+        // Ratings aggregate - single query
+        $ratingStats = AppRating::selectRaw('COUNT(*) as total, AVG(rating) as avg_rating')->first();
+        $totalRatings = (int) ($ratingStats->total ?? 0);
+        $avgRating = $totalRatings > 0 ? round((float) $ratingStats->avg_rating, 1) : 5.0;
 
         // Subjects with question counts
         $subjectsSummary = Subject::withCount(['questions', 'topics'])
@@ -68,6 +79,10 @@ class AdminDashboardWebController extends Controller
                 'total_attempts' => $totalAttempts,
                 'total_sessions' => $totalSessions,
                 'total_csq_scenarios' => ClinicalScenario::count(),
+                'total_inquiries' => SupportInquiry::count(),
+                'pending_inquiries' => SupportInquiry::where('status', 'pending')->count(),
+                'total_ratings' => $totalRatings,
+                'average_rating' => $avgRating,
             ],
             'difficulty_breakdown' => $difficultyBreakdown,
             'pathway_breakdown' => $pathwayBreakdown,

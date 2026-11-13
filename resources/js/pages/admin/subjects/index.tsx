@@ -130,31 +130,15 @@ export default function SubjectsIndex({ subjects }: SubjectsIndexProps) {
             <Head title="Manage Subjects — Cortex Admin" />
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-                {/* Header */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
-                    <div>
-                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
-                            <BookOpen className="size-4" />
-                            <span>
-                                19-Subject Postgraduate Curriculum Directory
-                            </span>
-                        </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            Postgraduate Medical Subjects
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Maintain the curriculum hierarchy across basic
-                            sciences, paraclinical specialties, and clinical
-                            disciplines.
-                        </p>
-                    </div>
-
+                {/* Action Toolbar */}
+                <div className="flex items-center justify-end">
                     <Button
                         onClick={openCreateDialog}
-                        className="shrink-0 gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]"
+                        size="sm"
+                        className="shrink-0 h-8 gap-1.5 bg-[#0066FF] text-xs font-semibold text-white shadow-xs hover:bg-[#0052cc]"
                     >
-                        <Plus className="size-4" />
-                        Add New Subject
+                        <Plus className="size-3.5" />
+                        Add Subject
                     </Button>
                 </div>
 

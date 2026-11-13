@@ -77,29 +77,12 @@ export default function UsersIndex({
             <Head title="Candidate & User Directory — Cortex Admin" />
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-                {/* Header */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
-                    <div>
-                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400">
-                            <Users className="size-4" />
-                            <span>
-                                Candidate Accounts, Readiness Trajectories &amp;
-                                Faculty Permissions
-                            </span>
-                        </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            Candidate Directory &amp; Role Management
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Audit enrolled medical doctors, examination targets,
-                            study metrics, and administrator privileges.
-                        </p>
-                    </div>
-
+                {/* Action Toolbar */}
+                <div className="flex items-center justify-end">
                     <div className="flex items-center gap-2">
                         <Badge
                             variant="outline"
-                            className="px-3 py-1 text-xs font-bold"
+                            className="px-2.5 py-1 text-xs font-medium"
                         >
                             Total Candidates: {users.total}
                         </Badge>

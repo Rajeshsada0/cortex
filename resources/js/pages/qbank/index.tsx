@@ -143,7 +143,7 @@ export default function QBankIndex({
             <Head title="Custom Test Builder — Cortex Q-Bank" />
 
             {/* Header */}
-            <div className="border-cortex-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
+            <div className="flex flex-col justify-between gap-4 pb-2 sm:flex-row sm:items-center">
                 <div>
                     <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-600 dark:text-cyan-400">
                         <Sparkles className="size-3.5" />

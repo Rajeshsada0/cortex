@@ -59,12 +59,6 @@ export default function Welcome() {
                     {/* Nav Links */}
                     <nav className="hidden items-center gap-6 text-xs font-semibold md:flex">
                         <Link
-                            href="/choose"
-                            className="font-bold text-cyan-600 dark:text-cyan-400 transition-colors hover:underline"
-                        >
-                            Practice Tracks (No Login)
-                        </Link>
-                        <Link
                             href="/subjects"
                             className="text-slate-600 transition-colors hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400"
                         >
@@ -144,16 +138,16 @@ export default function Welcome() {
                         {/* Left Column (58% width) */}
                         <div className="flex flex-col items-start text-left lg:col-span-7">
                             {/* Doctor Entrance Preparation Top Pill Badge */}
-                            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-xs font-bold text-cyan-700 dark:text-cyan-300 shadow-sm">
-                                <Stethoscope className="size-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
-                                <span className="tracking-wide">
+                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-[11px] font-semibold text-cyan-700 dark:text-cyan-300 shadow-xs">
+                                <Stethoscope className="size-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
+                                <span className="tracking-wider">
                                     DOCTOR ENTRANCE PREPARATION · MECEE-PG ·
                                     NEET-PG · INI-CET · USMLE
                                 </span>
                             </div>
 
                             {/* Main Headline with Blue Gradient */}
-                            <h1 className="text-4xl leading-[1.14] font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-[3.3rem]">
+                            <h1 className="text-2xl leading-[1.2] font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl lg:text-[2.25rem]">
                                 Precision Postgraduate
                                 <br />
                                 Entrance Platform for
@@ -164,34 +158,38 @@ export default function Welcome() {
                             </h1>
 
                             {/* Subheadline Description */}
-                            <p className="mt-5 max-w-xl text-sm leading-relaxed font-normal text-slate-600 dark:text-slate-300 sm:text-[15px]">
+                            <p className="mt-3.5 max-w-xl text-xs leading-relaxed font-normal text-slate-600 dark:text-slate-300 sm:text-sm">
                                 Inspired by the best medical question banks
-                                (Easy-PG • NBME • AIIMS). Zero-friction instant
-                                practice, authentic national negative marking
-                                (+4/−1 NEET-PG, +1/−0.25 CEE), immediate-reveal
-                                subject drills, and downloadable official PDF
-                                performance reports.
+                                (Easy-PG • NBME • AIIMS). Authentic national
+                                negative marking (+4/−1 NEET-PG, +1/−0.25 CEE),
+                                immediate-reveal subject drills, and
+                                downloadable official PDF performance reports.
                             </p>
 
-                            {/* 4 Action Buttons */}
-                            <div className="no-scrollbar mt-8 flex w-full flex-row flex-nowrap items-center gap-2.5 overflow-x-auto pb-1 sm:gap-3 sm:overflow-visible sm:pb-0">
-                                {/* Primary Button: Start Practice (Zero Login) */}
-                                <Link href="/choose" className="group shrink-0">
-                                    <div className="flex h-[52px] items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 px-4 whitespace-nowrap font-bold text-slate-950 shadow-[0_4px_18px_rgba(6,182,212,0.3)] transition-all duration-200 hover:shadow-cyan-500/50 hover:scale-[1.02]">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-950/20 text-slate-950">
-                                                <Sparkles className="size-4 fill-slate-950 text-slate-950" />
+                            {/* Action Buttons */}
+                            <div className="no-scrollbar mt-6 flex w-full flex-row flex-nowrap items-center gap-2.5 overflow-x-auto pb-1 sm:gap-3 sm:overflow-visible sm:pb-0">
+                                {/* Primary Button: Start Practice / Candidate Portal */}
+                                <Link
+                                    href={auth?.user ? '/qbank' : '/register'}
+                                    className="group shrink-0"
+                                >
+                                    <div className="flex h-11 items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 px-4 whitespace-nowrap font-bold text-slate-950 shadow-[0_4px_16px_rgba(6,182,212,0.25)] transition-all duration-200 hover:shadow-cyan-500/40 hover:scale-[1.02]">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-slate-950/20 text-slate-950">
+                                                <Sparkles className="size-3.5 fill-slate-950 text-slate-950" />
                                             </div>
                                             <div className="flex flex-col text-left">
-                                                <span className="text-xs leading-tight font-extrabold text-slate-950 sm:text-[13px]">
+                                                <span className="text-xs leading-tight font-extrabold text-slate-950">
                                                     Start Practice Now
                                                 </span>
-                                                <span className="mt-0.5 text-[10px] leading-tight font-semibold text-slate-900/80 sm:text-[11px]">
-                                                    No Login Required
+                                                <span className="text-[10px] leading-tight font-semibold text-slate-900/80">
+                                                    {auth?.user
+                                                        ? 'Candidate Q-Bank'
+                                                        : 'Candidate Portal'}
                                                 </span>
                                             </div>
                                         </div>
-                                        <ArrowRight className="ml-1 size-4 shrink-0 text-slate-950 transition-transform group-hover:translate-x-1" />
+                                        <ArrowRight className="ml-1 size-3.5 shrink-0 text-slate-950 transition-transform group-hover:translate-x-1" />
                                     </div>
                                 </Link>
 
@@ -202,8 +200,8 @@ export default function Welcome() {
                                     href="/subjects"
                                     className="group shrink-0"
                                 >
-                                    <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border border-border bg-card px-3.5 text-xs font-bold whitespace-nowrap text-foreground shadow-sm transition-all duration-200 hover:bg-muted dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-800 sm:px-4 sm:text-[13px]">
-                                        <PlaySquare className="size-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
+                                    <div className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-xs font-semibold whitespace-nowrap text-foreground shadow-xs transition-all duration-200 hover:bg-muted dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-800">
+                                        <PlaySquare className="size-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
                                         <span>19 Subjects</span>
                                     </div>
                                 </Link>
@@ -213,8 +211,8 @@ export default function Welcome() {
                                     href="/mock-exam"
                                     className="group shrink-0"
                                 >
-                                    <div className="flex h-[52px] items-center gap-2.5 rounded-2xl border border-border bg-card px-3.5 text-xs font-bold whitespace-nowrap text-foreground shadow-sm transition-all duration-200 hover:bg-muted dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-800 sm:px-4 sm:text-[13px]">
-                                        <GraduationCap className="size-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
+                                    <div className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3.5 text-xs font-semibold whitespace-nowrap text-foreground shadow-xs transition-all duration-200 hover:bg-muted dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-800">
+                                        <GraduationCap className="size-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" />
                                         <span>Mock Hall</span>
                                     </div>
                                 </Link>
@@ -223,7 +221,7 @@ export default function Welcome() {
 
                         {/* Right Column: Clean Transparent Doctor Graphic */}
                         <div className="relative flex items-center justify-center lg:col-span-5 lg:justify-end">
-                            <div className="relative flex w-full max-w-[520px] items-center justify-center">
+                            <div className="relative flex w-full max-w-[480px] items-center justify-center">
                                 <img
                                     src="/images/doctor-hero.png?v=5"
                                     alt="Medical Doctor Postgraduate Entrance Candidate preparing with Cortex Platform"
@@ -235,63 +233,63 @@ export default function Welcome() {
                     </div>
 
                     {/* Full-Width Floating Stats Bar Underneath */}
-                    <div className="mt-12 w-full rounded-2xl border border-border bg-card p-5 shadow-xl sm:mt-14 sm:rounded-3xl sm:p-7 dark:border-slate-800/90 dark:bg-gradient-to-r dark:from-slate-900/95 dark:via-[#0d1527] dark:to-slate-900/95">
-                        <div className="grid grid-cols-1 items-center gap-6 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:divide-border dark:divide-slate-800 lg:grid-cols-4">
+                    <div className="mt-10 w-full rounded-2xl border border-border bg-card p-4 shadow-lg sm:mt-12 sm:p-5 dark:border-slate-800/90 dark:bg-gradient-to-r dark:from-slate-900/95 dark:via-[#0d1527] dark:to-slate-900/95">
+                        <div className="grid grid-cols-1 items-center gap-4 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0 sm:divide-border dark:divide-slate-800 lg:grid-cols-4">
                             {/* Stat 1: 20,000+ */}
-                            <div className="flex items-center gap-4 pt-4 first:px-0 first:pt-0 sm:px-4 sm:pt-0">
-                                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                    <Users className="size-6" />
+                            <div className="flex items-center gap-3.5 pt-3 first:px-0 first:pt-0 sm:px-3 sm:pt-0">
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <Users className="size-5" />
                                 </div>
                                 <div>
-                                    <div className="font-mono text-2xl font-black tracking-tight text-foreground sm:text-3xl dark:text-white">
+                                    <div className="text-lg font-bold tracking-tight text-foreground sm:text-xl dark:text-white">
                                         20,000+
                                     </div>
-                                    <div className="mt-0.5 text-xs font-medium text-muted-foreground">
+                                    <div className="text-[11px] font-medium text-muted-foreground">
                                         Postgraduate Clinical Vignettes
                                     </div>
                                 </div>
                             </div>
 
                             {/* Stat 2: 19 Subjects */}
-                            <div className="flex items-center gap-4 pt-4 sm:px-4 sm:pt-0">
-                                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                                    <BookOpen className="size-6" />
+                            <div className="flex items-center gap-3.5 pt-3 sm:px-3 sm:pt-0">
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                                    <BookOpen className="size-5" />
                                 </div>
                                 <div>
-                                    <div className="font-mono text-2xl font-black tracking-tight text-cyan-600 dark:text-cyan-400 sm:text-3xl">
+                                    <div className="text-lg font-bold tracking-tight text-cyan-600 dark:text-cyan-400 sm:text-xl">
                                         19 Subjects
                                     </div>
-                                    <div className="mt-0.5 text-xs font-medium text-muted-foreground">
+                                    <div className="text-[11px] font-medium text-muted-foreground">
                                         Anatomy to Obstetrics &amp; Gyn
                                     </div>
                                 </div>
                             </div>
 
                             {/* Stat 3: Dual-Metric */}
-                            <div className="flex items-center gap-4 pt-4 sm:px-4 sm:pt-0">
-                                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                    <Target className="size-6" />
+                            <div className="flex items-center gap-3.5 pt-3 sm:px-3 sm:pt-0">
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <Target className="size-5" />
                                 </div>
                                 <div>
-                                    <div className="font-mono text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 sm:text-3xl">
+                                    <div className="text-lg font-bold tracking-tight text-emerald-600 dark:text-emerald-400 sm:text-xl whitespace-nowrap">
                                         Dual-Metric
                                     </div>
-                                    <div className="mt-0.5 text-xs font-medium text-muted-foreground">
+                                    <div className="text-[11px] font-medium text-muted-foreground">
                                         Confidence + Accuracy SRS
                                     </div>
                                 </div>
                             </div>
 
                             {/* Stat 4: <100ms */}
-                            <div className="flex items-center gap-4 pt-4 sm:px-4 sm:pt-0">
-                                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                                    <Zap className="size-6 fill-current" />
+                            <div className="flex items-center gap-3.5 pt-3 sm:px-3 sm:pt-0">
+                                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                    <Zap className="size-5 fill-current" />
                                 </div>
                                 <div>
-                                    <div className="font-mono text-2xl font-black tracking-tight text-purple-600 dark:text-purple-400 sm:text-3xl">
+                                    <div className="text-lg font-bold tracking-tight text-purple-600 dark:text-purple-400 sm:text-xl">
                                         &lt;100ms
                                     </div>
-                                    <div className="mt-0.5 text-xs font-medium text-muted-foreground">
+                                    <div className="text-[11px] font-medium text-muted-foreground">
                                         Instant Vignette Delivery
                                     </div>
                                 </div>
@@ -318,7 +316,7 @@ export default function Welcome() {
                     <span className="text-xs font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase">
                         HIGH-YIELD CLINICAL VIGNETTE ARCHITECTURE
                     </span>
-                    <h2 className="text-2xl font-black tracking-tight text-foreground dark:text-white sm:text-3xl">
+                    <h2 className="text-xl font-bold tracking-tight text-foreground dark:text-white sm:text-2xl">
                         Integrated Clinical Vignette with 3-Tier Deconstruction
                     </h2>
                     <p className="mx-auto max-w-lg text-xs leading-relaxed text-slate-600 dark:text-slate-300 sm:text-sm">
@@ -519,7 +517,7 @@ export default function Welcome() {
                         <span className="text-xs font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase">
                             STANDARDIZED BLUEPRINT ALIGNMENT
                         </span>
-                        <h2 className="text-2xl font-black tracking-tight text-foreground dark:text-white sm:text-3xl">
+                        <h2 className="text-xl font-bold tracking-tight text-foreground dark:text-white sm:text-2xl">
                             Tailored for Your Exact Postgraduate Medical
                             Entrance Target
                         </h2>
@@ -701,7 +699,7 @@ export default function Welcome() {
                         <span className="text-xs font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase">
                             ENGINEERED FOR RESIDENCY SUCCESS
                         </span>
-                        <h2 className="text-2xl font-black tracking-tight text-foreground dark:text-white sm:text-3xl">
+                        <h2 className="text-xl font-bold tracking-tight text-foreground dark:text-white sm:text-2xl">
                             Everything Required to Secure Top Medical Ranks
                         </h2>
                     </div>
@@ -770,7 +768,7 @@ export default function Welcome() {
                         <span className="text-xs font-bold tracking-wider text-cyan-600 dark:text-cyan-400 uppercase">
                             COMPREHENSIVE MEDICAL CURRICULUM
                         </span>
-                        <h2 className="text-2xl font-black tracking-tight text-foreground dark:text-white sm:text-3xl">
+                        <h2 className="text-xl font-bold tracking-tight text-foreground dark:text-white sm:text-2xl">
                             19-Subject Postgraduate Directory
                         </h2>
                         <p className="mx-auto max-w-md text-xs leading-relaxed text-muted-foreground sm:text-sm">
@@ -843,7 +841,7 @@ export default function Welcome() {
                                 High-Stakes Postgraduate Simulation Engine
                             </span>
                         </div>
-                        <h2 className="text-balance text-2xl font-black tracking-tight text-white sm:text-4xl">
+                        <h2 className="text-balance text-xl font-bold tracking-tight text-white sm:text-2xl lg:text-3xl">
                             Ready to Master Your Doctor Entrance Examination?
                         </h2>
                         <p className="max-w-xl text-xs leading-relaxed font-normal text-slate-300 sm:text-sm">

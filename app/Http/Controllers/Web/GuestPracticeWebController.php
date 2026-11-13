@@ -21,80 +21,11 @@ class GuestPracticeWebController extends Controller
     ) {}
 
     /**
-     * Public Practice Hub (/choose) - Choose an Exam Track
+     * Public Practice Hub (/choose) - Redirected
      */
-    public function choose(Request $request): Response
+    public function choose(Request $request)
     {
-        $user = $request->user();
-
-        $tracks = [
-            [
-                'id' => 'usmle-step1',
-                'pathway' => ExamPathway::USMLE_STEP1->value,
-                'name' => 'USMLE Step 1',
-                'region' => 'United States',
-                'description' => 'Integrated basic science vignettes. Systems-based, mechanism-heavy practice.',
-                'questions' => 280,
-                'blocks' => 7,
-                'duration' => '7 Blocks (60 min each)',
-                'marking' => 'Pass / Fail Target',
-                'color' => 'from-blue-600 to-indigo-700',
-                'accent' => '#0066FF',
-                'badge' => 'NBME Style',
-            ],
-            [
-                'id' => 'usmle-step2',
-                'pathway' => ExamPathway::USMLE_STEP2CK->value,
-                'name' => 'USMLE Step 2 CK',
-                'region' => 'United States',
-                'description' => 'Clinical decision-making, diagnosis vs next-best-step management, and patient safety.',
-                'questions' => 318,
-                'blocks' => 8,
-                'duration' => '8 Blocks (60 min each)',
-                'marking' => '3-Digit Scaled Score (1-300)',
-                'color' => 'from-cyan-600 to-blue-700',
-                'accent' => '#06B6D4',
-                'badge' => 'Clinical Mastery',
-            ],
-            [
-                'id' => 'neet-pg',
-                'pathway' => ExamPathway::NEET_PG->value,
-                'name' => 'NEET-PG (2026)',
-                'region' => 'India',
-                'description' => 'India’s national PG entrance. Rapid clinical stems, image-style findings, and strict negative marking.',
-                'questions' => 180,
-                'blocks' => 5,
-                'duration' => '3.5 Hours (210 min)',
-                'marking' => '+4.0 / -1.0 Marking (720 Marks)',
-                'color' => 'from-emerald-600 to-teal-700',
-                'accent' => '#10B981',
-                'badge' => '+4 / -1 Marking',
-            ],
-            [
-                'id' => 'cee',
-                'pathway' => ExamPathway::MECEE_PG->value,
-                'name' => 'CEE PG — Nepal',
-                'region' => 'Nepal',
-                'description' => 'MEC MECEE-PG for MD/MS. Concise stems, Nepal health guidelines, CPD module, and negative marking.',
-                'questions' => 200,
-                'blocks' => 4,
-                'duration' => '3 Hours (180 min)',
-                'marking' => '+1.0 / -0.25 Marking (200 Marks)',
-                'color' => 'from-red-600 to-rose-700',
-                'accent' => '#EF4444',
-                'badge' => 'MEC MECEE-PG',
-            ],
-        ];
-
-        $totalQuestions = Question::where('is_active', true)->count();
-        $totalSubjects = Subject::count();
-
-        return Inertia::render('choose', [
-            'tracks' => $tracks,
-            'totalQuestions' => $totalQuestions,
-            'totalSubjects' => $totalSubjects,
-            'currentUser' => $user,
-        ]);
+        return redirect('/');
     }
 
     /**

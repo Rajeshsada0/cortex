@@ -141,113 +141,101 @@ export default function QuestionsIndex({
             <Head title="MCQ Question Bank — Cortex Admin" />
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-                {/* Header */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
-                    <div>
-                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
-                            <HelpCircle className="size-4" />
-                            <span>Postgraduate Clinical Vignette Q-Bank</span>
-                        </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            MCQ Question Bank Management
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Review, calibrate, and author clinical vignettes
-                            with multi-tiered diagnostic rationales.
-                        </p>
+                {/* Header Actions & Status Tabs */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    {/* KPI Status Badges */}
+                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                        <button
+                            onClick={() => {
+                                setStatus('all');
+                                router.get('/admin/questions', {
+                                    ...filters,
+                                    status: 'all',
+                                });
+                            }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                status === 'all'
+                                    ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] dark:bg-blue-950/50'
+                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                            }`}
+                        >
+                            <span>All Questions</span>
+                            <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 font-mono text-[10px]"
+                            >
+                                {stats.total}
+                            </Badge>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setStatus('active');
+                                router.get('/admin/questions', {
+                                    ...filters,
+                                    status: 'active',
+                                });
+                            }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                status === 'active'
+                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                            }`}
+                        >
+                            <span className="size-2 rounded-full bg-emerald-500" />
+                            <span>Active Published</span>
+                            <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 font-mono text-[10px]"
+                            >
+                                {stats.active}
+                            </Badge>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setStatus('draft');
+                                router.get('/admin/questions', {
+                                    ...filters,
+                                    status: 'draft',
+                                });
+                            }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                status === 'draft'
+                                    ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                            }`}
+                        >
+                            <span className="size-2 rounded-full bg-amber-500" />
+                            <span>Drafts</span>
+                            <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 font-mono text-[10px]"
+                            >
+                                {stats.draft}
+                            </Badge>
+                        </button>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-3">
+                    {/* Action Toolbar */}
+                    <div className="flex shrink-0 items-center gap-2">
                         <Link href="/admin/questions/import">
                             <Button
                                 variant="outline"
-                                className="border-border gap-1.5 text-xs font-bold shadow-xs hover:border-[#0066FF] hover:text-[#0066FF]"
+                                size="sm"
+                                className="h-8 border-border gap-1.5 text-xs font-medium hover:border-[#0066FF] hover:text-[#0066FF]"
                             >
-                                <Upload className="size-4 text-[#0066FF]" />
+                                <Upload className="size-3.5 text-[#0066FF]" />
                                 Bulk Import
                             </Button>
                         </Link>
                         <Link href="/admin/questions/create">
-                            <Button className="gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]">
-                                <Plus className="size-4" />
-                                New Clinical MCQ
+                            <Button size="sm" className="h-8 gap-1.5 bg-[#0066FF] text-xs font-semibold text-white shadow-xs hover:bg-[#0052cc]">
+                                <Plus className="size-3.5" />
+                                New Question
                             </Button>
                         </Link>
                     </div>
-                </div>
-
-                {/* KPI Status Badges */}
-                <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        onClick={() => {
-                            setStatus('all');
-                            router.get('/admin/questions', {
-                                ...filters,
-                                status: 'all',
-                            });
-                        }}
-                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
-                            status === 'all'
-                                ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] dark:bg-blue-950/50'
-                                : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
-                        }`}
-                    >
-                        <span>All Questions</span>
-                        <Badge
-                            variant="secondary"
-                            className="h-5 px-1.5 font-mono text-[10px]"
-                        >
-                            {stats.total}
-                        </Badge>
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            setStatus('active');
-                            router.get('/admin/questions', {
-                                ...filters,
-                                status: 'active',
-                            });
-                        }}
-                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
-                            status === 'active'
-                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
-                                : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
-                        }`}
-                    >
-                        <span className="size-2 rounded-full bg-emerald-500" />
-                        <span>Active Published</span>
-                        <Badge
-                            variant="secondary"
-                            className="h-5 px-1.5 font-mono text-[10px]"
-                        >
-                            {stats.active}
-                        </Badge>
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            setStatus('draft');
-                            router.get('/admin/questions', {
-                                ...filters,
-                                status: 'draft',
-                            });
-                        }}
-                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
-                            status === 'draft'
-                                ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
-                                : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
-                        }`}
-                    >
-                        <span className="size-2 rounded-full bg-amber-500" />
-                        <span>Drafts</span>
-                        <Badge
-                            variant="secondary"
-                            className="h-5 px-1.5 font-mono text-[10px]"
-                        >
-                            {stats.draft}
-                        </Badge>
-                    </button>
                 </div>
 
                 {/* Filter Controls Card */}

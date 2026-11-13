@@ -46,6 +46,13 @@ class TestSessionController extends Controller
     {
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
+        if ($request->has('limit')) {
+            $rawLimit = (int) $request->input('limit');
+            $request->merge([
+                'limit' => max(1, min(1000, $rawLimit > 0 ? $rawLimit : 20)),
+            ]);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:150',
             'session_type' => 'nullable|string|in:PRACTICE,TIMED_BLOCK,GRAND_MOCK,MOCK',
@@ -59,9 +66,11 @@ class TestSessionController extends Controller
                 },
             ],
             'subject_id' => 'nullable|integer',
-            'topic_id' => 'nullable|integer',
+            'topic_id' => 'nullable',
+            'topic_ids' => 'nullable|array',
+            'topic_ids.*' => 'integer',
             'difficulty' => 'nullable|string|in:EASY,MEDIUM,HARD',
-            'limit' => 'nullable|integer|min:1|max:1000',
+            'limit' => 'nullable|integer|min:1',
             'duration_minutes' => 'nullable|integer|min:1|max:480',
         ]);
 
@@ -70,15 +79,18 @@ class TestSessionController extends Controller
             $sessionType = 'GRAND_MOCK';
         }
 
+        $topicIds = $request->input('topic_ids') ?? $validated['topic_id'] ?? null;
+        $limit = min(1000, max(1, (int) ($validated['limit'] ?? 20)));
+
         $result = $this->testSessionService->createSession(
             user: $user,
             title: $validated['title'],
             sessionType: $sessionType,
             examPathway: $validated['exam_pathway'] ?? $user->active_pathway,
             subjectId: $validated['subject_id'] ?? null,
-            topicId: $validated['topic_id'] ?? null,
+            topicId: $topicIds,
             difficulty: $validated['difficulty'] ?? null,
-            limit: $validated['limit'] ?? 20,
+            limit: $limit,
             durationMinutes: $validated['duration_minutes'] ?? null
         );
 

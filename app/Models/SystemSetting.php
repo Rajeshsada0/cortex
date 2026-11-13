@@ -30,6 +30,14 @@ class SystemSetting extends Model
         'footer_text' => '© 2026 Cortex Med. High-Stakes Doctor Entrance Simulation Engine.',
         'contact_email' => 'support@cortexmed.com',
 
+        // Support & Helpdesk
+        'support_desk_phone' => '+1 (800) 267-8391',
+        'support_desk_email' => 'support@cortexmedical.app',
+        'referral_bonus_text' => 'Refer a Fellow Med Student. Both get 1 month of Cortex AI Quick Calibration free when they join.',
+        'referral_promo_code' => 'DR_CORTEX',
+        'medical_disclaimer' => 'MEDICAL DISCLAIMER: Cortex Medical is an academic prep tool engineered strictly for exam preparation (USMLE, INI-CET, MECEE). Rationales, case vignettes, and mock items do NOT constitute diagnostic or treatment guidelines for real patient care.',
+        'terms_of_service' => 'By downloading, accessing, or registering on Cortex Medical, you agree to comply with and be bound by these Terms of Service. Content is curated to test foundational and clinical knowledge under standardized examination frameworks.',
+
         // SEO & Metadata
         'seo_meta_title' => 'Cortex Medical — Postgraduate Doctor Entrance Preparation (MECEE-PG • INI-CET • USMLE)',
         'seo_meta_description' => 'High-Stakes Postgraduate Doctor Entrance Simulation Engine. Prepare for Nepal MECEE-PG, NMCLE, India INI-CET, and USMLE with clinical vignettes, negative marking, and spaced repetition.',
@@ -126,6 +134,12 @@ class SystemSetting extends Model
             'site_favicon' => 'branding',
             'footer_text' => 'general',
             'contact_email' => 'general',
+            'support_desk_phone' => 'support',
+            'support_desk_email' => 'support',
+            'referral_bonus_text' => 'referral',
+            'referral_promo_code' => 'referral',
+            'medical_disclaimer' => 'legal',
+            'terms_of_service' => 'legal',
             'seo_meta_title' => 'seo',
             'seo_meta_description' => 'seo',
             'seo_meta_keywords' => 'seo',

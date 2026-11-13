@@ -22,10 +22,17 @@ class AdminCsqWebController extends Controller
         $selectedPathway = $request->query('pathway');
         $selectedDiscipline = $request->query('discipline');
         $search = $request->query('search');
+        $status = $request->query('status', 'all');
 
         $query = ClinicalScenario::withCount('questions')
             ->orderBy('order_index')
             ->orderBy('id');
+
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'draft' || $status === 'inactive') {
+            $query->where('is_active', false);
+        }
 
         if ($selectedPathway && $selectedPathway !== 'ALL') {
             $query->where('pathway_code', $selectedPathway);
@@ -78,6 +85,7 @@ class AdminCsqWebController extends Controller
                 'pathway' => $selectedPathway ?? 'ALL',
                 'discipline' => $selectedDiscipline ?? 'ALL',
                 'search' => $search ?? '',
+                'status' => $status,
             ],
             'stats' => [
                 'total_scenarios' => $totalScenarios,

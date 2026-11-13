@@ -194,32 +194,15 @@ export default function TopicsIndex({
             <Head title="Manage Topics & Subtopics — Cortex Admin" />
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-                {/* Header */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
-                    <div>
-                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
-                            <Layers className="size-4" />
-                            <span>
-                                Curriculum Classification &amp; High-Yield
-                                Priority Matrix
-                            </span>
-                        </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            Topics &amp; Subtopics Hierarchy
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Organize high-yield chapters, calibrate priority
-                            star ratings, and map granular subtopics for
-                            adaptive testing.
-                        </p>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-3">
+                {/* Action Toolbar */}
+                <div className="flex items-center justify-end">
+                    <div className="flex shrink-0 items-center gap-2">
                         <Button
                             onClick={openCreateTopicDialog}
-                            className="gap-1.5 bg-[#0066FF] text-xs font-bold text-white shadow-md hover:bg-[#0052cc]"
+                            size="sm"
+                            className="h-8 gap-1.5 bg-[#0066FF] text-xs font-semibold text-white shadow-xs hover:bg-[#0052cc]"
                         >
-                            <Plus className="size-4" />
+                            <Plus className="size-3.5" />
                             New Topic
                         </Button>
                     </div>

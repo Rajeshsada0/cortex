@@ -16,6 +16,8 @@ import {
     Layers,
     Info,
     Check,
+    Headset,
+    Gavel,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +34,12 @@ interface SystemSettingsData {
     site_favicon: string;
     footer_text: string;
     contact_email: string;
+    support_desk_email?: string;
+    support_desk_phone?: string;
+    referral_promo_code?: string;
+    referral_bonus_text?: string;
+    medical_disclaimer?: string;
+    terms_of_service?: string;
     seo_meta_title: string;
     seo_meta_description: string;
     seo_meta_keywords: string;
@@ -49,7 +57,7 @@ interface SettingsIndexProps {
 }
 
 export default function SettingsIndex({ settings }: SettingsIndexProps) {
-    const [activeTab, setActiveTab] = useState<'branding' | 'seo' | 'social'>('branding');
+    const [activeTab, setActiveTab] = useState<'branding' | 'seo' | 'social' | 'support'>('branding');
 
     // Local previews for uploaded files before saving
     const [logoPreview, setLogoPreview] = useState<string>(settings.site_logo);
@@ -68,6 +76,12 @@ export default function SettingsIndex({ settings }: SettingsIndexProps) {
         site_favicon: settings.site_favicon || '/favicon.ico',
         footer_text: settings.footer_text || '© 2026 Cortex Med. High-Stakes Doctor Entrance Simulation Engine.',
         contact_email: settings.contact_email || 'support@cortexmed.com',
+        support_desk_email: settings.support_desk_email || 'support@cortexmedical.app',
+        support_desk_phone: settings.support_desk_phone || '+1 (800) 267-8391',
+        referral_promo_code: settings.referral_promo_code || 'DR_CORTEX',
+        referral_bonus_text: settings.referral_bonus_text || 'Refer a Fellow Med Student. Both get 1 month of Cortex AI Quick Calibration free when they join.',
+        medical_disclaimer: settings.medical_disclaimer || 'MEDICAL DISCLAIMER: Cortex Medical is an academic prep tool engineered strictly for exam preparation (USMLE, INI-CET, MECEE). Rationales, case vignettes, and mock items do NOT constitute diagnostic or treatment guidelines for real patient care.',
+        terms_of_service: settings.terms_of_service || 'By downloading, accessing, or registering on Cortex Medical, you agree to comply with and be bound by these Terms of Service.',
         seo_meta_title: settings.seo_meta_title || '',
         seo_meta_description: settings.seo_meta_description || '',
         seo_meta_keywords: settings.seo_meta_keywords || '',
@@ -154,30 +168,18 @@ export default function SettingsIndex({ settings }: SettingsIndexProps) {
             <Head title="Global Settings & Platform Branding — Cortex Super Admin" />
 
             <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-                {/* Header */}
-                <div className="border-border flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
-                    <div>
-                        <div className="mb-1 inline-flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
-                            <Globe className="size-4" />
-                            <span>Super Admin System Administration Suite</span>
-                        </div>
-                        <h1 className="text-foreground text-2xl font-black tracking-tight sm:text-3xl">
-                            Global Platform Settings &amp; Branding
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Control app name, release version, site logo, browser favicon, SEO meta tags, and official social media links.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
+                {/* Action Toolbar */}
+                <div className="flex items-center justify-end">
+                    <div className="flex items-center gap-2">
                         <Button
                             type="button"
                             onClick={handleSubmit}
                             disabled={processing}
-                            className="gap-2 bg-[#0066FF] px-6 text-xs font-bold text-white shadow-md hover:bg-[#0052cc]"
+                            size="sm"
+                            className="h-8 gap-1.5 bg-[#0066FF] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0052cc]"
                         >
-                            <Save className="size-4" />
-                            {processing ? 'Saving Changes...' : 'Save All Settings'}
+                            <Save className="size-3.5" />
+                            {processing ? 'Saving...' : 'Save Settings'}
                         </Button>
                     </div>
                 </div>
@@ -221,6 +223,19 @@ export default function SettingsIndex({ settings }: SettingsIndexProps) {
                     >
                         <Share2 className="size-4" />
                         <span>Official Social Media Links</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('support')}
+                        className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-extrabold transition-colors ${
+                            activeTab === 'support'
+                                ? 'border-sky-500 text-sky-600 dark:text-sky-400'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <Headset className="size-4" />
+                        <span>Support, Legal &amp; Referrals</span>
                     </button>
                 </div>
 
@@ -977,6 +992,168 @@ export default function SettingsIndex({ settings }: SettingsIndexProps) {
                                         <p className="text-muted-foreground mt-3 text-[10px]">
                                             {data.footer_text}
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB 4: SUPPORT, LEGAL & REFERRALS */}
+                    {activeTab === 'support' && (
+                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                            <div className="space-y-6 lg:col-span-2">
+                                {/* Support Channels Card */}
+                                <div className="border-border bg-card rounded-2xl border p-6 shadow-xs">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-teal-600 dark:text-teal-400">
+                                        <Headset className="size-4" />
+                                        <span>Candidate Helpdesk &amp; Support Channels</span>
+                                    </div>
+                                    <h2 className="text-foreground mt-1 text-base font-black">
+                                        Live Helpdesk Configuration
+                                    </h2>
+                                    <p className="text-muted-foreground mt-0.5 text-xs">
+                                        Configures the 24/7 Clinical &amp; Technical helpdesk credentials displayed in the candidate sidebar and Contact Us modal.
+                                    </p>
+
+                                    <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="support_desk_email" className="text-xs font-bold">
+                                                Support Desk Email
+                                            </Label>
+                                            <Input
+                                                id="support_desk_email"
+                                                value={data.support_desk_email}
+                                                onChange={(e) => setData('support_desk_email', e.target.value)}
+                                                placeholder="support@cortexmedical.app"
+                                                className="h-9 rounded-xl text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="support_desk_phone" className="text-xs font-bold">
+                                                Live Desk Phone / Toll-Free
+                                            </Label>
+                                            <Input
+                                                id="support_desk_phone"
+                                                value={data.support_desk_phone}
+                                                onChange={(e) => setData('support_desk_phone', e.target.value)}
+                                                placeholder="+1 (800) 267-8391"
+                                                className="h-9 rounded-xl text-xs"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Referrals & Share Card */}
+                                <div className="border-border bg-card rounded-2xl border p-6 shadow-xs">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400">
+                                        <Share2 className="size-4" />
+                                        <span>Share the App &amp; Referral Program</span>
+                                    </div>
+                                    <h2 className="text-foreground mt-1 text-base font-black">
+                                        Candidate Referral Perks
+                                    </h2>
+                                    <p className="text-muted-foreground mt-0.5 text-xs">
+                                        Controls the referral promo code and promotional copy shown in the Share the App modal.
+                                    </p>
+
+                                    <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="referral_promo_code" className="text-xs font-bold">
+                                                Default Referral Promo Code
+                                            </Label>
+                                            <Input
+                                                id="referral_promo_code"
+                                                value={data.referral_promo_code}
+                                                onChange={(e) => setData('referral_promo_code', e.target.value)}
+                                                placeholder="DR_CORTEX"
+                                                className="h-9 rounded-xl text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5 sm:col-span-2">
+                                            <Label htmlFor="referral_bonus_text" className="text-xs font-bold">
+                                                Referral Perk Description
+                                            </Label>
+                                            <Input
+                                                id="referral_bonus_text"
+                                                value={data.referral_bonus_text}
+                                                onChange={(e) => setData('referral_bonus_text', e.target.value)}
+                                                placeholder="Refer a Fellow Med Student. Both get 1 month of Cortex AI Quick Calibration free when they join."
+                                                className="h-9 rounded-xl text-xs"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Medical Disclaimer & Legal Card */}
+                                <div className="border-border bg-card rounded-2xl border p-6 shadow-xs">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                                        <Gavel className="size-4" />
+                                        <span>Medical Disclaimer &amp; Terms of Service</span>
+                                    </div>
+                                    <h2 className="text-foreground mt-1 text-base font-black">
+                                        Licensure Disclaimer &amp; Honor Code
+                                    </h2>
+                                    <p className="text-muted-foreground mt-0.5 text-xs">
+                                        Displayed in the Terms &amp; Conditions modal across web and mobile examination portals.
+                                    </p>
+
+                                    <div className="mt-5 space-y-4">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="medical_disclaimer" className="text-xs font-bold">
+                                                Clinical Academic Disclaimer (Warning Banner)
+                                            </Label>
+                                            <Textarea
+                                                id="medical_disclaimer"
+                                                value={data.medical_disclaimer}
+                                                onChange={(e) => setData('medical_disclaimer', e.target.value)}
+                                                className="min-h-[90px] rounded-xl text-xs leading-relaxed"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="terms_of_service" className="text-xs font-bold">
+                                                Terms of Service Summary
+                                            </Label>
+                                            <Textarea
+                                                id="terms_of_service"
+                                                value={data.terms_of_service}
+                                                onChange={(e) => setData('terms_of_service', e.target.value)}
+                                                className="min-h-[100px] rounded-xl text-xs leading-relaxed"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Preview */}
+                            <div className="space-y-6">
+                                <div className="border-border bg-card rounded-2xl border p-5 shadow-xs">
+                                    <h3 className="text-foreground text-sm font-black">
+                                        Support Desk Quick Info
+                                    </h3>
+                                    <div className="mt-3 space-y-3 text-xs">
+                                        <div className="rounded-xl border border-teal-200/60 bg-teal-50/50 p-3 dark:border-teal-900/40 dark:bg-teal-950/20">
+                                            <span className="font-bold text-teal-800 dark:text-teal-300 block">
+                                                Email Inquiries:
+                                            </span>
+                                            <span className="text-muted-foreground">{data.support_desk_email}</span>
+                                        </div>
+                                        <div className="rounded-xl border border-teal-200/60 bg-teal-50/50 p-3 dark:border-teal-900/40 dark:bg-teal-950/20">
+                                            <span className="font-bold text-teal-800 dark:text-teal-300 block">
+                                                Toll-Free Phone:
+                                            </span>
+                                            <span className="text-muted-foreground">{data.support_desk_phone}</span>
+                                        </div>
+                                        <div className="rounded-xl border border-purple-200/60 bg-purple-50/50 p-3 dark:border-purple-900/40 dark:bg-purple-950/20">
+                                            <span className="font-bold text-purple-800 dark:text-purple-300 block">
+                                                Active Promo:
+                                            </span>
+                                            <span className="font-mono font-bold text-purple-700 dark:text-purple-300">
+                                                {data.referral_promo_code}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -100,9 +100,9 @@ class AdminQuestionWebController extends Controller
                 'status' => $status ?? 'all',
             ],
             'stats' => [
-                'total' => Question::count(),
-                'active' => Question::where('is_active', true)->count(),
-                'draft' => Question::where('is_active', false)->count(),
+                'total' => $totalQuestionsCount = Question::count(),
+                'active' => $activeQuestionsCount = Question::where('is_active', true)->count(),
+                'draft' => max(0, $totalQuestionsCount - $activeQuestionsCount),
             ],
         ]);
     }

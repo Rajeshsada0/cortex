@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,17 +31,78 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar')) {
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+                Storage::disk('public')->delete($rawAvatar);
+            }
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+            unset($validated['avatar']);
+        } elseif ($request->boolean('remove_avatar')) {
+            $rawAvatar = $user->getRawOriginal('avatar');
+            if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+                Storage::disk('public')->delete($rawAvatar);
+            }
+            $user->avatar = null;
         }
 
-        $request->user()->save();
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
         return to_route('profile.edit');
+    }
+
+    /**
+     * Upload or update user avatar picture.
+     */
+    public function updateAvatar(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+        ]);
+
+        $user = $request->user();
+        $rawAvatar = $user->getRawOriginal('avatar');
+        if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+            Storage::disk('public')->delete($rawAvatar);
+        }
+
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $user->avatar = $path;
+        $user->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile photo updated successfully.')]);
+
+        return back();
+    }
+
+    /**
+     * Remove user avatar picture.
+     */
+    public function destroyAvatar(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $rawAvatar = $user->getRawOriginal('avatar');
+        if ($rawAvatar && Storage::disk('public')->exists($rawAvatar)) {
+            Storage::disk('public')->delete($rawAvatar);
+        }
+
+        $user->avatar = null;
+        $user->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile photo removed.')]);
+
+        return back();
     }
 
     /**

@@ -122,13 +122,11 @@ class DashboardWebController extends Controller
             ->where('session_type', 'GRAND_MOCK')
             ->count();
 
-        $completedSessionsCount = TestSession::where('user_id', $user->id)
-            ->where('is_completed', true)
-            ->count();
-
         $completedSessions = TestSession::where('user_id', $user->id)
             ->where('is_completed', true)
-            ->get();
+            ->get(['id', 'total_questions', 'score_obtained']);
+
+        $completedSessionsCount = $completedSessions->count();
 
         $avgScorePercent = $completedSessions->isNotEmpty()
             ? round((float) $completedSessions->avg(fn ($s) => $s->total_questions > 0 ? ($s->score_obtained / $s->total_questions) * 100 : 0), 1)

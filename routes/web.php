@@ -2,12 +2,16 @@
 
 use App\Http\Controllers\Admin\AdminCsqWebController;
 use App\Http\Controllers\Admin\AdminDashboardWebController;
+use App\Http\Controllers\Admin\AdminInquiryWebController;
 use App\Http\Controllers\Admin\AdminPathwayWebController;
 use App\Http\Controllers\Admin\AdminQuestionWebController;
+use App\Http\Controllers\Admin\AdminRatingWebController;
 use App\Http\Controllers\Admin\AdminSettingsWebController;
 use App\Http\Controllers\Admin\AdminSubjectWebController;
 use App\Http\Controllers\Admin\AdminTopicWebController;
 use App\Http\Controllers\Admin\AdminUserWebController;
+use App\Http\Controllers\Api\V1\AppRatingController;
+use App\Http\Controllers\Api\V1\SupportInquiryController;
 use App\Http\Controllers\Web\BookmarkWebController;
 use App\Http\Controllers\Web\CsqWebController;
 use App\Http\Controllers\Web\DashboardWebController;
@@ -27,8 +31,8 @@ use Illuminate\Support\Facades\Route;
 // Welcome landing page
 Route::inertia('/', 'welcome')->name('home');
 
-// Easy-PG Inspired Public Zero-Login Practice Features
-Route::get('/choose', [GuestPracticeWebController::class, 'choose'])->name('choose');
+// Public Practice Features
+Route::get('/choose', fn () => redirect('/'))->name('choose');
 Route::get('/subjects', [GuestPracticeWebController::class, 'subjects'])->name('public.subjects.index');
 Route::get('/subjects/{slug}', [GuestPracticeWebController::class, 'subjectDetail'])->name('public.subjects.show');
 Route::get('/about-medai', [GuestPracticeWebController::class, 'aboutMedAi'])->name('about-medai');
@@ -41,6 +45,11 @@ Route::post('/flashcards/review', [FlashcardWebController::class, 'reviewCard'])
 
 // Medical Gaming Hub & Clinical Recall Games (Medle, Synapses, Image Rush, Probe)
 Route::get('/play', PlayWebController::class)->name('play.index');
+
+// Public / Candidate Support Inquiries & Community Ratings
+Route::post('/support/inquiry', [SupportInquiryController::class, 'store'])->name('support.inquiry.store');
+Route::post('/app-rating', [AppRatingController::class, 'store'])->name('app.rating.store');
+Route::get('/app-ratings/summary', [AppRatingController::class, 'summary'])->name('app.rating.summary');
 
 // Standalone Printable / Downloadable Exam Report Scorecard
 Route::get('/download/{id}', [ExamReportDownloadController::class, 'download'])->name('exam.download');
@@ -140,6 +149,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // User Directory & Role Assignment
     Route::get('/users', [AdminUserWebController::class, 'index'])->name('users.index');
     Route::post('/users/{user}/toggle-admin', [AdminUserWebController::class, 'toggleAdmin'])->name('users.toggle-admin');
+
+    // Candidate Support Inquiries & Helpdesk
+    Route::get('/inquiries', [AdminInquiryWebController::class, 'index'])->name('inquiries.index');
+    Route::post('/inquiries', [AdminInquiryWebController::class, 'store'])->name('inquiries.store');
+    Route::get('/inquiries/export', [AdminInquiryWebController::class, 'export'])->name('inquiries.export');
+    Route::patch('/inquiries/{inquiry}/status', [AdminInquiryWebController::class, 'updateStatus'])->name('inquiries.update-status');
+    Route::delete('/inquiries/{inquiry}', [AdminInquiryWebController::class, 'destroy'])->name('inquiries.destroy');
+
+    // Candidate Ratings & Community Reviews
+    Route::get('/ratings', [AdminRatingWebController::class, 'index'])->name('ratings.index');
+    Route::delete('/ratings/{rating}', [AdminRatingWebController::class, 'destroy'])->name('ratings.destroy');
 
     // Super Admin Global Platform Settings
     Route::get('/settings', [AdminSettingsWebController::class, 'index'])->name('settings.index');
