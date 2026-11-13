@@ -69,6 +69,9 @@ jobs:
           PORT: ${{ secrets.CPANEL_PORT || '22' }}
           TARGET: ${{ secrets.TARGET_PATH }}
         run: |
+          # Ensure target directory exists on cPanel
+          ssh -p $PORT -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $USER@$HOST "mkdir -p '$TARGET'"
+
           rsync -avz --delete \
             -e "ssh -p $PORT -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
             --exclude='.git/' \
@@ -82,7 +85,7 @@ jobs:
             --exclude='storage/framework/sessions/*' \
             --exclude='storage/framework/views/*' \
             --exclude='storage/logs/*' \
-            ./ $USER@$HOST:$TARGET/
+            ./ $USER@$HOST:"$TARGET"/
 
       - name: 8. Execute Server-Side Laravel Tasks
         env:
@@ -93,7 +96,15 @@ jobs:
         run: |
           ssh -p $PORT -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $USER@$HOST << 'EOF'
             set -e
-            cd ${{ secrets.TARGET_PATH }}
+
+            # Resolve target directory whether relative or absolute
+            TARGET_DIR="${{ secrets.TARGET_PATH }}"
+            if [[ "$TARGET_DIR" != /* ]]; then
+              TARGET_DIR="$HOME/$TARGET_DIR"
+            fi
+
+            mkdir -p "$TARGET_DIR"
+            cd "$TARGET_DIR"
 
             # Auto-detect PHP 8.3 binary on cPanel (ea-php83 or standard php)
             if command -v ea-php83 >/dev/null 2>&1; then
