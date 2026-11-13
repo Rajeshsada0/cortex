@@ -1,0 +1,117 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to cPanel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, zip
+          coverage: none
+
+      - name: 3. Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 4. Install PHP Dependencies (No Dev)
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: 5. Install NPM Packages & Build Production Assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: 6. Configure SSH Keys
+        env:
+          SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          HOST: ${{ secrets.CPANEL_HOST }}
+          PORT: ${{ secrets.CPANEL_PORT || '22' }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p $PORT -H $HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: 7. Sync Application Files to cPanel (Rsync)
+        env:
+          HOST: ${{ secrets.CPANEL_HOST }}
+          USER: ${{ secrets.CPANEL_USER }}
+          PORT: ${{ secrets.CPANEL_PORT || '22' }}
+          TARGET: ${{ secrets.TARGET_PATH }}
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p $PORT -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='storage/app/public/*' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='storage/logs/*' \
+            ./ $USER@$HOST:$TARGET/
+
+      - name: 8. Execute Server-Side Laravel Tasks
+        env:
+          HOST: ${{ secrets.CPANEL_HOST }}
+          USER: ${{ secrets.CPANEL_USER }}
+          PORT: ${{ secrets.CPANEL_PORT || '22' }}
+          TARGET: ${{ secrets.TARGET_PATH }}
+        run: |
+          ssh -p $PORT -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $USER@$HOST << 'EOF'
+            set -e
+            cd ${{ secrets.TARGET_PATH }}
+
+            # Auto-detect PHP 8.3 binary on cPanel (ea-php83 or standard php)
+            if command -v ea-php83 >/dev/null 2>&1; then
+              PHP_BIN="ea-php83"
+            elif command -v /usr/local/bin/ea-php83 >/dev/null 2>&1; then
+              PHP_BIN="/usr/local/bin/ea-php83"
+            else
+              PHP_BIN="php"
+            fi
+
+            echo "Using PHP binary: $($PHP_BIN -v | head -n 1)"
+
+            # Ensure storage directories and permissions
+            mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache storage/app/public/avatars
+            chmod -R 775 storage bootstrap/cache
+
+            # Link storage for public avatars & media
+            $PHP_BIN artisan storage:link || true
+
+            # Run database migrations
+            $PHP_BIN artisan migrate --force
+
+            # Optimize cache for production
+            $PHP_BIN artisan optimize:clear
+            $PHP_BIN artisan config:cache
+            $PHP_BIN artisan route:cache
+            $PHP_BIN artisan view:cache
+
+            echo "Deployment completed successfully!"
+          EOF
