@@ -29,6 +29,7 @@ import {
     FileSpreadsheet,
     Eye,
     Loader2,
+    Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -69,12 +70,23 @@ interface FlashcardItem {
     pearl?: string;
 }
 
+interface DeckItem {
+    id: string;
+    title: string;
+    cardsCount: number;
+    type: 'anki' | 'custom';
+    lastReviewed?: string;
+    subject?: string;
+}
+
 interface FlashcardsPageProps {
     user: any;
     dueCount: number;
     sections: SectionGroup[];
     themes: ThemeItem[];
     sampleCards: FlashcardItem[];
+    initialDecks?: DeckItem[];
+    subjects?: Array<{ id: number; name: string; slug: string }>;
 }
 
 export default function FlashcardsIndex({
@@ -83,6 +95,8 @@ export default function FlashcardsIndex({
     sections: initialSections = [],
     themes: initialThemes = [],
     sampleCards = [],
+    initialDecks = [],
+    subjects = [],
 }: FlashcardsPageProps) {
     const [dueCount, setDueCount] = useState<number>(initialDueCount);
 
@@ -97,13 +111,11 @@ export default function FlashcardsIndex({
     const [sortBy, setSortBy] = useState<'foundations' | 'count_desc' | 'alphabetical'>('foundations');
 
     // Themes filter
-    const [themeFilter, setThemeFilter] = useState<'all' | 'high_yield' | 'image'>('all');
+    const [themeFilter, setThemeFilter] = useState<'all' | 'high_yield' | 'image' | 'past_year'>('all');
 
     // Decks filter & custom user decks state
     const [deckFilter, setDeckFilter] = useState<'all' | 'custom' | 'anki' | 'my_cards'>('all');
-    const [customDecks, setCustomDecks] = useState<
-        Array<{ id: string; title: string; cardsCount: number; type: 'anki' | 'custom'; lastReviewed?: string }>
-    >([]);
+    const [customDecks, setCustomDecks] = useState<DeckItem[]>(initialDecks);
 
     // Interactive Study Player state
     const [studySessionActive, setStudySessionActive] = useState(false);
@@ -117,6 +129,7 @@ export default function FlashcardsIndex({
 
     // Modals state
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [addCardModalOpen, setAddCardModalOpen] = useState(false);
     const [ankiModalOpen, setAnkiModalOpen] = useState(false);
     const [cortexModalOpen, setCortexModalOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'mobile' | 'expanded'>('mobile');
@@ -146,6 +159,18 @@ export default function FlashcardsIndex({
     // New Deck Form state
     const [newDeckTitle, setNewDeckTitle] = useState('');
     const [newDeckCategory, setNewDeckCategory] = useState('Anatomy');
+    const [isSavingDeck, setIsSavingDeck] = useState(false);
+
+    // New Card Form state
+    const [newCardFront, setNewCardFront] = useState('');
+    const [newCardBack, setNewCardBack] = useState('');
+    const [newCardPearl, setNewCardPearl] = useState('');
+    const [newCardDeckId, setNewCardDeckId] = useState('');
+    const [newCardSubjectId, setNewCardSubjectId] = useState('');
+    const [newCardIsHighYield, setNewCardIsHighYield] = useState(false);
+    const [newCardIsPastYear, setNewCardIsPastYear] = useState(false);
+    const [newCardPastYear, setNewCardPastYear] = useState('');
+    const [isSavingCard, setIsSavingCard] = useState(false);
 
     // Filtered Subjects
     const filteredSections = useMemo(() => {
@@ -206,7 +231,15 @@ export default function FlashcardsIndex({
     // Launch Study Session dynamically from database
     const startStudySession = async (
         title: string,
-        filterParams?: { subject?: string; theme?: string; source?: string; cards?: FlashcardItem[] }
+        filterParams?: {
+            subject?: string;
+            theme?: string;
+            source?: string;
+            deckId?: string;
+            isHighYield?: boolean;
+            isPastYear?: boolean;
+            cards?: FlashcardItem[];
+        }
     ) => {
         setSessionTitle(title);
         setCurrentCardIndex(0);
@@ -226,7 +259,10 @@ export default function FlashcardsIndex({
             if (filterParams?.subject) query.append('subject', filterParams.subject);
             if (filterParams?.theme) query.append('theme', filterParams.theme);
             if (filterParams?.source) query.append('source', filterParams.source);
-            query.append('limit', '15');
+            if (filterParams?.deckId) query.append('deck_id', filterParams.deckId);
+            if (filterParams?.isHighYield) query.append('is_high_yield', '1');
+            if (filterParams?.isPastYear) query.append('is_past_year', '1');
+            query.append('limit', '20');
 
             const res = await fetch(`/flashcards/cards?${query.toString()}`);
             if (res.ok) {
@@ -296,24 +332,127 @@ export default function FlashcardsIndex({
         }
     };
 
-    // Create custom deck
-    const handleCreateDeck = (e: React.FormEvent) => {
+    // Create custom deck with backend persistence
+    const handleCreateDeck = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newDeckTitle.trim()) return;
+        if (!newDeckTitle.trim() || isSavingDeck) return;
+        setIsSavingDeck(true);
 
-        const newDeck = {
-            id: 'deck-' + Date.now(),
-            title: newDeckTitle.trim(),
-            cardsCount: 15,
-            type: 'custom' as const,
-            lastReviewed: 'Just now',
-        };
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
+            const res = await fetch('/flashcards/decks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+                body: JSON.stringify({
+                    title: newDeckTitle.trim(),
+                    category: newDeckCategory,
+                }),
+            });
 
-        setCustomDecks((prev) => [newDeck, ...prev]);
-        setNewDeckTitle('');
-        setCreateModalOpen(false);
-        setActiveTab('decks');
-        toast.success(`Deck "${newDeck.title}" created!`);
+            if (res.ok) {
+                const data = await res.json();
+                const createdDeck: DeckItem = data.deck || {
+                    id: 'deck-' + Date.now(),
+                    title: newDeckTitle.trim(),
+                    cardsCount: 0,
+                    type: 'custom',
+                    lastReviewed: 'Just now',
+                };
+                setCustomDecks((prev) => [createdDeck, ...prev]);
+                setNewDeckTitle('');
+                setCreateModalOpen(false);
+                setActiveTab('decks');
+                toast.success(`Deck "${createdDeck.title}" created!`);
+            } else {
+                toast.error('Failed to create deck.');
+            }
+        } catch (err) {
+            toast.error('Network error creating deck.');
+        } finally {
+            setIsSavingDeck(false);
+        }
+    };
+
+    // Delete custom deck with backend persistence
+    const handleDeleteDeck = async (deckId: string, deckTitle: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm(`Are you sure you want to delete deck "${deckTitle}"?`)) return;
+
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
+            const res = await fetch(`/flashcards/decks/${deckId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+            });
+
+            if (res.ok) {
+                setCustomDecks((prev) => prev.filter((d) => d.id !== deckId));
+                toast.success(`Deck "${deckTitle}" deleted.`);
+            } else {
+                toast.error('Failed to delete deck.');
+            }
+        } catch (err) {
+            toast.error('Network error deleting deck.');
+        }
+    };
+
+    // Create custom flashcard with backend persistence
+    const handleCreateCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newCardFront.trim() || !newCardBack.trim() || isSavingCard) return;
+        setIsSavingCard(true);
+
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
+            const res = await fetch('/flashcards/cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+                body: JSON.stringify({
+                    front: newCardFront.trim(),
+                    back: newCardBack.trim(),
+                    pearl: newCardPearl.trim() || null,
+                    deck_id: newCardDeckId || null,
+                    subject_id: newCardSubjectId ? Number(newCardSubjectId) : null,
+                    is_high_yield: newCardIsHighYield,
+                    is_past_year: newCardIsPastYear,
+                    past_year: newCardPastYear.trim() || null,
+                }),
+            });
+
+            if (res.ok) {
+                toast.success('Flashcard saved successfully!');
+                setAddCardModalOpen(false);
+                setNewCardFront('');
+                setNewCardBack('');
+                setNewCardPearl('');
+                setNewCardIsHighYield(false);
+                setNewCardIsPastYear(false);
+                setNewCardPastYear('');
+
+                if (newCardDeckId) {
+                    setCustomDecks((prev) =>
+                        prev.map((d) => (d.id === newCardDeckId ? { ...d, cardsCount: (d.cardsCount || 0) + 1 } : d))
+                    );
+                }
+            } else {
+                toast.error('Failed to save flashcard.');
+            }
+        } catch (err) {
+            toast.error('Network error saving card.');
+        } finally {
+            setIsSavingCard(false);
+        }
     };
 
     // Simulate Anki Import
@@ -506,37 +645,43 @@ export default function FlashcardsIndex({
                         )}
                     </div>
 
-                    {/* Top Action Buttons: Daily Review & Create */}
-                    <div className="grid grid-cols-2 gap-3 mb-3" data-purpose="quick-actions">
+                    {/* Top Action Buttons: Daily Review, Create Deck & Add Card */}
+                    <div className="grid grid-cols-3 gap-2 mb-3" data-purpose="quick-actions">
                         {/* Daily Review Button */}
                         <button
                             onClick={() => {
                                 startStudySession('Daily Recall Review', { source: 'due' });
                             }}
-                            className="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl font-medium text-xs border transition-all bg-white text-neutral-800 border-neutral-200/90 shadow-xs hover:border-[#F06560] active:scale-95 cursor-pointer"
+                            className="flex items-center justify-center space-x-1.5 py-2 px-2 rounded-xl font-medium text-xs border transition-all bg-white text-neutral-800 border-neutral-200/90 shadow-xs hover:border-[#F06560] active:scale-95 cursor-pointer"
                         >
-                            <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <rect height="16" rx="3" width="18" x="3" y="4" />
                                 <path d="M16 2v4M8 2v4M3 10h18" />
                             </svg>
-                            <span className="tracking-tight">Daily Review</span>
+                            <span className="tracking-tight text-[11px] font-semibold">Daily</span>
                             {dueCount > 0 && (
-                                <span className="bg-[#EF4444] text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                                <span className="bg-[#EF4444] text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
                                     {dueCount}
                                 </span>
                             )}
                         </button>
 
-                        {/* Create Button */}
+                        {/* Create Deck Button */}
                         <button
                             onClick={() => setCreateModalOpen(true)}
-                            className="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl bg-white text-neutral-800 font-medium text-xs border border-dashed border-neutral-300 shadow-xs hover:border-[#F06560] hover:text-[#F06560] active:scale-95 transition-all cursor-pointer"
+                            className="flex items-center justify-center space-x-1 py-2 px-2 rounded-xl bg-white text-neutral-800 font-medium text-xs border border-dashed border-neutral-300 shadow-xs hover:border-[#F06560] hover:text-[#F06560] active:scale-95 transition-all cursor-pointer"
                         >
-                            <svg className="w-4 h-4 text-[#F06560]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <rect height="18" rx="3" strokeDasharray="3 3" width="18" x="3" y="3" />
-                                <path d="M12 8v8M8 12h8" strokeLinecap="round" />
-                            </svg>
-                            <span className="tracking-tight font-semibold">Create</span>
+                            <Plus className="w-3.5 h-3.5 text-[#F06560]" />
+                            <span className="tracking-tight text-[11px] font-semibold">New Deck</span>
+                        </button>
+
+                        {/* Add Card Button */}
+                        <button
+                            onClick={() => setAddCardModalOpen(true)}
+                            className="flex items-center justify-center space-x-1 py-2 px-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-500 text-white font-medium text-xs shadow-xs hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+                        >
+                            <Plus className="w-3.5 h-3.5 text-white" />
+                            <span className="tracking-tight text-[11px] font-bold">New Card</span>
                         </button>
                     </div>
 
@@ -650,6 +795,14 @@ export default function FlashcardsIndex({
                                     </svg>
                                     <span>High Yield</span>
                                 </button>
+
+                                {/* Past Year Questions Instant Study Chip */}
+                                <button
+                                    onClick={() => startStudySession('Past Year Questions (PYQs)', { isPastYear: true })}
+                                    className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 active:scale-95 transition cursor-pointer"
+                                >
+                                    <span>🏛️ PYQs Study</span>
+                                </button>
                             </div>
 
                             {/* Section list */}
@@ -733,7 +886,7 @@ export default function FlashcardsIndex({
                                     </svg>
                                     <span>High Yield</span>
                                 </button>
-                                {/* Image */}
+                                 {/* Image */}
                                 <button
                                     onClick={() => setThemeFilter('image')}
                                     className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
@@ -748,6 +901,20 @@ export default function FlashcardsIndex({
                                         <path d="m21 15-5-5L5 21" />
                                     </svg>
                                     <span>Image</span>
+                                </button>
+                                {/* Past Year Questions (PYQs) */}
+                                <button
+                                    onClick={() => {
+                                        setThemeFilter('past_year');
+                                        startStudySession('Past Year Board Flashcards', { isPastYear: true });
+                                    }}
+                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
+                                        themeFilter === 'past_year'
+                                            ? 'bg-[#EF4444] text-white border-transparent'
+                                            : 'bg-white border border-neutral-200 text-neutral-700'
+                                    }`}
+                                >
+                                    <span>🏛️ Past Year (PYQ)</span>
                                 </button>
                             </div>
 
@@ -885,7 +1052,7 @@ export default function FlashcardsIndex({
                                     {filteredDecks.map((deck) => (
                                         <article
                                             key={deck.id}
-                                            onClick={() => startStudySession(deck.title)}
+                                            onClick={() => startStudySession(deck.title, { deckId: deck.id })}
                                             className="bg-white rounded-2xl p-4 flex items-center justify-between border border-[#EEF2F6] shadow-xs hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group"
                                         >
                                             <div className="flex items-center space-x-3.5">
@@ -897,11 +1064,23 @@ export default function FlashcardsIndex({
                                                         {deck.title}
                                                     </h3>
                                                     <p className="text-xs text-neutral-400 mt-0.5">
-                                                        {deck.cardsCount.toLocaleString()} Cards • {deck.lastReviewed}
+                                                        {deck.cardsCount.toLocaleString()} Cards • {deck.lastReviewed} {deck.subject ? `• ${deck.subject}` : ''}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600" />
+                                            <div className="flex items-center space-x-2">
+                                                {deck.type === 'custom' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleDeleteDeck(deck.id, deck.title, e)}
+                                                        className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
+                                                        title="Delete Deck"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600" />
+                                            </div>
                                         </article>
                                     ))}
                                 </div>
@@ -1229,10 +1408,164 @@ export default function FlashcardsIndex({
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={!newDeckTitle.trim()}
-                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#F06560] text-white hover:bg-[#D94843] disabled:opacity-50 transition cursor-pointer"
+                                    disabled={!newDeckTitle.trim() || isSavingDeck}
+                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#F06560] text-white hover:bg-[#D94843] disabled:opacity-50 transition cursor-pointer flex items-center space-x-1.5"
                                 >
-                                    Save Deck
+                                    {isSavingDeck && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    <span>{isSavingDeck ? 'Saving...' : 'Save Deck'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* ADD FLASHCARD MODAL                                       */}
+            {/* ========================================================= */}
+            {addCardModalOpen && (
+                <div className="fixed inset-0 z-60 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-lg bg-white rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                            <div className="flex items-center space-x-2">
+                                <span className="text-xl">🗂️</span>
+                                <h3 className="text-base font-bold text-neutral-900">Add New Flashcard</h3>
+                            </div>
+                            <button
+                                onClick={() => setAddCardModalOpen(false)}
+                                className="text-neutral-400 hover:text-neutral-700 p-1 rounded-full hover:bg-neutral-100 transition"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreateCard} className="mt-4 space-y-3.5">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                        Target Deck
+                                    </label>
+                                    <select
+                                        value={newCardDeckId}
+                                        onChange={(e) => setNewCardDeckId(e.target.value)}
+                                        className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-[#F06560]"
+                                    >
+                                        <option value="">General (No Deck)</option>
+                                        {customDecks.map((d) => (
+                                            <option key={d.id} value={d.id}>
+                                                {d.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                        Medical Subject
+                                    </label>
+                                    <select
+                                        value={newCardSubjectId}
+                                        onChange={(e) => setNewCardSubjectId(e.target.value)}
+                                        className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-[#F06560]"
+                                    >
+                                        <option value="">Select Subject...</option>
+                                        {subjects.map((s) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                    Card Front (Question / Prompt) <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={newCardFront}
+                                    onChange={(e) => setNewCardFront(e.target.value)}
+                                    placeholder="e.g. What is the classic triad of Cardiac Tamponade?"
+                                    rows={3}
+                                    required
+                                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560] focus:ring-1 focus:ring-[#F06560]"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                    Card Back (Answer / Solution) <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={newCardBack}
+                                    onChange={(e) => setNewCardBack(e.target.value)}
+                                    placeholder="e.g. Beck's Triad: 1. Hypotension, 2. Distended jugular veins (JVD), 3. Muffled heart sounds."
+                                    rows={3}
+                                    required
+                                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560] focus:ring-1 focus:ring-[#F06560]"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                    High-Yield Clinical Pearl / Mnemonic (Optional)
+                                </label>
+                                <textarea
+                                    value={newCardPearl}
+                                    onChange={(e) => setNewCardPearl(e.target.value)}
+                                    placeholder="e.g. Pulsus paradoxus (> 10 mmHg drop in SBP on inspiration) is also present. Contrast with tension pneumothorax!"
+                                    rows={2}
+                                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560]"
+                                />
+                            </div>
+
+                            {/* Tags: High-Yield & Past Year Question */}
+                            <div className="bg-neutral-50 rounded-2xl p-3 border border-neutral-200/70 space-y-2.5">
+                                <label className="flex items-center space-x-2 text-xs font-semibold text-neutral-800 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={newCardIsHighYield}
+                                        onChange={(e) => setNewCardIsHighYield(e.target.checked)}
+                                        className="rounded text-amber-500 focus:ring-amber-400 h-4 w-4"
+                                    />
+                                    <span>⭐ Mark as High-Yield Question (HYQ)</span>
+                                </label>
+
+                                <div className="space-y-2">
+                                    <label className="flex items-center space-x-2 text-xs font-semibold text-neutral-800 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={newCardIsPastYear}
+                                            onChange={(e) => setNewCardIsPastYear(e.target.checked)}
+                                            className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
+                                        />
+                                        <span>🏛️ Mark as Past Year Question (PYQ)</span>
+                                    </label>
+                                    {newCardIsPastYear && (
+                                        <input
+                                            type="text"
+                                            value={newCardPastYear}
+                                            onChange={(e) => setNewCardPastYear(e.target.value)}
+                                            placeholder="Exam / Year (e.g. MECEE 2024, USMLE 2023)"
+                                            className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-blue-500"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="pt-2 flex items-center justify-end space-x-2 border-t border-neutral-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setAddCardModalOpen(false)}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!newCardFront.trim() || !newCardBack.trim() || isSavingCard}
+                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#F06560] text-white hover:bg-[#D94843] disabled:opacity-50 transition cursor-pointer flex items-center space-x-1.5"
+                                >
+                                    {isSavingCard && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    <span>{isSavingCard ? 'Saving...' : 'Save Flashcard'}</span>
                                 </button>
                             </div>
                         </form>

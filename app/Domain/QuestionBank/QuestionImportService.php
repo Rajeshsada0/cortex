@@ -25,8 +25,12 @@ class QuestionImportService
         UploadedFile $file,
         bool $publishAsActive = true,
         ?int $defaultSubjectId = null,
+        ?int $defaultTopicId = null,
         array $defaultPathways = [],
         string $pathwayMode = 'fallback',
+        bool $markAsPastYear = false,
+        ?string $defaultPastYear = null,
+        bool $markAsHighYield = false,
         int $chunkSize = 500,
         ?callable $progressCallback = null
     ): array
@@ -57,8 +61,12 @@ class QuestionImportService
                 jsonContent: $content,
                 publishAsActive: $publishAsActive,
                 defaultSubjectId: $defaultSubjectId,
+                defaultTopicId: $defaultTopicId,
                 defaultPathways: $defaultPathways,
                 pathwayMode: $pathwayMode,
+                markAsPastYear: $markAsPastYear,
+                defaultPastYear: $defaultPastYear,
+                markAsHighYield: $markAsHighYield,
                 chunkSize: $chunkSize,
                 progressCallback: $progressCallback
             );
@@ -68,8 +76,12 @@ class QuestionImportService
             filePath: $realPath,
             publishAsActive: $publishAsActive,
             defaultSubjectId: $defaultSubjectId,
+            defaultTopicId: $defaultTopicId,
             defaultPathways: $defaultPathways,
             pathwayMode: $pathwayMode,
+            markAsPastYear: $markAsPastYear,
+            defaultPastYear: $defaultPastYear,
+            markAsHighYield: $markAsHighYield,
             chunkSize: $chunkSize,
             progressCallback: $progressCallback
         );
@@ -85,8 +97,12 @@ class QuestionImportService
         string $filePath,
         bool $publishAsActive = true,
         ?int $defaultSubjectId = null,
+        ?int $defaultTopicId = null,
         array $defaultPathways = [],
         string $pathwayMode = 'fallback',
+        bool $markAsPastYear = false,
+        ?string $defaultPastYear = null,
+        bool $markAsHighYield = false,
         int $chunkSize = 500,
         ?callable $progressCallback = null
     ): array
@@ -313,7 +329,11 @@ class QuestionImportService
                 defaultPathways: $defaultPathways,
                 pathwayMode: $pathwayMode,
                 validExams: $validExams,
-                existingCodes: $existingCodes
+                existingCodes: $existingCodes,
+                defaultTopicId: $defaultTopicId,
+                markAsPastYear: $markAsPastYear,
+                defaultPastYear: $defaultPastYear,
+                markAsHighYield: $markAsHighYield
             );
 
             if (! empty($validation['errors'])) {
@@ -348,6 +368,9 @@ class QuestionImportService
                 'integration_explanation' => $validation['integration_explanation'],
                 'application_explanation' => $validation['application_explanation'],
                 'memory_peg' => $validation['memory_peg'] ?? null,
+                'is_past_year' => $validation['is_past_year'] ?? false,
+                'past_year' => $validation['past_year'] ?? null,
+                'is_high_yield' => $validation['is_high_yield'] ?? false,
                 'is_active' => $validation['is_active'] ?? $publishAsActive,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -408,15 +431,29 @@ class QuestionImportService
         string $csvContent,
         bool $publishAsActive = true,
         ?int $defaultSubjectId = null,
+        ?int $defaultTopicId = null,
         array $defaultPathways = [],
-        string $pathwayMode = 'fallback'
+        string $pathwayMode = 'fallback',
+        bool $markAsPastYear = false,
+        ?string $defaultPastYear = null,
+        bool $markAsHighYield = false
     ): array
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'csv_import_');
         file_put_contents($tempFile, $csvContent);
 
         try {
-            return $this->importFromCsvFile($tempFile, $publishAsActive, $defaultSubjectId, $defaultPathways, $pathwayMode);
+            return $this->importFromCsvFile(
+                filePath: $tempFile,
+                publishAsActive: $publishAsActive,
+                defaultSubjectId: $defaultSubjectId,
+                defaultTopicId: $defaultTopicId,
+                defaultPathways: $defaultPathways,
+                pathwayMode: $pathwayMode,
+                markAsPastYear: $markAsPastYear,
+                defaultPastYear: $defaultPastYear,
+                markAsHighYield: $markAsHighYield
+            );
         } finally {
             if (file_exists($tempFile)) {
                 @unlink($tempFile);
@@ -431,8 +468,12 @@ class QuestionImportService
         string $jsonContent,
         bool $publishAsActive = true,
         ?int $defaultSubjectId = null,
+        ?int $defaultTopicId = null,
         array $defaultPathways = [],
         string $pathwayMode = 'fallback',
+        bool $markAsPastYear = false,
+        ?string $defaultPastYear = null,
+        bool $markAsHighYield = false,
         int $chunkSize = 500,
         ?callable $progressCallback = null
     ): array
@@ -599,7 +640,11 @@ class QuestionImportService
                 defaultPathways: $defaultPathways,
                 pathwayMode: $pathwayMode,
                 validExams: $validExams,
-                existingCodes: $existingCodes
+                existingCodes: $existingCodes,
+                defaultTopicId: $defaultTopicId,
+                markAsPastYear: $markAsPastYear,
+                defaultPastYear: $defaultPastYear,
+                markAsHighYield: $markAsHighYield
             );
 
             if (! empty($validation['errors'])) {
@@ -634,6 +679,9 @@ class QuestionImportService
                 'integration_explanation' => $validation['integration_explanation'],
                 'application_explanation' => $validation['application_explanation'],
                 'memory_peg' => $validation['memory_peg'] ?? null,
+                'is_past_year' => $validation['is_past_year'] ?? false,
+                'past_year' => $validation['past_year'] ?? null,
+                'is_high_yield' => $validation['is_high_yield'] ?? false,
                 'is_active' => $validation['is_active'] ?? $publishAsActive,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -703,7 +751,11 @@ class QuestionImportService
         array $defaultPathways = [],
         string $pathwayMode = 'fallback',
         array $validExams = [],
-        array &$existingCodes = []
+        array &$existingCodes = [],
+        ?int $defaultTopicId = null,
+        bool $markAsPastYear = false,
+        ?string $defaultPastYear = null,
+        bool $markAsHighYield = false
     ): array
     {
         $errors = [];
@@ -916,7 +968,7 @@ class QuestionImportService
         if (! isset($matchedTopic) || ! $matchedTopic) {
             $matchedTopic = null;
             if ($matchedSubject) {
-                $topicInput = $get(['topic', 'topic_id', 'topic_name', 'topicid', 'topicname']);
+                $topicInput = $get(['topic', 'topic_id', 'topic_name', 'topicid', 'topicname', 'topics', 'chapter', 'section', 'unit']);
                 if ($topicInput) {
                     $cleanTopicInput = strtolower(trim((string) $topicInput));
                     $matchedTopic = $matchedSubject->topics?->first(function ($t) use ($topicInput, $cleanTopicInput) {
@@ -930,6 +982,43 @@ class QuestionImportService
 
                         return str_contains($tNameLower, $cleanTopicInput) || str_contains($cleanTopicInput, $tNameLower);
                     });
+
+                    // If not found in memory, find in DB or INSERT the new topic!
+                    if (! $matchedTopic && strlen(trim((string) $topicInput)) > 0) {
+                        $cleanTopicName = trim((string) $topicInput);
+                        $topicSlug = Str::slug($cleanTopicName);
+                        if (empty($topicSlug)) {
+                            $topicSlug = 'topic-' . Str::random(6);
+                        }
+
+                        $matchedTopic = Topic::where('subject_id', $matchedSubject->id)
+                            ->where(function ($q) use ($cleanTopicName, $topicSlug) {
+                                $q->where('slug', $topicSlug)
+                                    ->orWhereRaw('LOWER(name) = ?', [strtolower($cleanTopicName)]);
+                            })
+                            ->first();
+
+                        if (! $matchedTopic) {
+                            $matchedTopic = Topic::create([
+                                'subject_id' => $matchedSubject->id,
+                                'name' => $cleanTopicName,
+                                'slug' => $topicSlug,
+                                'high_yield_priority' => 3,
+                            ]);
+                        }
+
+                        if ($matchedSubject->relationLoaded('topics')) {
+                            if (! $matchedSubject->topics->contains('id', $matchedTopic->id)) {
+                                $matchedSubject->topics->push($matchedTopic);
+                            }
+                        }
+                    }
+                }
+
+                // If no topic in question row, check default topic selection
+                if (! $matchedTopic && ! empty($defaultTopicId)) {
+                    $matchedTopic = $matchedSubject->topics?->firstWhere('id', (int) $defaultTopicId)
+                        ?? Topic::where('subject_id', $matchedSubject->id)->find($defaultTopicId);
                 }
 
                 if (! $matchedTopic) {
@@ -948,6 +1037,9 @@ class QuestionImportService
                             'high_yield_priority' => 2,
                         ]
                     );
+                    if ($matchedSubject->relationLoaded('topics')) {
+                        $matchedSubject->topics->push($matchedTopic);
+                    }
                 }
             }
         }
@@ -955,12 +1047,34 @@ class QuestionImportService
         // 6. Subtopic (Optional)
         $matchedSubtopic = null;
         if ($matchedTopic) {
-            $subtopicInput = $get(['subtopic', 'subtopic_id', 'subtopic_name']);
+            $subtopicInput = $get(['subtopic', 'subtopic_id', 'subtopic_name', 'subtopicid', 'subtopicname']);
             if ($subtopicInput) {
-                $matchedSubtopic = $matchedTopic->subtopics->first(function ($st) use ($subtopicInput) {
+                $matchedSubtopic = $matchedTopic->subtopics?->first(function ($st) use ($subtopicInput) {
                     return (string) $st->id === (string) $subtopicInput
                         || strcasecmp($st->name, (string) $subtopicInput) === 0;
                 });
+
+                if (! $matchedSubtopic && strlen(trim((string) $subtopicInput)) > 0) {
+                    $cleanSubName = trim((string) $subtopicInput);
+                    $subSlug = Str::slug($cleanSubName);
+                    if (empty($subSlug)) {
+                        $subSlug = 'subtopic-' . Str::random(6);
+                    }
+                    $matchedSubtopic = Subtopic::firstOrCreate(
+                        [
+                            'topic_id' => $matchedTopic->id,
+                            'slug' => $subSlug,
+                        ],
+                        [
+                            'name' => $cleanSubName,
+                        ]
+                    );
+                    if ($matchedTopic->relationLoaded('subtopics')) {
+                        if (! $matchedTopic->subtopics->contains('id', $matchedSubtopic->id)) {
+                            $matchedTopic->subtopics->push($matchedSubtopic);
+                        }
+                    }
+                }
             }
         }
 
@@ -1059,6 +1173,35 @@ class QuestionImportService
             }
         }
 
+        // 13. Past Year Question (PYQ) & High-Yield Flags
+        $isPastYearRaw = $get(['is_past_year', 'is_pyq', 'past_year_question', 'past_year', 'pyq', 'pastpaper']);
+        $isPastYear = false;
+        if ($isPastYearRaw !== null && $isPastYearRaw !== '') {
+            $isPastYear = filter_var($isPastYearRaw, FILTER_VALIDATE_BOOLEAN)
+                || in_array(strtolower(trim((string) $isPastYearRaw)), ['1', 'true', 'yes', 'y']);
+        }
+        if ($markAsPastYear) {
+            $isPastYear = true;
+        }
+
+        $pastYearVal = $get(['past_year', 'exam_year', 'year', 'pyq_year']);
+        if (empty($pastYearVal) && ! empty($defaultPastYear)) {
+            $pastYearVal = $defaultPastYear;
+        }
+        if (! empty($pastYearVal) && ! $isPastYear) {
+            $isPastYear = true;
+        }
+
+        $isHighYieldRaw = $get(['is_high_yield', 'high_yield', 'is_hy', 'highyield', 'hy', 'pearl']);
+        $isHighYield = false;
+        if ($isHighYieldRaw !== null && $isHighYieldRaw !== '') {
+            $isHighYield = filter_var($isHighYieldRaw, FILTER_VALIDATE_BOOLEAN)
+                || in_array(strtolower(trim((string) $isHighYieldRaw)), ['1', 'true', 'yes', 'y']);
+        }
+        if ($markAsHighYield) {
+            $isHighYield = true;
+        }
+
         return [
             'errors' => $errors,
             'code' => $code,
@@ -1076,6 +1219,9 @@ class QuestionImportService
             'integration_explanation' => (string) $integration,
             'application_explanation' => (string) $application,
             'memory_peg' => $memoryPeg ? (string) $memoryPeg : null,
+            'is_past_year' => $isPastYear,
+            'past_year' => $pastYearVal ? (string) $pastYearVal : null,
+            'is_high_yield' => $isHighYield,
             'options' => array_values($options),
             'relevant_exams' => array_unique($relevantExams),
         ];
@@ -1106,6 +1252,9 @@ class QuestionImportService
             'integration_explanation',
             'application_explanation',
             'memory_peg',
+            'is_past_year',
+            'past_year',
+            'is_high_yield',
             'relevant_exams',
         ];
 
@@ -1130,6 +1279,9 @@ class QuestionImportService
                 'ST elevations in leads V1-V2 (septal) and V3-V4 (anterior) localize ischemia precisely to the LAD territory.',
                 'Emergency primary percutaneous coronary intervention (PCI) with door-to-balloon time < 90 minutes is the therapeutic standard.',
                 'Widow Maker = LAD = V1-V4 anterior wall STEMI',
+                'true',
+                '2024',
+                'true',
                 'MECEE_PG,INI_CET,USMLE_STEP2CK',
             ],
             [
@@ -1152,6 +1304,9 @@ class QuestionImportService
                 'Excess muscarinic stimulation produces DUMBBELLS: Diarrhea, Urination, Miosis, Bradycardia, Bronchorrhea/Bronchospasm, Emesis, Lacrimation, Salivation.',
                 'Intravenous Atropine titrated until pulmonary secretions clear is the immediate life-saving therapy, followed by Pralidoxime for enzyme regeneration.',
                 'Atropine FIRST until lungs are dry, then 2-PAM to break the bond!',
+                'false',
+                '',
+                'true',
                 'COMBINED',
             ],
         ];

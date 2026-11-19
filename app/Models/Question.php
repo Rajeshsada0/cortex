@@ -29,12 +29,27 @@ class Question extends Model
         'integration_explanation',
         'application_explanation',
         'memory_peg',
+        'is_past_year',
+        'past_year',
+        'is_high_yield',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_past_year' => 'boolean',
+        'is_high_yield' => 'boolean',
     ];
+
+    public function scopePastYear(Builder $query): Builder
+    {
+        return $query->where('is_past_year', true);
+    }
+
+    public function scopeHighYield(Builder $query): Builder
+    {
+        return $query->where('is_high_yield', true);
+    }
 
     protected static function booted(): void
     {

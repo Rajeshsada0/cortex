@@ -148,14 +148,23 @@ class AdminPathwayWebController extends Controller
 
     public function destroy(ExamPathway $pathway): RedirectResponse
     {
-        if ($pathway->is_system) {
-            return redirect()->route('admin.pathways.index')
-                ->with('error', "Core system pathway '{$pathway->name}' cannot be deleted as it is required for baseline clinical simulations.");
+        $name = $pathway->name;
+        $code = $pathway->code;
+
+        // Clean up exam relevances for questions if any
+        \App\Models\QuestionExamRelevance::where('exam', $code)->delete();
+
+        // If any user has this pathway active, switch them to another active pathway
+        $fallback = ExamPathway::where('is_active', true)->where('id', '!=', $pathway->id)->first();
+        if ($fallback) {
+            \App\Models\User::where('active_pathway', $code)->update(['active_pathway' => $fallback->code]);
         }
 
-        $name = $pathway->name;
         $pathway->delete();
+
         \Illuminate\Support\Facades\Cache::forget('active_exam_pathways_shared');
+        \Illuminate\Support\Facades\Cache::forget("pathway_total_q_{$code}");
+        \Illuminate\Support\Facades\Cache::forget("subject_q_counts_{$code}");
 
         return redirect()->route('admin.pathways.index')
             ->with('success', "Exam Pathway '{$name}' deleted successfully.");

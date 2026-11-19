@@ -40,7 +40,11 @@ Route::match(['get', 'post'], '/practice/guest-launch', [GuestPracticeWebControl
 
 // Medical Flashcards Learning Hub & Spaced Review Deck
 Route::get('/flashcards', FlashcardWebController::class)->name('flashcards.index');
+Route::get('/flashcards/decks', [FlashcardWebController::class, 'getDecks'])->name('flashcards.decks');
+Route::post('/flashcards/decks', [FlashcardWebController::class, 'storeDeck'])->name('flashcards.decks.store');
+Route::delete('/flashcards/decks/{id}', [FlashcardWebController::class, 'deleteDeck'])->name('flashcards.decks.destroy');
 Route::get('/flashcards/cards', [FlashcardWebController::class, 'getCards'])->name('flashcards.cards');
+Route::post('/flashcards/cards', [FlashcardWebController::class, 'storeCard'])->name('flashcards.cards.store');
 Route::post('/flashcards/review', [FlashcardWebController::class, 'reviewCard'])->name('flashcards.review');
 
 // Medical Gaming Hub & Clinical Recall Games (Medle, Synapses, Image Rush, Probe)

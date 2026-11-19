@@ -29,6 +29,8 @@ class AdminQuestionWebController extends Controller
         $difficulty = $request->query('difficulty');
         $exam = $request->query('exam');
         $status = $request->query('status'); // 'all', 'active', 'draft'
+        $pastYear = $request->query('past_year'); // 'all', 'yes', 'no'
+        $highYield = $request->query('high_yield'); // 'all', 'yes', 'no'
 
         $query = Question::with([
             'subject:id,name',
@@ -69,6 +71,18 @@ class AdminQuestionWebController extends Controller
             $query->where('is_active', false);
         }
 
+        if ($pastYear === 'yes') {
+            $query->where('is_past_year', true);
+        } elseif ($pastYear === 'no') {
+            $query->where('is_past_year', false);
+        }
+
+        if ($highYield === 'yes') {
+            $query->where('is_high_yield', true);
+        } elseif ($highYield === 'no') {
+            $query->where('is_high_yield', false);
+        }
+
         $questions = $query->latest()
             ->paginate(15)
             ->withQueryString();
@@ -98,11 +112,15 @@ class AdminQuestionWebController extends Controller
                 'difficulty' => $difficulty ?? 'ALL',
                 'exam' => $exam ?? 'ALL',
                 'status' => $status ?? 'all',
+                'past_year' => $pastYear ?? 'all',
+                'high_yield' => $highYield ?? 'all',
             ],
             'stats' => [
                 'total' => $totalQuestionsCount = Question::count(),
                 'active' => $activeQuestionsCount = Question::where('is_active', true)->count(),
                 'draft' => max(0, $totalQuestionsCount - $activeQuestionsCount),
+                'past_year' => Question::where('is_past_year', true)->count(),
+                'high_yield' => Question::where('is_high_yield', true)->count(),
             ],
         ]);
     }
@@ -187,6 +205,9 @@ class AdminQuestionWebController extends Controller
             'integration_explanation' => 'required|string',
             'application_explanation' => 'required|string',
             'memory_peg' => 'nullable|string',
+            'is_past_year' => 'nullable|boolean',
+            'past_year' => 'nullable|string|max:30',
+            'is_high_yield' => 'nullable|boolean',
             'is_active' => 'boolean',
             'options' => 'required|array|size:4',
             'options.*.option_key' => 'required|in:A,B,C,D',
@@ -231,6 +252,9 @@ class AdminQuestionWebController extends Controller
                 'integration_explanation' => $validated['integration_explanation'],
                 'application_explanation' => $validated['application_explanation'],
                 'memory_peg' => $validated['memory_peg'] ?? null,
+                'is_past_year' => $validated['is_past_year'] ?? false,
+                'past_year' => $validated['past_year'] ?? null,
+                'is_high_yield' => $validated['is_high_yield'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -298,6 +322,10 @@ class AdminQuestionWebController extends Controller
             'file' => 'required|file|max:153600',
             'status' => 'nullable|in:active,draft',
             'subject_id' => 'nullable|exists:subjects,id',
+            'topic_id' => 'nullable|exists:topics,id',
+            'is_past_year' => 'nullable|boolean',
+            'past_year' => 'nullable|string|max:30',
+            'is_high_yield' => 'nullable|boolean',
             'pathways' => 'nullable|array',
             'pathways.*' => 'string',
             'pathway_mode' => 'nullable|in:fallback,override',
@@ -309,6 +337,10 @@ class AdminQuestionWebController extends Controller
 
         $publishAsActive = ($validated['status'] ?? 'active') === 'active';
         $defaultSubjectId = ! empty($validated['subject_id']) ? (int) $validated['subject_id'] : null;
+        $defaultTopicId = ! empty($validated['topic_id']) ? (int) $validated['topic_id'] : null;
+        $markAsPastYear = ! empty($validated['is_past_year']);
+        $defaultPastYear = $validated['past_year'] ?? null;
+        $markAsHighYield = ! empty($validated['is_high_yield']);
         $defaultPathways = $validated['pathways'] ?? [];
         $pathwayMode = $validated['pathway_mode'] ?? 'fallback';
 
@@ -316,8 +348,12 @@ class AdminQuestionWebController extends Controller
             file: $request->file('file'),
             publishAsActive: $publishAsActive,
             defaultSubjectId: $defaultSubjectId,
+            defaultTopicId: $defaultTopicId,
             defaultPathways: $defaultPathways,
-            pathwayMode: $pathwayMode
+            pathwayMode: $pathwayMode,
+            markAsPastYear: $markAsPastYear,
+            defaultPastYear: $defaultPastYear,
+            markAsHighYield: $markAsHighYield
         );
 
         $msg = "Bulk import completed: {$results['imported']} questions imported successfully.";
@@ -401,6 +437,9 @@ class AdminQuestionWebController extends Controller
             'integration_explanation' => 'required|string',
             'application_explanation' => 'required|string',
             'memory_peg' => 'nullable|string',
+            'is_past_year' => 'nullable|boolean',
+            'past_year' => 'nullable|string|max:30',
+            'is_high_yield' => 'nullable|boolean',
             'is_active' => 'boolean',
             'options' => 'required|array|size:4',
             'options.*.option_key' => 'required|in:A,B,C,D',
@@ -441,6 +480,9 @@ class AdminQuestionWebController extends Controller
                 'integration_explanation' => $validated['integration_explanation'],
                 'application_explanation' => $validated['application_explanation'],
                 'memory_peg' => $validated['memory_peg'] ?? null,
+                'is_past_year' => $validated['is_past_year'] ?? false,
+                'past_year' => $validated['past_year'] ?? null,
+                'is_high_yield' => $validated['is_high_yield'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 

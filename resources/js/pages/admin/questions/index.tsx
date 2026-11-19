@@ -39,6 +39,9 @@ interface QuestionItem {
     stem: string;
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     correct_option: 'A' | 'B' | 'C' | 'D';
+    is_past_year?: boolean;
+    past_year?: string | null;
+    is_high_yield?: boolean;
     is_active: boolean;
     created_at: string;
     subject: { id: number; name: string };
@@ -70,11 +73,15 @@ interface QuestionsIndexProps {
         difficulty: string;
         exam: string;
         status: string;
+        past_year?: string;
+        high_yield?: string;
     };
     stats: {
         total: number;
         active: number;
         draft: number;
+        past_year?: number;
+        high_yield?: number;
     };
 }
 
@@ -91,6 +98,8 @@ export default function QuestionsIndex({
     const [difficulty, setDifficulty] = useState(filters.difficulty || 'ALL');
     const [exam, setExam] = useState(filters.exam || 'ALL');
     const [status, setStatus] = useState(filters.status || 'all');
+    const [pastYear, setPastYear] = useState(filters.past_year || 'all');
+    const [highYield, setHighYield] = useState(filters.high_yield || 'all');
 
     // Quick Preview Modal
     const [previewQuestion, setPreviewQuestion] = useState<QuestionItem | null>(
@@ -108,6 +117,8 @@ export default function QuestionsIndex({
         if (difficulty !== 'ALL') query.difficulty = difficulty;
         if (exam !== 'ALL') query.exam = exam;
         if (status !== 'all') query.status = status;
+        if (pastYear !== 'all') query.past_year = pastYear;
+        if (highYield !== 'all') query.high_yield = highYield;
 
         router.get('/admin/questions', query, { preserveState: true });
     };
@@ -119,6 +130,8 @@ export default function QuestionsIndex({
         setDifficulty('ALL');
         setExam('ALL');
         setStatus('all');
+        setPastYear('all');
+        setHighYield('all');
         router.get('/admin/questions');
     };
 
@@ -213,6 +226,54 @@ export default function QuestionsIndex({
                                 className="h-5 px-1.5 font-mono text-[10px]"
                             >
                                 {stats.draft}
+                            </Badge>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                const nextVal = pastYear === 'yes' ? 'all' : 'yes';
+                                setPastYear(nextVal);
+                                router.get('/admin/questions', {
+                                    ...filters,
+                                    past_year: nextVal,
+                                });
+                            }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                pastYear === 'yes'
+                                    ? 'border-amber-600 bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200'
+                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                            }`}
+                        >
+                            <span>Past Year (PYQ)</span>
+                            <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 font-mono text-[10px]"
+                            >
+                                {stats.past_year ?? 0}
+                            </Badge>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                const nextVal = highYield === 'yes' ? 'all' : 'yes';
+                                setHighYield(nextVal);
+                                router.get('/admin/questions', {
+                                    ...filters,
+                                    high_yield: nextVal,
+                                });
+                            }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                highYield === 'yes'
+                                    ? 'border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-200'
+                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                            }`}
+                        >
+                            <span>High-Yield (HYQ)</span>
+                            <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 font-mono text-[10px]"
+                            >
+                                {stats.high_yield ?? 0}
                             </Badge>
                         </button>
                     </div>
@@ -339,6 +400,32 @@ export default function QuestionsIndex({
                                 )}
                             </select>
                         </div>
+
+                        {/* Past Year Filter */}
+                        <div>
+                            <select
+                                value={pastYear}
+                                onChange={(e) => setPastYear(e.target.value)}
+                                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
+                            >
+                                <option value="all">Past Year: All</option>
+                                <option value="yes">PYQ Only</option>
+                                <option value="no">Non-PYQ</option>
+                            </select>
+                        </div>
+
+                        {/* High-Yield Filter */}
+                        <div>
+                            <select
+                                value={highYield}
+                                onChange={(e) => setHighYield(e.target.value)}
+                                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs font-semibold focus:border-[#0066FF] focus:outline-none"
+                            >
+                                <option value="all">High-Yield: All</option>
+                                <option value="yes">High-Yield Only</option>
+                                <option value="no">Standard Only</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="border-border/60 flex items-center justify-between border-t pt-3">
@@ -424,7 +511,19 @@ export default function QuestionsIndex({
                                             className="hover:bg-muted/20 transition-colors"
                                         >
                                             <td className="px-4 py-3.5 font-mono font-bold text-sky-600 dark:text-sky-400">
-                                                {q.code}
+                                                <div>{q.code}</div>
+                                                <div className="flex flex-wrap items-center gap-1 mt-1">
+                                                    {q.is_past_year && (
+                                                        <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50">
+                                                            PYQ {q.past_year ? `'${q.past_year}` : ''}
+                                                        </span>
+                                                    )}
+                                                    {q.is_high_yield && (
+                                                        <span className="inline-flex items-center rounded-md bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50">
+                                                            ★ HY
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             <td className="px-4 py-3.5">

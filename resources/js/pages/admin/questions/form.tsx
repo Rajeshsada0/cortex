@@ -68,6 +68,9 @@ interface QuestionData {
     integration_explanation?: string;
     application_explanation?: string;
     memory_peg?: string | null;
+    is_past_year?: boolean;
+    past_year?: string | null;
+    is_high_yield?: boolean;
     is_active?: boolean;
     options?: Array<{
         option_key: 'A' | 'B' | 'C' | 'D';
@@ -202,9 +205,18 @@ export default function QuestionForm({
     }, [question]);
     const [relevantExams, setRelevantExams] = useState<string[]>(initialExams);
 
-    // Status
+    // Status & Clinical Flags
     const [isActive, setIsActive] = useState<boolean>(
         question?.is_active ?? true,
+    );
+    const [isPastYear, setIsPastYear] = useState<boolean>(
+        question?.is_past_year ?? false,
+    );
+    const [pastYear, setPastYear] = useState<string>(
+        question?.past_year || '',
+    );
+    const [isHighYield, setIsHighYield] = useState<boolean>(
+        question?.is_high_yield ?? false,
     );
 
     const [processing, setProcessing] = useState(false);
@@ -389,6 +401,9 @@ export default function QuestionForm({
             integration_explanation: integrationExplanation,
             application_explanation: applicationExplanation,
             memory_peg: memoryPeg || null,
+            is_past_year: isPastYear,
+            past_year: pastYear || null,
+            is_high_yield: isHighYield,
             is_active: isActive,
             options,
             relevant_exams: relevantExams,
@@ -655,6 +670,58 @@ export default function QuestionForm({
                                     ○ Draft (Hidden)
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Past Year Question (PYQ) Flag */}
+                        <div className="space-y-2 rounded-2xl border border-amber-200/70 bg-amber-50/40 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={isPastYear}
+                                        onChange={(e) => setIsPastYear(e.target.checked)}
+                                        className="size-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                                    />
+                                    <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                        Past Year Question (PYQ)
+                                    </span>
+                                </label>
+                                <Badge className="bg-amber-100 text-amber-800 text-[10px] dark:bg-amber-900/60 dark:text-amber-200">
+                                    Past Paper
+                                </Badge>
+                            </div>
+                            {isPastYear && (
+                                <div className="pl-6">
+                                    <Label className="text-[11px] font-semibold text-muted-foreground mb-1 block">
+                                        Exam Year (e.g. 2024, 2023)
+                                    </Label>
+                                    <input
+                                        type="text"
+                                        value={pastYear}
+                                        onChange={(e) => setPastYear(e.target.value)}
+                                        placeholder="e.g. 2024"
+                                        className="w-full max-w-xs rounded-lg border border-input bg-card px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-amber-500"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* High Yield Question (HYQ) Flag */}
+                        <div className="flex items-center justify-between rounded-2xl border border-rose-200/70 bg-rose-50/40 p-3.5 dark:border-rose-900/40 dark:bg-rose-950/20">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={isHighYield}
+                                    onChange={(e) => setIsHighYield(e.target.checked)}
+                                    className="size-4 rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                                />
+                                <span className="text-xs font-bold text-rose-900 dark:text-rose-200">
+                                    High-Yield Clinical Question (HYQ)
+                                </span>
+                            </label>
+                            <Badge className="bg-rose-100 text-rose-800 text-[10px] dark:bg-rose-900/60 dark:text-rose-200">
+                                High-Yield Pearl
+                            </Badge>
                         </div>
                     </div>
 

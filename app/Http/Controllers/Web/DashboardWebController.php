@@ -172,9 +172,49 @@ class DashboardWebController extends Controller
             'completedSessionsCount' => $completedSessionsCount,
             'avgScorePercent' => $avgScorePercent,
             'totalQuestions' => Cache::remember("pathway_total_q_{$pathway}", 3600, fn () => Question::where('is_active', true)->forExam($pathway)->count()),
+            'pastYearQuestionsCount' => Question::where('is_active', true)->where('is_past_year', true)->count(),
+            'highYieldQuestionsCount' => Question::where('is_active', true)->where('is_high_yield', true)->count(),
             'totalAttempts' => QuestionAttempt::where('user_id', $user->id)
                 ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
                 ->count(),
+            'active_pathways' => Cache::remember('active_exam_pathways_shared', 3600, function () {
+                return \App\Models\ExamPathway::where('is_active', true)
+                    ->orderBy('order_index')
+                    ->orderBy('id')
+                    ->get()
+                    ->map(function ($p) {
+                        $totalQ = $p->total_questions ?: 200;
+                        return [
+                            'id' => $p->id,
+                            'code' => $p->code,
+                            'name' => $p->name,
+                            'full_name' => $p->full_name,
+                            'region' => $p->region,
+                            'total_questions' => $totalQ,
+                            'duration_minutes' => (int) $p->duration_minutes,
+                            'correct_marks' => (float) $p->correct_marks,
+                            'negative_marks' => (float) $p->negative_marks,
+                            'scoring_type' => $p->scoring_type,
+                            'penalty_label' => $p->penalty_label,
+                            'badge_color' => $p->badge_color,
+                            'tag' => match (strtoupper($p->code)) {
+                                'MECEE_PG' => 'National',
+                                'INI_CET' => 'Clinical',
+                                'NEET_PG' => 'National',
+                                'USMLE_STEP1' => 'Licensure',
+                                'USMLE_STEP2CK' => 'Clinical',
+                                'COMBINED' => 'Integrated',
+                                default => $p->region ?: 'Medical',
+                            },
+                            'sub' => $p->negative_marks > 0
+                                ? "+{$p->correct_marks} / -{$p->negative_marks} Scheme • {$totalQ} Questions"
+                                : "Pass / Fail Scheme • {$totalQ} Questions",
+                            'is_active' => true,
+                        ];
+                    })
+                    ->values()
+                    ->toArray();
+            }),
         ];
 
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {

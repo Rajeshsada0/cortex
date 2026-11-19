@@ -55,6 +55,9 @@ class QuestionResource extends JsonResource
             'integration_explanation' => $this->integration_explanation,
             'application_explanation' => $this->application_explanation,
             'memory_peg' => $this->memory_peg,
+            'is_past_year' => (bool) $this->is_past_year,
+            'past_year' => $this->past_year,
+            'is_high_yield' => (bool) $this->is_high_yield,
             'options' => $this->options ? $this->options->sortBy('option_key')->values()->map(fn ($opt) => [
                 'id' => $opt->id,
                 'option_key' => $opt->option_key,

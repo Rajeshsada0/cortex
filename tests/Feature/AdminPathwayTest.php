@@ -112,20 +112,33 @@ class AdminPathwayTest extends TestCase
         $this->assertEquals(190, $pathway->duration_minutes);
     }
 
-    public function test_admin_cannot_delete_system_pathway(): void
+    public function test_admin_can_delete_pathway(): void
     {
         $admin = User::where('email', 'dr.cortex@example.com')->first();
-        $systemPathway = ExamPathway::where('code', 'MECEE_PG')->first();
-        $this->assertTrue($systemPathway->is_system);
+        $pathway = ExamPathway::create([
+            'code' => 'TEST_DEL',
+            'name' => 'Test Deletable',
+            'full_name' => 'Test Deletable Pathway',
+            'region' => 'Nepal',
+            'total_questions' => 100,
+            'duration_minutes' => 120,
+            'correct_marks' => 1.0,
+            'negative_marks' => 0.25,
+            'scoring_type' => 'Negative Marking',
+            'penalty_label' => 'Standard',
+            'is_active' => true,
+            'is_system' => true,
+            'order_index' => 50,
+        ]);
 
-        $response = $this->actingAs($admin)->delete(route('admin.pathways.destroy', $systemPathway));
+        $response = $this->actingAs($admin)->delete(route('admin.pathways.destroy', $pathway));
 
         $response->assertRedirect(route('admin.pathways.index'));
-        $response->assertSessionHas('error');
+        $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('exam_pathways', [
-            'id' => $systemPathway->id,
-            'code' => 'MECEE_PG',
+        $this->assertDatabaseMissing('exam_pathways', [
+            'id' => $pathway->id,
+            'code' => 'TEST_DEL',
         ]);
     }
 
@@ -158,5 +171,32 @@ class AdminPathwayTest extends TestCase
             'id' => $customPathway->id,
             'code' => 'AMC_CAT',
         ]);
+    }
+
+    public function test_api_pathways_returns_only_active_pathways(): void
+    {
+        $inactive = ExamPathway::create([
+            'code' => 'INACTIVE_TEST',
+            'name' => 'Inactive Pathway',
+            'full_name' => 'Inactive Pathway Long Name',
+            'region' => 'Nepal',
+            'total_questions' => 100,
+            'duration_minutes' => 120,
+            'correct_marks' => 1.0,
+            'negative_marks' => 0.25,
+            'scoring_type' => 'Negative Marking',
+            'penalty_label' => 'Standard',
+            'is_active' => false,
+            'is_system' => false,
+            'order_index' => 100,
+        ]);
+
+        $response = $this->getJson(route('api.v1.pathways.index'));
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $codes = collect($response->json('data'))->pluck('code');
+        $this->assertNotContains('INACTIVE_TEST', $codes);
     }
 }

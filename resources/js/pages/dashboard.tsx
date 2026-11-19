@@ -496,26 +496,14 @@ export default function Dashboard({
                     data-purpose="kpi-metrics-row"
                 >
                     {/* Card 1: Daily Target */}
-                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
                                 <Target className="h-4 w-4" />
                             </div>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-foreground"
-                                        aria-label="Daily target info"
-                                    >
-                                        <Info className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    Target: {user.daily_mcq_target || 100} MCQs/day (
-                                    {user.daily_study_hours || 6}h planned)
-                                </TooltipContent>
-                            </Tooltip>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                Daily Goal
+                            </span>
                         </div>
                         <div className="mt-3">
                             <div className="flex items-baseline gap-1 font-mono">
@@ -533,45 +521,44 @@ export default function Dashboard({
                                 />
                             </div>
                         </div>
-                        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span>Daily Goal</span>
+                        <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                            <span className="text-muted-foreground">{dailyProgressPct}% done</span>
                             <span className="font-semibold text-cyan-600 dark:text-cyan-400">
-                                {dailyProgressPct}%
+                                Target →
                             </span>
                         </div>
                     </div>
 
                     {/* Card 2: Spaced Repetition */}
-                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                                 <Repeat className="h-4 w-4" />
                             </div>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-foreground"
-                                        aria-label="Spaced repetition info"
-                                    >
-                                        <Info className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    Overdue cards ready for memory consolidation
-                                </TooltipContent>
-                            </Tooltip>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                Due Review
+                            </span>
                         </div>
                         <div className="mt-3">
-                            <div className="font-mono text-2xl font-bold text-amber-600 dark:text-amber-400">
-                                {dueCardsCount}
+                            <div className="flex items-baseline gap-1 font-mono">
+                                <span className="text-2xl font-bold text-foreground">
+                                    {dueCardsCount}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    cards
+                                </span>
                             </div>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                Due for Review
-                            </p>
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-1.5 rounded-full bg-amber-500 transition-all"
+                                    style={{ width: dueCardsCount > 0 ? '35%' : '100%' }}
+                                />
+                            </div>
                         </div>
-                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
-                            <span className="text-muted-foreground">Flashcards</span>
+                        <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                            <span className="text-muted-foreground">
+                                {dueCardsCount === 0 ? 'All caught up' : 'Flashcards'}
+                            </span>
                             <Link
                                 href="/flashcards"
                                 className="inline-flex items-center font-semibold text-amber-600 hover:underline dark:text-amber-400"
@@ -582,35 +569,32 @@ export default function Dashboard({
                     </div>
 
                     {/* Card 3: Saved Pearls */}
-                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400">
                                 <Bookmark className="h-4 w-4" />
                             </div>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-foreground"
-                                        aria-label="Notebook info"
-                                    >
-                                        <Info className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    Bookmarked clinical vignettes & high-yield pearls
-                                </TooltipContent>
-                            </Tooltip>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                Saved Pearls
+                            </span>
                         </div>
                         <div className="mt-3">
-                            <div className="font-mono text-2xl font-bold text-foreground">
-                                {bookmarkedCount}
+                            <div className="flex items-baseline gap-1 font-mono">
+                                <span className="text-2xl font-bold text-foreground">
+                                    {bookmarkedCount}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    notes
+                                </span>
                             </div>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                Saved Pearls
-                            </p>
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-1.5 rounded-full bg-purple-500 transition-all"
+                                    style={{ width: (bookmarkedCount ?? 0) > 0 ? '50%' : '0%' }}
+                                />
+                            </div>
                         </div>
-                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                        <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[11px]">
                             <span className="text-muted-foreground">Notebook</span>
                             <Link
                                 href="/bookmarks"
@@ -622,25 +606,14 @@ export default function Dashboard({
                     </div>
 
                     {/* Card 4: Q-Bank Progress */}
-                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                    <div className="flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 <CheckCircle2 className="h-4 w-4" />
                             </div>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-foreground"
-                                        aria-label="Q-Bank progress info"
-                                    >
-                                        <Info className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    {totalAttempts} attempted out of {totalQuestions} active questions
-                                </TooltipContent>
-                            </Tooltip>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                Q-Bank Solved
+                            </span>
                         </div>
                         <div className="mt-3">
                             <div className="flex items-baseline gap-1 font-mono">
@@ -658,44 +631,44 @@ export default function Dashboard({
                                 />
                             </div>
                         </div>
-                        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span>Q-Bank Solved</span>
-                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                {overallQBankPct}%
-                            </span>
+                        <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                            <span className="text-muted-foreground">{overallQBankPct}% solved</span>
+                            <Link
+                                href="/qbank/runner"
+                                className="inline-flex items-center font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+                            >
+                                Solve →
+                            </Link>
                         </div>
                     </div>
 
                     {/* Card 5: Mock Exam Hall */}
-                    <div className="col-span-2 sm:col-span-1 flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700">
+                    <div className="col-span-2 sm:col-span-1 flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition hover:border-slate-300 dark:hover:border-slate-700 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                                 <Award className="h-4 w-4" />
                             </div>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-foreground"
-                                        aria-label="Mock exams info"
-                                    >
-                                        <Info className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    Full-length timed mock exams taken
-                                </TooltipContent>
-                            </Tooltip>
+                            <span className="text-xs font-semibold text-muted-foreground">
+                                Mock Hall
+                            </span>
                         </div>
                         <div className="mt-3">
-                            <div className="font-mono text-2xl font-bold text-foreground">
-                                {grandMocksCount}
+                            <div className="flex items-baseline gap-1 font-mono">
+                                <span className="text-2xl font-bold text-foreground">
+                                    {grandMocksCount}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    exams
+                                </span>
                             </div>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                Grand Mocks Taken
-                            </p>
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-1.5 rounded-full bg-indigo-500 transition-all"
+                                    style={{ width: (grandMocksCount ?? 0) > 0 ? '60%' : '0%' }}
+                                />
+                            </div>
                         </div>
-                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px]">
+                        <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-[11px]">
                             <span className="text-muted-foreground">
                                 {completedSessionsCount} Sessions
                             </span>

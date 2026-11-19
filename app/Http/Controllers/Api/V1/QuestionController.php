@@ -25,7 +25,9 @@ class QuestionController extends Controller
             ->inSubject($request->query('subject_id'))
             ->inTopic($request->query('topic_id'))
             ->difficulty($request->query('difficulty'))
-            ->status($user, $request->query('status'));
+            ->status($user, $request->query('status'))
+            ->when($request->boolean('is_past_year') || $request->query('filter') === 'past_year', fn ($q) => $q->where('is_past_year', true))
+            ->when($request->boolean('is_high_yield') || $request->query('filter') === 'high_yield', fn ($q) => $q->where('is_high_yield', true));
 
         $perPage = min(50, max(5, (int) $request->query('per_page', 15)));
         $questions = $query->paginate($perPage);

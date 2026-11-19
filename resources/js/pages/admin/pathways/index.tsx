@@ -170,13 +170,6 @@ export default function PathwaysIndex({
     // Handle opening delete modal
     const handleOpenDelete = (p: PathwayInfo) => {
         setActivePathway(p);
-        setIsDeleteOpen(false);
-        if (p.isSystem) {
-            toast.error('Core System Pathway', {
-                description: 'Core default blueprints cannot be deleted to preserve platform baseline consistency.',
-            });
-            return;
-        }
         setIsDeleteOpen(true);
     };
 
@@ -372,18 +365,16 @@ export default function PathwaysIndex({
                                                 <span className="sr-only">Edit</span>
                                             </Button>
 
-                                            {!p.isSystem && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleOpenDelete(p)}
-                                                    className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
-                                                    title={`Delete ${p.name}`}
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                    <span className="sr-only">Delete</span>
-                                                </Button>
-                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleOpenDelete(p)}
+                                                className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                                                title={`Delete ${p.name}`}
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                                <span className="sr-only">Delete</span>
+                                            </Button>
                                         </div>
                                     </div>
 

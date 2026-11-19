@@ -19,6 +19,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout'])->name('api.v1.auth.logout');
 
     // Exam Configurations & Pathways
+    Route::get('/pathways', [ExamConfigController::class, 'index'])->name('api.v1.pathways.index');
+    Route::get('/exam-configs', [ExamConfigController::class, 'index'])->name('api.v1.exam-configs.index');
     Route::get('/exam-configs/{pathway}', [ExamConfigController::class, 'show'])->name('api.v1.exam-configs.show');
 
     // Clinical Dashboard Unified Data Feed
@@ -49,7 +51,12 @@ Route::prefix('v1')->group(function () {
     Route::post('/test-sessions/{id}/submit', [TestSessionController::class, 'submit'])->name('api.v1.test-sessions.submit');
 
     // Spaced Repetition (SM-2 / FSRS Dual-Metric) & Dynamic Flashcards
-    Route::get('/flashcards', [SpacedRepetitionController::class, 'flashcards'])->name('api.v1.flashcards.index');
+    Route::get('/flashcards', [\App\Http\Controllers\Web\FlashcardWebController::class, 'getCards'])->name('api.v1.flashcards.index');
+    Route::get('/flashcards/decks', [\App\Http\Controllers\Web\FlashcardWebController::class, 'getDecks'])->name('api.v1.flashcards.decks');
+    Route::post('/flashcards/decks', [\App\Http\Controllers\Web\FlashcardWebController::class, 'storeDeck'])->name('api.v1.flashcards.decks.store');
+    Route::delete('/flashcards/decks/{id}', [\App\Http\Controllers\Web\FlashcardWebController::class, 'deleteDeck'])->name('api.v1.flashcards.decks.destroy');
+    Route::get('/flashcards/cards', [\App\Http\Controllers\Web\FlashcardWebController::class, 'getCards'])->name('api.v1.flashcards.cards');
+    Route::post('/flashcards/cards', [\App\Http\Controllers\Web\FlashcardWebController::class, 'storeCard'])->name('api.v1.flashcards.cards.store');
     Route::get('/spaced-repetition/due', [SpacedRepetitionController::class, 'due'])->name('api.v1.spaced-repetition.due');
     Route::post('/spaced-repetition/review', [SpacedRepetitionController::class, 'review'])->name('api.v1.spaced-repetition.review');
 

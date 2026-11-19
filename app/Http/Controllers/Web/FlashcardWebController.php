@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Flashcard;
+use App\Models\FlashcardDeck;
 use App\Models\Question;
 use App\Models\SpacedRepetitionQueue;
 use App\Models\Subject;
@@ -278,6 +280,23 @@ class FlashcardWebController extends Controller
             ],
         ];
 
+        // Query user's real custom decks from database
+        $customDecks = FlashcardDeck::with(['subject:id,name'])
+            ->when($user, fn ($q) => $q->where(fn ($sq) => $sq->where('user_id', $user->id)->orWhere('is_public', true)))
+            ->withCount('cards')
+            ->latest()
+            ->get()
+            ->map(fn ($d) => [
+                'id' => (string) $d->id,
+                'title' => $d->title,
+                'cardsCount' => $d->cards_count ?: $d->cards_count,
+                'type' => $d->category === 'anki' ? 'anki' : 'custom',
+                'lastReviewed' => $d->updated_at ? $d->updated_at->diffForHumans() : 'Recently',
+                'subject' => $d->subject?->name ?? 'General',
+            ])
+            ->values()
+            ->toArray();
+
         // Dynamically query high-yield flashcards from the database
         $dynamicFlashcards = Question::where('is_active', true)
             ->with(['subject', 'topic', 'options'])
@@ -288,11 +307,15 @@ class FlashcardWebController extends Controller
             ->values()
             ->toArray();
 
+        $subjects = Subject::orderBy('order_index')->get(['id', 'name', 'slug']);
+
         return Inertia::render('flashcards/index', [
             'user' => $user,
             'dueCount' => $dueCount,
             'sections' => $sections,
             'themes' => $themes,
+            'initialDecks' => $customDecks,
+            'subjects' => $subjects,
             'sampleCards' => $dynamicFlashcards,
         ]);
     }
@@ -323,24 +346,198 @@ class FlashcardWebController extends Controller
             'back' => implode("\n\n", array_filter($explanationParts)),
             'pearl' => $q->memory_peg ?? $q->learning_objective ?? '',
             'difficulty' => $q->difficulty ?? 'MEDIUM',
+            'is_high_yield' => (bool) $q->is_high_yield,
+            'is_past_year' => (bool) $q->is_past_year,
+            'past_year' => $q->past_year,
         ];
     }
 
     /**
-     * Dynamic card retrieval for study sessions by subject, theme, or due queue
+     * Format a Flashcard model into standard Flashcard array
+     */
+    public static function formatFlashcardModelToFlashcard(Flashcard $fc): array
+    {
+        return [
+            'id' => (string) $fc->id,
+            'subject' => $fc->subject?->name ?? 'Custom Deck',
+            'topic' => $fc->topic?->name ?? 'Clinical Pearl',
+            'front' => $fc->front,
+            'back' => $fc->back,
+            'pearl' => $fc->pearl ?? '',
+            'difficulty' => $fc->difficulty ?? 'MEDIUM',
+            'is_high_yield' => (bool) $fc->is_high_yield,
+            'is_past_year' => (bool) $fc->is_past_year,
+            'past_year' => $fc->past_year,
+        ];
+    }
+
+    /**
+     * Dynamic deck retrieval
+     */
+    public function getDecks(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $decks = FlashcardDeck::with('subject:id,name')
+            ->when($user, fn ($q) => $q->where(fn ($sq) => $sq->where('user_id', $user->id)->orWhere('is_public', true)))
+            ->withCount('cards')
+            ->latest()
+            ->get()
+            ->map(fn ($d) => [
+                'id' => (string) $d->id,
+                'title' => $d->title,
+                'cardsCount' => $d->cards_count ?: $d->cards_count,
+                'type' => $d->category === 'anki' ? 'anki' : 'custom',
+                'lastReviewed' => $d->updated_at ? $d->updated_at->diffForHumans() : 'Recently',
+                'subject' => $d->subject?->name ?? 'General',
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'decks' => $decks,
+        ]);
+    }
+
+    /**
+     * Create a custom deck
+     */
+    public function storeDeck(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $validated = $request->validate([
+            'title' => 'required|string|max:150',
+            'description' => 'nullable|string',
+            'subject_id' => 'nullable|exists:subjects,id',
+            'category' => 'nullable|string|max:50',
+        ]);
+
+        $deck = FlashcardDeck::create([
+            'user_id' => $user?->id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'subject_id' => $validated['subject_id'] ?? null,
+            'category' => $validated['category'] ?? 'custom',
+            'cards_count' => 0,
+            'is_public' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'deck' => [
+                'id' => (string) $deck->id,
+                'title' => $deck->title,
+                'cardsCount' => 0,
+                'type' => $deck->category === 'anki' ? 'anki' : 'custom',
+                'lastReviewed' => 'Just now',
+            ],
+        ]);
+    }
+
+    /**
+     * Delete a custom deck
+     */
+    public function deleteDeck(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $deck = FlashcardDeck::where('id', $id)
+            ->when($user, fn ($q) => $q->where('user_id', $user->id))
+            ->first();
+
+        if ($deck) {
+            $deck->cards()->delete();
+            $deck->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Create a custom flashcard
+     */
+    public function storeCard(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $validated = $request->validate([
+            'front' => 'required|string',
+            'back' => 'required|string',
+            'pearl' => 'nullable|string',
+            'deck_id' => 'nullable|exists:flashcard_decks,id',
+            'subject_id' => 'nullable|exists:subjects,id',
+            'topic_id' => 'nullable|exists:topics,id',
+            'difficulty' => 'nullable|in:EASY,MEDIUM,HARD',
+            'is_high_yield' => 'nullable|boolean',
+            'is_past_year' => 'nullable|boolean',
+            'past_year' => 'nullable|string|max:30',
+        ]);
+
+        $card = Flashcard::create([
+            'user_id' => $user?->id,
+            'deck_id' => $validated['deck_id'] ?? null,
+            'subject_id' => $validated['subject_id'] ?? null,
+            'topic_id' => $validated['topic_id'] ?? null,
+            'front' => $validated['front'],
+            'back' => $validated['back'],
+            'pearl' => $validated['pearl'] ?? null,
+            'difficulty' => $validated['difficulty'] ?? 'MEDIUM',
+            'is_high_yield' => $validated['is_high_yield'] ?? false,
+            'is_past_year' => $validated['is_past_year'] ?? false,
+            'past_year' => $validated['past_year'] ?? null,
+        ]);
+
+        if (! empty($validated['deck_id'])) {
+            FlashcardDeck::where('id', $validated['deck_id'])->increment('cards_count');
+        }
+
+        return response()->json([
+            'success' => true,
+            'card' => self::formatFlashcardModelToFlashcard($card),
+        ]);
+    }
+
+    /**
+     * Dynamic card retrieval for study sessions by subject, theme, deck, or due queue
      */
     public function getCards(Request $request): JsonResponse
     {
         $subject = $request->query('subject');
         $theme = $request->query('theme');
+        $deckId = $request->query('deck_id') ?? $request->query('deck');
         $source = $request->query('source');
+        $isHighYield = $request->boolean('is_high_yield') || $request->query('filter') === 'high_yield';
+        $isPastYear = $request->boolean('is_past_year') || $request->query('filter') === 'past_year';
         $limit = min(50, max(1, (int) $request->query('limit', 15)));
 
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
 
+        // 1. If specific deck_id is requested, pull directly from Flashcard table
+        if ($deckId) {
+            $customCards = Flashcard::where('deck_id', $deckId)
+                ->with(['subject', 'topic'])
+                ->latest()
+                ->take($limit)
+                ->get()
+                ->map(fn ($fc) => self::formatFlashcardModelToFlashcard($fc));
+
+            if ($customCards->isNotEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'count' => $customCards->count(),
+                    'cards' => $customCards,
+                ]);
+            }
+        }
+
+        // 2. Query questions table
         $query = Question::query()
             ->where('is_active', true)
             ->with(['subject', 'topic', 'options']);
+
+        if ($isHighYield) {
+            $query->where('is_high_yield', true);
+        }
+
+        if ($isPastYear) {
+            $query->where('is_past_year', true);
+        }
 
         if ($source === 'due' && $user) {
             $now = Carbon::now();
@@ -367,7 +564,9 @@ class FlashcardWebController extends Controller
         if ($theme) {
             $themeLower = strtolower($theme);
             if (str_contains($themeLower, 'first-aid') || str_contains($themeLower, 'hy') || str_contains($themeLower, 'high-yield')) {
-                $query->whereNotNull('memory_peg');
+                $query->where(fn ($q) => $q->whereNotNull('memory_peg')->orWhere('is_high_yield', true));
+            } elseif (str_contains($themeLower, 'past-year') || str_contains($themeLower, 'pyq')) {
+                $query->where('is_past_year', true);
             } elseif (str_contains($themeLower, 'bacteriology') || str_contains($themeLower, 'virology')) {
                 $query->whereHas('subject', fn ($q) => $q->where('name', 'like', '%Microbiology%'));
             } elseif (str_contains($themeLower, 'biochem')) {
@@ -376,6 +575,18 @@ class FlashcardWebController extends Controller
         }
 
         $questions = $query->inRandomOrder()->take($limit)->get();
+
+        if ($questions->isEmpty()) {
+            $fallbackQuery = Question::where('is_active', true)
+                ->with(['subject', 'topic', 'options']);
+            if ($isHighYield) {
+                $fallbackQuery->where('is_high_yield', true);
+            }
+            if ($isPastYear) {
+                $fallbackQuery->where('is_past_year', true);
+            }
+            $questions = $fallbackQuery->inRandomOrder()->take($limit)->get();
+        }
 
         if ($questions->isEmpty()) {
             $questions = Question::where('is_active', true)

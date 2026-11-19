@@ -15,6 +15,7 @@ import {
     AlertTriangle,
     Compass,
     Check,
+    Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -82,12 +83,20 @@ export default function QuestionsImport({
         file: File | null;
         status: 'active' | 'draft';
         subject_id: string;
+        topic_id: string;
+        is_past_year: boolean;
+        past_year: string;
+        is_high_yield: boolean;
         pathways: string[];
         pathway_mode: 'fallback' | 'override';
     }>({
         file: null,
         status: 'active',
         subject_id: '',
+        topic_id: '',
+        is_past_year: false,
+        past_year: '',
+        is_high_yield: false,
         pathways: initialExams,
         pathway_mode: 'fallback',
     });
@@ -632,12 +641,13 @@ export default function QuestionsImport({
                                     </Label>
                                     <select
                                         value={data.subject_id}
-                                        onChange={(e) =>
-                                            setData(
-                                                'subject_id',
-                                                e.target.value,
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            setData((prev) => ({
+                                                ...prev,
+                                                subject_id: e.target.value,
+                                                topic_id: '',
+                                            }));
+                                        }}
                                         className="border-input bg-card text-foreground w-full rounded-xl border px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-[#0066FF] focus:outline-hidden"
                                     >
                                         <option value="">
@@ -653,6 +663,103 @@ export default function QuestionsImport({
                                         Used if a row does not specify an
                                         explicit subject name or ID.
                                     </p>
+                                </div>
+
+                                {/* Default Topic Fallback (Visible when subject chosen) */}
+                                {data.subject_id && (
+                                    <div>
+                                        <Label className="text-foreground mb-1.5 block text-xs font-bold">
+                                            Default Topic (Optional Fallback)
+                                        </Label>
+                                        <select
+                                            value={data.topic_id}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'topic_id',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="border-input bg-card text-foreground w-full rounded-xl border px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-[#0066FF] focus:outline-hidden"
+                                        >
+                                            <option value="">
+                                                Auto-detect from file row (creates topic if new)
+                                            </option>
+                                            {subjects
+                                                .find((s) => String(s.id) === String(data.subject_id))
+                                                ?.topics?.map((top) => (
+                                                    <option key={top.id} value={top.id}>
+                                                        {top.name}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                        <p className="text-muted-foreground mt-1 text-[10px]">
+                                            Any topic in your uploaded file is automatically created and inserted into the subject curriculum!
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Past Year Question & High Yield Configuration */}
+                                <div className="col-span-full rounded-2xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                            <Sparkles className="size-3.5 text-[#0066FF]" />
+                                            Clinical Tagging Features
+                                        </h4>
+                                        <span className="text-[10px] text-muted-foreground font-medium">Batch defaults for this upload</span>
+                                    </div>
+
+                                    {/* Past Year Question Checkbox */}
+                                    <div className="flex flex-col gap-2 rounded-xl border border-amber-200/60 bg-amber-50/40 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+                                        <div className="flex items-center justify-between">
+                                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.is_past_year}
+                                                    onChange={(e) => setData('is_past_year', e.target.checked)}
+                                                    className="size-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                                                />
+                                                <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                                    Mark as Past Year Questions (PYQs)
+                                                </span>
+                                            </label>
+                                            <Badge className="bg-amber-100 text-amber-800 text-[10px] dark:bg-amber-900/60 dark:text-amber-200">
+                                                Past Exam Papers
+                                            </Badge>
+                                        </div>
+
+                                        {data.is_past_year && (
+                                            <div className="pl-6 pt-1">
+                                                <Label className="text-[11px] font-semibold text-muted-foreground mb-1 block">
+                                                    Exam Year (Optional, e.g. 2024, 2023)
+                                                </Label>
+                                                <input
+                                                    type="text"
+                                                    value={data.past_year}
+                                                    onChange={(e) => setData('past_year', e.target.value)}
+                                                    placeholder="e.g. 2024"
+                                                    className="w-full max-w-xs rounded-lg border border-input bg-card px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-amber-500"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* High Yield Question Checkbox */}
+                                    <div className="flex items-center justify-between rounded-xl border border-rose-200/60 bg-rose-50/40 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.is_high_yield}
+                                                onChange={(e) => setData('is_high_yield', e.target.checked)}
+                                                className="size-4 rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                                            />
+                                            <span className="text-xs font-bold text-rose-900 dark:text-rose-200">
+                                                Mark as High-Yield Questions (HYQs)
+                                            </span>
+                                        </label>
+                                        <Badge className="bg-rose-100 text-rose-800 text-[10px] dark:bg-rose-900/60 dark:text-rose-200">
+                                            High-Yield Pearls
+                                        </Badge>
+                                    </div>
                                 </div>
                             </div>
 
