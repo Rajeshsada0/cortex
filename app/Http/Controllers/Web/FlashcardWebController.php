@@ -351,21 +351,80 @@ class FlashcardWebController extends Controller
     }
 
     /**
+     * Clean answer text for flashcard display (strip leading option keys like "D. ", "A) ", "(B) ", "Key: D")
+     */
+    public static function cleanAnswerText(?string $text): string
+    {
+        if (! $text) {
+            return '';
+        }
+        $text = trim($text);
+        // Strip leading option letters like "A. ", "B) ", "(C) ", "D - ", "Key: D", "Key: A. "
+        $text = preg_replace('/^(Key:\s*)?(\([A-Ea-e]\)|[A-Ea-e][\.\)\:\-]\s*)/i', '', $text);
+
+        return trim($text);
+    }
+
+    /**
+     * Clean explanation text by removing redundant exam option references (e.g. "Ans. is 'd' i.e.,")
+     */
+    public static function cleanExplanationText(?string $explanation, string $answerTitle = ''): string
+    {
+        if (! $explanation) {
+            return '';
+        }
+        $text = trim($explanation);
+
+        $patterns = [
+            '/^Ans(\.|wer)?\s*(is|:)?\s*[\'"`\(\[]?[a-eA-E][\'"`\)\]]?\s*(i\.e\.?,?|:|\-)?\s*/iu',
+            '/^[a-eA-E]\s+i\.e\.?,?\s*/iu',
+            '/^Option\s+[\'"`\(\[]?[a-eA-E][\'"`\)\]]?\s*(is\s+(the\s+)?correct(\s+answer)?)?[\.\:\-]?\s*/iu',
+            '/^Correct\s+answer\s+(is|:)\s*[\'"`\(\[]?[a-eA-E][\'"`\)\]]?[\.\:\-]?\s*/iu',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $text = preg_replace($pattern, '', $text);
+        }
+
+        $text = trim($text);
+
+        // If explanation starts by duplicating the answer title, avoid stuttering
+        if ($answerTitle && str_starts_with(strtolower($text), strtolower($answerTitle))) {
+            $rest = trim(substr($text, strlen($answerTitle)));
+            $rest = preg_replace('/^[\s\.\,\:\;\-]+/', '', $rest);
+            if ($rest) {
+                $text = $rest;
+            }
+        }
+
+        return trim($text);
+    }
+
+    /**
      * Format a Question model into standard Flashcard array
      */
     public static function formatQuestionToFlashcard(Question $q): array
     {
         $correctOption = $q->options->where('option_key', $q->correct_option)->first();
-        $correctText = $correctOption ? "{$q->correct_option}. {$correctOption->option_text}" : "Key: {$q->correct_option}";
+        $rawOptionText = $correctOption?->option_text;
+        $answerTitle = self::cleanAnswerText($rawOptionText);
+
+        $rawExplanation = $q->foundation_explanation
+            ?: ($q->integration_explanation ?: ($q->learning_objective ?: ''));
+        $cleanedExplanation = self::cleanExplanationText($rawExplanation, $answerTitle);
 
         $explanationParts = [];
-        $explanationParts[] = $correctText;
-        if ($q->foundation_explanation) {
-            $explanationParts[] = $q->foundation_explanation;
-        } elseif ($q->integration_explanation) {
-            $explanationParts[] = $q->integration_explanation;
-        } elseif ($q->learning_objective) {
-            $explanationParts[] = $q->learning_objective;
+        if ($answerTitle !== '') {
+            $explanationParts[] = $answerTitle;
+        }
+
+        if ($cleanedExplanation !== '' && strcasecmp($cleanedExplanation, $answerTitle) !== 0) {
+            $explanationParts[] = $cleanedExplanation;
+        }
+
+        // Fallback: If both answer and explanation ended up empty, fallback to explanation or option
+        if (empty($explanationParts)) {
+            $explanationParts[] = $rawOptionText ?: ($rawExplanation ?: 'Clinical review key');
         }
 
         return [

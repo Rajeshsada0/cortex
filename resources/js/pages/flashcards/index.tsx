@@ -107,6 +107,51 @@ interface FlashcardsPageProps {
     totalQBankCount?: number;
 }
 
+export function cleanFlashcardAnswerText(raw?: string): string {
+    if (!raw) return '';
+    const lines = raw.split('\n');
+    const cleanedParts: string[] = [];
+    let firstLineAnswer: string | null = null;
+
+    for (const line of lines) {
+        let trimmed = line.trim();
+        if (!trimmed) continue;
+
+        // Remove "Key: D" or "Key: A"
+        trimmed = trimmed.replace(/^Key:\s*[A-Ea-e][\.\:\-]?\s*/i, '');
+        // Remove leading option letter e.g. "D. ", "A) ", "(B) ", "C - "
+        trimmed = trimmed.replace(/^(\([A-Ea-e]\)|[A-Ea-e][\.\)\:\-]\s*)/i, '');
+        // Remove "Ans. is 'd' i.e., " or "Ans is `d` i.e.," or "Ans: D" or "B i.e. "
+        trimmed = trimmed.replace(/^Ans(\.|wer)?\s*(is|:)?\s*['"`\(\[]?[a-eA-E]['"`\)\]]?\s*(i\.e\.?,?|:|\-)?\s*/iu, '');
+        trimmed = trimmed.replace(/^[a-eA-E]\s+i\.e\.?,?\s*/iu, '');
+        trimmed = trimmed.replace(/^Option\s+['"`\(\[]?[a-eA-E]['"`\)\]]?\s*(is\s+(the\s+)?correct(\s+answer)?)?[\.\:\-]?\s*/iu, '');
+        trimmed = trimmed.replace(/^Correct\s+answer\s+(is|:)\s*['"`\(\[]?[a-eA-E]['"`\)\]]?[\.\:\-]?\s*/iu, '');
+        trimmed = trimmed.trim();
+
+        if (!trimmed) continue;
+
+        if (firstLineAnswer === null) {
+            firstLineAnswer = trimmed;
+            cleanedParts.push(trimmed);
+        } else {
+            // Deduplicate if identical to first line answer
+            if (trimmed.toLowerCase() === firstLineAnswer.toLowerCase()) {
+                continue;
+            }
+            if (trimmed.toLowerCase().startsWith(firstLineAnswer.toLowerCase())) {
+                const rest = trimmed.slice(firstLineAnswer.length).replace(/^[\s\.\,\:\;\-]+/, '').trim();
+                if (rest) {
+                    cleanedParts.push(rest);
+                }
+                continue;
+            }
+            cleanedParts.push(trimmed);
+        }
+    }
+
+    return cleanedParts.length > 0 ? cleanedParts.join('\n\n') : raw.trim();
+}
+
 export default function FlashcardsIndex({
     user,
     dueCount: initialDueCount = 14,
@@ -1491,8 +1536,8 @@ export default function FlashcardsIndex({
                                             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
                                                 Answer & Explanation:
                                             </span>
-                                            <p className="text-xs text-neutral-700 leading-relaxed line-clamp-3 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100">
-                                                {card.back}
+                                            <p className="text-xs text-neutral-700 leading-relaxed line-clamp-3 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100 whitespace-pre-line">
+                                                {cleanFlashcardAnswerText(card.back)}
                                             </p>
                                         </div>
 
@@ -1636,7 +1681,7 @@ export default function FlashcardsIndex({
                                                     <span>Clinical Answer & Explanation</span>
                                                 </div>
                                                 <p className="text-sm text-neutral-800 leading-relaxed whitespace-pre-line">
-                                                    {studyCards[currentCardIndex]?.back}
+                                                    {cleanFlashcardAnswerText(studyCards[currentCardIndex]?.back)}
                                                 </p>
                                                 {studyCards[currentCardIndex]?.pearl && (
                                                     <div className="mt-3 p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 leading-relaxed">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\SpacedRepetition\SpacedRepetitionService;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Web\FlashcardWebController;
 use App\Http\Resources\V1\QuestionResource;
 use App\Models\Question;
 use App\Models\SpacedRepetitionQueue;
@@ -130,30 +131,7 @@ class SpacedRepetitionController extends Controller
                 ->get();
         }
 
-        $cards = $questions->map(function ($q) {
-            $correctOption = $q->options->where('option_key', $q->correct_option)->first();
-            $correctText = $correctOption ? "{$q->correct_option}. {$correctOption->option_text}" : "Key: {$q->correct_option}";
-
-            $explanationParts = [];
-            $explanationParts[] = $correctText;
-            if ($q->foundation_explanation) {
-                $explanationParts[] = $q->foundation_explanation;
-            } elseif ($q->integration_explanation) {
-                $explanationParts[] = $q->integration_explanation;
-            } elseif ($q->learning_objective) {
-                $explanationParts[] = $q->learning_objective;
-            }
-
-            return [
-                'id' => (string) $q->id,
-                'subject' => $q->subject?->name ?? 'General Medicine',
-                'topic' => $q->topic?->name ?? 'High Yield Pearls',
-                'front' => $q->stem,
-                'back' => implode("\n\n", array_filter($explanationParts)),
-                'pearl' => $q->memory_peg ?? $q->learning_objective ?? '',
-                'difficulty' => $q->difficulty ?? 'MEDIUM',
-            ];
-        });
+        $cards = $questions->map(fn ($q) => FlashcardWebController::formatQuestionToFlashcard($q));
 
         return response()->json([
             'success' => true,
