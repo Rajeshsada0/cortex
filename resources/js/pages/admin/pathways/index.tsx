@@ -214,14 +214,20 @@ export default function PathwaysIndex({
 
         router.delete(`/admin/pathways/${activePathway.id}`, {
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 setIsDeleteOpen(false);
                 setIsDeleting(false);
-                toast.success(`Exam Pathway '${activePathway.name}' deleted.`);
+                const flash = (page.props as { flash?: { error?: string; success?: string } })?.flash;
+                if (flash?.error) {
+                    toast.error(flash.error);
+                } else {
+                    toast.success(flash?.success || `Exam Pathway '${activePathway.name}' deleted.`);
+                }
             },
-            onError: () => {
+            onError: (errors) => {
                 setIsDeleting(false);
-                toast.error('Failed to delete pathway.');
+                const first = Object.values(errors)[0] as string | undefined;
+                toast.error(first || 'Failed to delete pathway.');
             },
         });
     };
