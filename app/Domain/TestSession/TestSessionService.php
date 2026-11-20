@@ -32,7 +32,9 @@ final class TestSessionService
         int $limit = 20,
         ?int $durationMinutes = null,
         ?string $status = null,
-        ?array $questionIds = null
+        ?array $questionIds = null,
+        ?bool $isPastYear = null,
+        ?bool $isHighYield = null
     ): array {
         $pathway = $examPathway ?? $user->active_pathway ?? 'INI_CET';
 
@@ -45,6 +47,14 @@ final class TestSessionService
             // Include user's bookmarked questions across their curriculum
         } else {
             $query->forExam($pathway);
+        }
+
+        if ($isPastYear && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_past_year')) {
+            $query->where('is_past_year', true);
+        }
+
+        if ($isHighYield && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_high_yield')) {
+            $query->where('is_high_yield', true);
         }
 
         if (! empty($subjectId)) {
@@ -81,7 +91,8 @@ final class TestSessionService
         $questions = $query->inRandomOrder()->limit($limit)->get();
 
         // If not enough questions found for strict filters and status is ALL, fallback within this pathway
-        if ($questions->isEmpty() && empty($questionIds) && (! $status || strtoupper($status) === 'ALL')) {
+        // ONLY fallback if the user did NOT explicitly filter by PYQ, HYQ, or specific question IDs
+        if ($questions->isEmpty() && empty($questionIds) && ! $isPastYear && ! $isHighYield && (! $status || strtoupper($status) === 'ALL')) {
             $questions = Question::query()
                 ->where('is_active', true)
                 ->forExam($pathway)

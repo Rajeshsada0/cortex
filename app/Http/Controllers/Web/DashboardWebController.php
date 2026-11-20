@@ -172,8 +172,12 @@ class DashboardWebController extends Controller
             'completedSessionsCount' => $completedSessionsCount,
             'avgScorePercent' => $avgScorePercent,
             'totalQuestions' => Cache::remember("pathway_total_q_{$pathway}", 3600, fn () => Question::where('is_active', true)->forExam($pathway)->count()),
-            'pastYearQuestionsCount' => Question::where('is_active', true)->where('is_past_year', true)->count(),
-            'highYieldQuestionsCount' => Question::where('is_active', true)->where('is_high_yield', true)->count(),
+            'pastYearQuestionsCount' => \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_past_year')
+                ? Question::where('is_active', true)->forExam($pathway)->where('is_past_year', true)->count()
+                : 0,
+            'highYieldQuestionsCount' => \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_high_yield')
+                ? Question::where('is_active', true)->forExam($pathway)->where('is_high_yield', true)->count()
+                : 0,
             'totalAttempts' => QuestionAttempt::where('user_id', $user->id)
                 ->whereHas('question', fn ($q) => $q->where('is_active', true)->forExam($pathway))
                 ->count(),

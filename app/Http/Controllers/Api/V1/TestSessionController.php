@@ -72,6 +72,8 @@ class TestSessionController extends Controller
             'difficulty' => 'nullable|string|in:EASY,MEDIUM,HARD',
             'limit' => 'nullable|integer|min:1',
             'duration_minutes' => 'nullable|integer|min:1|max:480',
+            'is_past_year' => 'nullable|boolean',
+            'is_high_yield' => 'nullable|boolean',
         ]);
 
         $sessionType = $validated['session_type'] ?? 'PRACTICE';
@@ -91,7 +93,9 @@ class TestSessionController extends Controller
             topicId: $topicIds,
             difficulty: $validated['difficulty'] ?? null,
             limit: $limit,
-            durationMinutes: $validated['duration_minutes'] ?? null
+            durationMinutes: $validated['duration_minutes'] ?? null,
+            isPastYear: $request->boolean('is_past_year'),
+            isHighYield: $request->boolean('is_high_yield')
         );
 
         return response()->json([

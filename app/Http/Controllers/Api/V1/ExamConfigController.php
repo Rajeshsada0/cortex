@@ -6,16 +6,22 @@ use App\Domain\Scoring\ExamPathway as ExamPathwayEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ExamPathway;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ExamConfigController extends Controller
 {
     /**
      * List all active exam pathways
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $pathways = ExamPathway::where('is_active', true)
-            ->orderBy('order_index')
+        $query = ExamPathway::query();
+
+        if (! $request->boolean('all')) {
+            $query->where('is_active', true);
+        }
+
+        $pathways = $query->orderBy('order_index')
             ->orderBy('id')
             ->get();
 
