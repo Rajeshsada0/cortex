@@ -118,14 +118,14 @@ export function cleanFlashcardAnswerText(raw?: string): string {
         if (!trimmed) continue;
 
         // Remove "Key: D" or "Key: A"
-        trimmed = trimmed.replace(/^Key:\s*[A-Ea-e][\.\:\-]?\s*/i, '');
+        trimmed = trimmed.replace(/^Key:\s*[A-Ea-e][.:-]?\s*/i, '');
         // Remove leading option letter e.g. "D. ", "A) ", "(B) ", "C - "
-        trimmed = trimmed.replace(/^(\([A-Ea-e]\)|[A-Ea-e][\.\)\:\-]\s*)/i, '');
+        trimmed = trimmed.replace(/^(\([A-Ea-e]\)|[A-Ea-e][.:-]\s*)/i, '');
         // Remove "Ans. is 'd' i.e., " or "Ans is `d` i.e.," or "Ans: D" or "B i.e. "
-        trimmed = trimmed.replace(/^Ans(\.|wer)?\s*(is|:)?\s*['"`\(\[]?[a-eA-E]['"`\)\]]?\s*(i\.e\.?,?|:|\-)?\s*/iu, '');
-        trimmed = trimmed.replace(/^[a-eA-E]\s+i\.e\.?,?\s*/iu, '');
-        trimmed = trimmed.replace(/^Option\s+['"`\(\[]?[a-eA-E]['"`\)\]]?\s*(is\s+(the\s+)?correct(\s+answer)?)?[\.\:\-]?\s*/iu, '');
-        trimmed = trimmed.replace(/^Correct\s+answer\s+(is|:)\s*['"`\(\[]?[a-eA-E]['"`\)\]]?[\.\:\-]?\s*/iu, '');
+        trimmed = trimmed.replace(/^Ans(\.|wer)?\s*(is|:)?\s*['"`(\[]?[a-eA-E]['"`)\]]?\s*(i\.e\.?,?|:|-)?\s*/i, '');
+        trimmed = trimmed.replace(/^[a-eA-E]\s+i\.e\.?,?\s*/i, '');
+        trimmed = trimmed.replace(/^Option\s+['"`(\[]?[a-eA-E]['"`)\]]?\s*(is\s+(the\s+)?correct(\s+answer)?)?[.:-]?\s*/i, '');
+        trimmed = trimmed.replace(/^Correct\s+answer\s+(is|:)\s*['"`(\[]?[a-eA-E]['"`)\]]?[.:-]?\s*/i, '');
         trimmed = trimmed.trim();
 
         if (!trimmed) continue;
@@ -139,7 +139,7 @@ export function cleanFlashcardAnswerText(raw?: string): string {
                 continue;
             }
             if (trimmed.toLowerCase().startsWith(firstLineAnswer.toLowerCase())) {
-                const rest = trimmed.slice(firstLineAnswer.length).replace(/^[\s\.\,\:\;\-]+/, '').trim();
+                const rest = trimmed.slice(firstLineAnswer.length).replace(/^[\s.,:;-]+/, '').trim();
                 if (rest) {
                     cleanedParts.push(rest);
                 }
