@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import {
     Sparkles,
@@ -23,13 +23,21 @@ import {
     RotateCcw,
     ThumbsUp,
     Zap,
-    Maximize2,
-    Minimize2,
     SlidersHorizontal,
     FileSpreadsheet,
     Eye,
     Loader2,
     Trash2,
+    Layers,
+    Flame,
+    GraduationCap,
+    Filter,
+    ExternalLink,
+    Brain,
+    Stethoscope,
+    Tag,
+    Clock,
+    ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -68,6 +76,13 @@ interface FlashcardItem {
     front: string;
     back: string;
     pearl?: string;
+    difficulty?: string;
+    is_high_yield?: boolean;
+    is_past_year?: boolean;
+    past_year?: string;
+    deck_id?: string;
+    deck_title?: string;
+    created_at?: string;
 }
 
 interface DeckItem {
@@ -87,6 +102,9 @@ interface FlashcardsPageProps {
     sampleCards: FlashcardItem[];
     initialDecks?: DeckItem[];
     subjects?: Array<{ id: number; name: string; slug: string }>;
+    customCards?: FlashcardItem[];
+    totalCustomCardsCount?: number;
+    totalQBankCount?: number;
 }
 
 export default function FlashcardsIndex({
@@ -97,11 +115,14 @@ export default function FlashcardsIndex({
     sampleCards = [],
     initialDecks = [],
     subjects = [],
+    customCards = [],
+    totalCustomCardsCount = 0,
+    totalQBankCount = 0,
 }: FlashcardsPageProps) {
     const [dueCount, setDueCount] = useState<number>(initialDueCount);
 
-    // Tab state: 'subject' | 'themes' | 'decks'
-    const [activeTab, setActiveTab] = useState<'subject' | 'themes' | 'decks'>('subject');
+    // Tab state: 'subject' | 'themes' | 'decks' | 'cards'
+    const [activeTab, setActiveTab] = useState<'subject' | 'themes' | 'decks' | 'cards'>('subject');
 
     // Search query
     const [searchQuery, setSearchQuery] = useState('');
@@ -116,6 +137,12 @@ export default function FlashcardsIndex({
     // Decks filter & custom user decks state
     const [deckFilter, setDeckFilter] = useState<'all' | 'custom' | 'anki' | 'my_cards'>('all');
     const [customDecks, setCustomDecks] = useState<DeckItem[]>(initialDecks);
+
+    // Custom Cards State (all cards created by user)
+    const [customCardsList, setCustomCardsList] = useState<FlashcardItem[]>(customCards);
+    const [cardSearchQuery, setCardSearchQuery] = useState('');
+    const [cardSubjectFilter, setCardSubjectFilter] = useState<string>('all');
+    const [cardTagFilter, setCardTagFilter] = useState<'all' | 'hyq' | 'pyq'>('all');
 
     // Interactive Study Player state
     const [studySessionActive, setStudySessionActive] = useState(false);
@@ -132,7 +159,22 @@ export default function FlashcardsIndex({
     const [addCardModalOpen, setAddCardModalOpen] = useState(false);
     const [ankiModalOpen, setAnkiModalOpen] = useState(false);
     const [cortexModalOpen, setCortexModalOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<'mobile' | 'expanded'>('mobile');
+
+    // Form state for creating custom deck
+    const [newDeckTitle, setNewDeckTitle] = useState('');
+    const [newDeckCategory, setNewDeckCategory] = useState('Anatomy');
+    const [isSavingDeck, setIsSavingDeck] = useState(false);
+
+    // Form state for adding custom flashcard
+    const [newCardFront, setNewCardFront] = useState('');
+    const [newCardBack, setNewCardBack] = useState('');
+    const [newCardPearl, setNewCardPearl] = useState('');
+    const [newCardDeckId, setNewCardDeckId] = useState('');
+    const [newCardSubjectId, setNewCardSubjectId] = useState('');
+    const [newCardIsHighYield, setNewCardIsHighYield] = useState(false);
+    const [newCardIsPastYear, setNewCardIsPastYear] = useState(false);
+    const [newCardPastYear, setNewCardPastYear] = useState('');
+    const [isSavingCard, setIsSavingCard] = useState(false);
 
     // Cortex AI chat state
     const [cortexQuery, setCortexQuery] = useState('');
@@ -150,44 +192,58 @@ export default function FlashcardsIndex({
         {
             id: 'init-1',
             sender: 'ai',
-            text: 'Hello Dr. Cortex! I am Dr. Cortex AI, your clinical board exam and spaced-repetition flashcard tutor. Need a mnemonic, high-yield pearl, or differential breakdown for any flashcard topic?',
-            clinicalPearl: 'Beck Triad (Hypotension, JVD, Muffled Heart Sounds) indicates Cardiac Tamponade. Immediate pericardiocentesis is diagnostic and life-saving.',
-            relatedTopics: ['Beck Triad', 'Cranial Nerve Lesions', 'Loop vs Thiazide Diuretics', 'SAD PUCKER Mnemonic'],
+            text: 'Hello Doctor! I am Dr. Cortex AI, your clinical spaced repetition tutor. Ask me to break down any flashcard, mnemonic, differential diagnosis, or landmark board question.',
+            clinicalPearl: 'Active recall spaced at 1d, 3d, 7d, 21d increases board exam retention by 320% compared to passive reading.',
+            emergencyStep: 'In acute clinical emergencies, always confirm Airway, Breathing, and Circulation (ABC) before secondary workups.',
+            relatedTopics: ['Beck Triad', 'Cranial Nerves', 'Acid-Base Disorders', 'Loop Diuretics'],
         },
     ]);
 
-    // New Deck Form state
-    const [newDeckTitle, setNewDeckTitle] = useState('');
-    const [newDeckCategory, setNewDeckCategory] = useState('Anatomy');
-    const [isSavingDeck, setIsSavingDeck] = useState(false);
+    // Keyboard navigation for Study Session
+    useEffect(() => {
+        if (!studySessionActive || sessionCompleted || isLoadingCards) return;
 
-    // New Card Form state
-    const [newCardFront, setNewCardFront] = useState('');
-    const [newCardBack, setNewCardBack] = useState('');
-    const [newCardPearl, setNewCardPearl] = useState('');
-    const [newCardDeckId, setNewCardDeckId] = useState('');
-    const [newCardSubjectId, setNewCardSubjectId] = useState('');
-    const [newCardIsHighYield, setNewCardIsHighYield] = useState(false);
-    const [newCardIsPastYear, setNewCardIsPastYear] = useState(false);
-    const [newCardPastYear, setNewCardPastYear] = useState('');
-    const [isSavingCard, setIsSavingCard] = useState(false);
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-    // Filtered Subjects
+            if (e.code === 'Space') {
+                e.preventDefault();
+                setIsFlipped((prev) => !prev);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                setStudySessionActive(false);
+            } else if (isFlipped) {
+                if (e.key === '1') handleCardRating('again');
+                else if (e.key === '2') handleCardRating('hard');
+                else if (e.key === '3') handleCardRating('good');
+                else if (e.key === '4') handleCardRating('easy');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [studySessionActive, isFlipped, sessionCompleted, isLoadingCards, currentCardIndex, studyCards]);
+
+    // Filtered sections and items for Tab 1
     const filteredSections = useMemo(() => {
-        let sections = initialSections.map((sec) => {
-            let items = sec.items.filter((item) => {
-                const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-                if (!matchesSearch) return false;
+        return initialSections.map((sec) => {
+            let items = [...sec.items];
 
-                if (subjectFilter === 'saved') return item.isSaved;
-                if (subjectFilter === 'high_yield') return item.isHighYield;
-                return true;
-            });
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase().trim();
+                items = items.filter((it) => it.title.toLowerCase().includes(q));
+            }
+
+            if (subjectFilter === 'saved') {
+                items = items.filter((it) => it.isSaved);
+            } else if (subjectFilter === 'high_yield') {
+                items = items.filter((it) => it.isHighYield);
+            }
 
             if (sortBy === 'count_desc') {
-                items = [...items].sort((a, b) => b.cardsCount - a.cardsCount);
+                items.sort((a, b) => b.cardsCount - a.cardsCount);
             } else if (sortBy === 'alphabetical') {
-                items = [...items].sort((a, b) => a.title.localeCompare(b.title));
+                items.sort((a, b) => a.title.localeCompare(b.title));
             }
 
             return {
@@ -195,140 +251,170 @@ export default function FlashcardsIndex({
                 items,
             };
         });
-
-        // If Foundations First, foundational is top
-        if (sortBy === 'foundations') {
-            return sections;
-        }
-
-        return sections;
     }, [initialSections, searchQuery, subjectFilter, sortBy]);
 
-    // Filtered Themes
+    // Filtered themes for Tab 2
     const filteredThemes = useMemo(() => {
-        return initialThemes.filter((theme) => {
-            const matchesSearch = theme.title.toLowerCase().includes(searchQuery.toLowerCase());
-            if (!matchesSearch) return false;
+        let list = [...initialThemes];
 
-            if (themeFilter === 'high_yield') return theme.isHighYield;
-            if (themeFilter === 'image') return theme.hasImage;
-            return true;
-        });
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = list.filter((th) => th.title.toLowerCase().includes(q));
+        }
+
+        if (themeFilter === 'high_yield') {
+            list = list.filter((th) => th.isHighYield);
+        } else if (themeFilter === 'image') {
+            list = list.filter((th) => th.hasImage);
+        }
+
+        return list;
     }, [initialThemes, searchQuery, themeFilter]);
 
-    // Filtered Decks
+    // Filtered decks for Tab 3
     const filteredDecks = useMemo(() => {
-        return customDecks.filter((deck) => {
-            const matchesSearch = deck.title.toLowerCase().includes(searchQuery.toLowerCase());
-            if (!matchesSearch) return false;
+        let list = [...customDecks];
 
-            if (deckFilter === 'custom') return deck.type === 'custom';
-            if (deckFilter === 'anki') return deck.type === 'anki';
-            return true;
-        });
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = list.filter((d) => d.title.toLowerCase().includes(q));
+        }
+
+        if (deckFilter === 'custom') {
+            list = list.filter((d) => d.type === 'custom');
+        } else if (deckFilter === 'anki') {
+            list = list.filter((d) => d.type === 'anki');
+        }
+
+        return list;
     }, [customDecks, searchQuery, deckFilter]);
 
-    // Launch Study Session dynamically from database
+    // Filtered custom cards list for Tab 4 (All Flashcards manager)
+    const filteredCustomCards = useMemo(() => {
+        let list = [...customCardsList];
+
+        if (cardSearchQuery.trim()) {
+            const q = cardSearchQuery.toLowerCase().trim();
+            list = list.filter(
+                (c) =>
+                    c.front.toLowerCase().includes(q) ||
+                    c.back.toLowerCase().includes(q) ||
+                    (c.pearl && c.pearl.toLowerCase().includes(q)) ||
+                    (c.subject && c.subject.toLowerCase().includes(q))
+            );
+        }
+
+        if (cardSubjectFilter !== 'all') {
+            list = list.filter((c) => c.subject === cardSubjectFilter);
+        }
+
+        if (cardTagFilter === 'hyq') {
+            list = list.filter((c) => c.is_high_yield);
+        } else if (cardTagFilter === 'pyq') {
+            list = list.filter((c) => c.is_past_year);
+        }
+
+        return list;
+    }, [customCardsList, cardSearchQuery, cardSubjectFilter, cardTagFilter]);
+
+    // Launch Study Session
     const startStudySession = async (
         title: string,
-        filterParams?: {
-            subject?: string;
-            theme?: string;
-            source?: string;
-            deckId?: string;
-            isHighYield?: boolean;
-            isPastYear?: boolean;
-            cards?: FlashcardItem[];
-        }
+        filterParams: { subject?: string; theme?: string; deckId?: string; isHighYield?: boolean; isPastYear?: boolean; source?: string } = {}
     ) => {
         setSessionTitle(title);
+        setIsLoadingCards(true);
+        setStudySessionActive(true);
         setCurrentCardIndex(0);
         setIsFlipped(false);
         setSessionCompleted(false);
         setReviewedCount(0);
-        setStudySessionActive(true);
 
-        if (filterParams?.cards && filterParams.cards.length > 0) {
-            setStudyCards(filterParams.cards);
-            return;
-        }
-
-        setIsLoadingCards(true);
         try {
-            const query = new URLSearchParams();
-            if (filterParams?.subject) query.append('subject', filterParams.subject);
-            if (filterParams?.theme) query.append('theme', filterParams.theme);
-            if (filterParams?.source) query.append('source', filterParams.source);
-            if (filterParams?.deckId) query.append('deck_id', filterParams.deckId);
-            if (filterParams?.isHighYield) query.append('is_high_yield', '1');
-            if (filterParams?.isPastYear) query.append('is_past_year', '1');
-            query.append('limit', '20');
+            const params = new URLSearchParams();
+            if (filterParams.subject) params.append('subject', filterParams.subject);
+            if (filterParams.theme) params.append('theme', filterParams.theme);
+            if (filterParams.deckId) params.append('deck_id', filterParams.deckId);
+            if (filterParams.isHighYield) params.append('is_high_yield', '1');
+            if (filterParams.isPastYear) params.append('is_past_year', '1');
+            if (filterParams.source) params.append('source', filterParams.source);
+            params.append('limit', '20');
 
-            const res = await fetch(`/flashcards/cards?${query.toString()}`);
+            const res = await fetch(`/flashcards/cards?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.cards && data.cards.length > 0) {
                     setStudyCards(data.cards);
-                    setIsLoadingCards(false);
-                    return;
+                } else if (sampleCards.length > 0) {
+                    setStudyCards(sampleCards);
+                } else {
+                    setStudyCards([
+                        {
+                            id: 'fallback-1',
+                            subject: 'General Medicine',
+                            topic: 'Clinical Diagnostic Criteria',
+                            front: 'What are the classic diagnostic signs of Cardiac Tamponade (Beck\'s Triad)?',
+                            back: '1. Hypotension with narrowed pulse pressure\n2. Elevated jugular venous pressure (distended neck veins)\n3. Muffled heart sounds on auscultation.',
+                            pearl: 'Pulsus paradoxus (>10 mmHg inspiratory drop in systolic blood pressure) and electrical alternans on ECG.',
+                        },
+                    ]);
                 }
+            } else {
+                setStudyCards(sampleCards.length > 0 ? sampleCards : []);
             }
-        } catch (e) {
-            console.error('Failed to load dynamic flashcards', e);
-        }
-
-        // Fallback to initial dynamic sampleCards if available
-        if (sampleCards.length > 0) {
+        } catch (err) {
+            console.error('Error fetching study cards:', err);
             setStudyCards(sampleCards);
+        } finally {
+            setIsLoadingCards(false);
         }
-        setIsLoadingCards(false);
     };
 
-    // Review Card & persist to Spaced Repetition queue
+    // Open Add Card modal pre-configured for a subject or deck
+    const openAddCardForSubject = (subjectTitle: string) => {
+        const found = subjects.find((s) => s.name.toLowerCase() === subjectTitle.toLowerCase());
+        if (found) {
+            setNewCardSubjectId(String(found.id));
+        }
+        setAddCardModalOpen(true);
+    };
+
+    const openAddCardForDeck = (deckId: string) => {
+        setNewCardDeckId(deckId);
+        setAddCardModalOpen(true);
+    };
+
+    // Handle Card Rating in Study Session (FSRS / SM-2 spaced repetition engine)
     const handleCardRating = async (rating: 'again' | 'hard' | 'good' | 'easy') => {
-        const currentCard = studyCards[currentCardIndex];
-        setIsFlipped(false);
-        setReviewedCount((prev) => prev + 1);
+        const activeCard = studyCards[currentCardIndex];
+        const newCount = reviewedCount + 1;
+        setReviewedCount(newCount);
 
-        if (currentCard && currentCard.id) {
-            try {
-                const isCorrect = rating !== 'again';
-                const confidence = rating === 'hard' ? 'LOW' : (rating === 'good' ? 'MEDIUM' : 'HIGH');
-                const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
-
-                const res = await fetch('/flashcards/review', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-                    },
-                    body: JSON.stringify({
-                        question_id: currentCard.id,
-                        is_correct: isCorrect,
-                        confidence: confidence,
-                    }),
-                });
-
-                if (res.ok) {
-                    const result = await res.json();
-                    if (typeof result.due_count === 'number') {
-                        setDueCount(result.due_count);
-                    }
-                }
-            } catch (err) {
-                console.error('Error submitting spaced repetition review:', err);
-            }
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
+            await fetch('/flashcards/review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+                body: JSON.stringify({
+                    question_id: activeCard?.id,
+                    rating,
+                }),
+            });
+        } catch (e) {
+            console.warn('Silent review sync error:', e);
         }
 
-        const nextIndex = currentCardIndex + 1;
-        if (nextIndex < studyCards.length) {
-            setCurrentCardIndex(nextIndex);
+        if (currentCardIndex + 1 < studyCards.length) {
+            setCurrentCardIndex((prev) => prev + 1);
+            setIsFlipped(false);
         } else {
             setSessionCompleted(true);
-            toast.success('Deck Completed!', {
-                description: `Successfully reviewed ${studyCards.length} flashcards in ${sessionTitle}.`,
-            });
+            setDueCount((prev) => Math.max(0, prev - newCount));
+            toast.success(`Session Complete! ${newCount} cards reviewed.`);
         }
     };
 
@@ -344,7 +430,7 @@ export default function FlashcardsIndex({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
                 },
                 body: JSON.stringify({
@@ -380,26 +466,54 @@ export default function FlashcardsIndex({
     // Delete custom deck with backend persistence
     const handleDeleteDeck = async (deckId: string, deckTitle: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm(`Are you sure you want to delete deck "${deckTitle}"?`)) return;
+        if (!confirm(`Are you sure you want to delete deck "${deckTitle}"? All associated cards in this deck will be deleted.`)) return;
 
         try {
             const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
             const res = await fetch(`/flashcards/decks/${deckId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
                 },
             });
 
             if (res.ok) {
                 setCustomDecks((prev) => prev.filter((d) => d.id !== deckId));
+                setCustomCardsList((prev) => prev.filter((c) => c.deck_id !== deckId));
                 toast.success(`Deck "${deckTitle}" deleted.`);
             } else {
                 toast.error('Failed to delete deck.');
             }
         } catch (err) {
             toast.error('Network error deleting deck.');
+        }
+    };
+
+    // Delete custom card with backend persistence
+    const handleDeleteCard = async (cardId: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        if (!confirm('Are you sure you want to delete this flashcard?')) return;
+
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content;
+            const res = await fetch(`/flashcards/cards/${cardId}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+            });
+
+            if (res.ok) {
+                setCustomCardsList((prev) => prev.filter((c) => c.id !== cardId));
+                setStudyCards((prev) => prev.filter((c) => c.id !== cardId));
+                toast.success('Flashcard deleted successfully.');
+            } else {
+                toast.error('Failed to delete flashcard.');
+            }
+        } catch (err) {
+            toast.error('Network error deleting card.');
         }
     };
 
@@ -415,7 +529,7 @@ export default function FlashcardsIndex({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
                 },
                 body: JSON.stringify({
@@ -431,6 +545,26 @@ export default function FlashcardsIndex({
             });
 
             if (res.ok) {
+                const data = await res.json();
+                const targetSubject = subjects.find((s) => s.id === Number(newCardSubjectId));
+                const targetDeck = customDecks.find((d) => d.id === newCardDeckId);
+
+                const createdCard: FlashcardItem = data.card || {
+                    id: 'fc-' + Date.now(),
+                    front: newCardFront.trim(),
+                    back: newCardBack.trim(),
+                    pearl: newCardPearl.trim() || '',
+                    subject: targetSubject?.name || 'General Medicine',
+                    topic: targetDeck?.title || 'Clinical Pearl',
+                    deck_id: newCardDeckId || undefined,
+                    deck_title: targetDeck?.title || undefined,
+                    is_high_yield: newCardIsHighYield,
+                    is_past_year: newCardIsPastYear,
+                    past_year: newCardPastYear.trim() || undefined,
+                    created_at: 'Just now',
+                };
+
+                setCustomCardsList((prev) => [createdCard, ...prev]);
                 toast.success('Flashcard saved successfully!');
                 setAddCardModalOpen(false);
                 setNewCardFront('');
@@ -457,12 +591,13 @@ export default function FlashcardsIndex({
 
     // Simulate Anki Import
     const handleImportAnki = () => {
-        const ankiDeck = {
+        const ankiDeck: DeckItem = {
             id: 'anki-' + Date.now(),
             title: 'Anki AnKing Step 1 Comprehensive',
             cardsCount: 14200,
             type: 'anki' as const,
             lastReviewed: 'Imported today',
+            subject: 'USMLE Integrated',
         };
 
         setCustomDecks((prev) => [ankiDeck, ...prev]);
@@ -521,724 +656,961 @@ export default function FlashcardsIndex({
                     setCortexCredits(aiData.credits_remaining);
                 }
             } else {
-                throw new Error('API request failed');
+                // Fallback simulation
+                setTimeout(() => {
+                    setCortexMessages((prev) => [
+                        ...prev,
+                        {
+                            id: `ai-${Date.now()}`,
+                            sender: 'ai',
+                            text: `Regarding "${text}": In board exams, focus on the hallmark clinical differentiator, immediate diagnostic investigation of choice, and first-line intervention.`,
+                            clinicalPearl: 'High-yield landmark: Pair clinical presentation with pathophysiological hallmarks for rapid 30-second recall.',
+                            relatedTopics: ['Pathophysiology', 'First-Line Pharmacotherapy', 'Board Landmarks'],
+                        },
+                    ]);
+                }, 400);
             }
-        } catch {
-            // High-yield offline medical fallback
-            let fallbackReply = `Here is a high-yield pearl for "${text}": Always link the pathophysiologic mechanism to pathognomonic physical signs.`;
-            let pearl: string | undefined;
-            let emergency: string | undefined;
-            const topics = ['Beck Triad', 'Cranial Nerves', 'SAD PUCKER'];
-
-            const lower = text.toLowerCase();
-            if (lower.includes('beck') || lower.includes('tamponade')) {
-                fallbackReply = 'Cardiac Tamponade: Characterized by pulsus paradoxus (> 10 mmHg drop in SBP on inspiration) and electrical alternans on ECG.';
-                pearl = 'Beck Triad: Hypotension, Distended Neck Veins (JVD), Muffled Heart Sounds. Contrast with tension pneumothorax (which has absent unilateral breath sounds and hyperresonance).';
-                emergency = 'Perform emergent ultrasound-guided pericardiocentesis or surgical subxiphoid pericardial window. Avoid positive pressure ventilation as it worsens venous return!';
-            } else if (lower.includes('diuretic') || lower.includes('loop')) {
-                fallbackReply = 'Loop vs Thiazide Diuretics:';
-                pearl = 'Loops inhibit Na+/K+/2Cl- cotransporter in the thick ascending limb of Henle (causes hypocalcemia). Thiazides inhibit Na+/Cl- in the DCT (causes hypercalcemia). Loops Lose calcium, Thiazides Take calcium in.';
-            }
-
-            setCortexMessages((prev) => [
-                ...prev,
-                {
-                    id: `ai-${Date.now()}`,
-                    sender: 'ai',
-                    text: fallbackReply,
-                    clinicalPearl: pearl,
-                    emergencyStep: emergency,
-                    relatedTopics: topics,
-                },
-            ]);
+        } catch (err) {
+            console.error('Cortex AI chat error:', err);
         } finally {
             setCortexIsTyping(false);
         }
     };
 
-    return (
-        <div className="min-h-screen bg-[#F0F2F5] text-[#1E293B] antialiased flex flex-col items-center justify-start selection:bg-rose-100 selection:text-rose-600 font-sans">
-            <Head title="Flashcards - Medical Learning App" />
+    const totalCalculatedCards = totalCustomCardsCount + (totalQBankCount > 0 ? totalQBankCount : 25684);
 
-            {/* Desktop Top Bar (Quick Controls for pairs & dev) */}
-            <div className="w-full max-w-4xl px-4 py-2 hidden md:flex items-center justify-between text-xs text-neutral-500 border-b border-neutral-200/60 bg-white/60 backdrop-blur-sm sticky top-0 z-40">
-                <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-neutral-700">Cortex Medical Flashcards</span>
-                    <span className="text-neutral-300">•</span>
-                    <span className="bg-red-50 text-[#EB5757] px-2 py-0.5 rounded-full font-medium text-[11px]">
-                        FSRS 5-Stage SRS
-                    </span>
+    return (
+        <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto selection:bg-rose-100 selection:text-rose-600 font-sans">
+            <Head title="Flashcards Hub - Medical Learning & Spaced Repetition" />
+
+            {/* ========================================================= */}
+            {/* 1. TOP HEADER & PRIMARY DESKTOP CONTROLS                 */}
+            {/* ========================================================= */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-neutral-200/80">
+                <div>
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 to-red-500 flex items-center justify-center text-white shadow-md shadow-rose-200">
+                            <Layers className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <div className="flex items-center space-x-2">
+                                <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+                                    Interactive Flashcards Hub
+                                </h1>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200">
+                                    FSRS 5-Stage SRS
+                                </span>
+                            </div>
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                                Cognitive spaced repetition • Board exam landmarks, high-yield pearls & custom candidate decks
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-3">
+
+                {/* Primary Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Primary Button: + Create Flashcard */}
                     <button
-                        onClick={() => setViewMode(viewMode === 'mobile' ? 'expanded' : 'mobile')}
-                        className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition"
+                        type="button"
+                        onClick={() => setAddCardModalOpen(true)}
+                        className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs shadow-sm shadow-rose-200 active:scale-98 transition cursor-pointer"
                     >
-                        {viewMode === 'mobile' ? (
-                            <>
-                                <Maximize2 className="w-3.5 h-3.5" />
-                                <span>Expanded View</span>
-                            </>
-                        ) : (
-                            <>
-                                <Minimize2 className="w-3.5 h-3.5" />
-                                <span>Mobile Frame</span>
-                            </>
+                        <Plus className="w-4 h-4 stroke-[2.5]" />
+                        <span>Create Flashcard</span>
+                    </button>
+
+                    {/* Button: + New Deck */}
+                    <button
+                        type="button"
+                        onClick={() => setCreateModalOpen(true)}
+                        className="inline-flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 font-semibold text-xs border border-neutral-300 shadow-2xs active:scale-98 transition cursor-pointer"
+                    >
+                        <Plus className="w-4 h-4 text-rose-500" />
+                        <span>New Deck</span>
+                    </button>
+
+                    {/* Daily Review Button */}
+                    <button
+                        type="button"
+                        onClick={() => startStudySession('Daily Recall Review', { source: 'due' })}
+                        className="inline-flex items-center space-x-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-neutral-50 text-neutral-800 font-semibold text-xs border border-neutral-300 shadow-2xs active:scale-98 transition cursor-pointer"
+                    >
+                        <Calendar className="w-4 h-4 text-rose-500" />
+                        <span>Daily Review</span>
+                        {dueCount > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                                {dueCount}
+                            </span>
                         )}
                     </button>
-                    <Link
-                        href="/dashboard"
-                        className="px-2.5 py-1 rounded-lg bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-700 transition font-medium"
+
+                    {/* Anki Import */}
+                    <button
+                        type="button"
+                        onClick={() => setAnkiModalOpen(true)}
+                        className="inline-flex items-center space-x-1.5 px-3 py-2.5 rounded-xl bg-white hover:bg-neutral-50 text-neutral-700 font-semibold text-xs border border-neutral-300 shadow-2xs active:scale-98 transition cursor-pointer"
+                        title="Import Anki .apkg"
                     >
-                        Exit to Dashboard
-                    </Link>
+                        <UploadCloud className="w-4 h-4 text-blue-500" />
+                        <span>Import Anki</span>
+                    </button>
+
+                    {/* Dr. Cortex AI Tutor */}
+                    <button
+                        type="button"
+                        onClick={() => setCortexModalOpen(true)}
+                        className="inline-flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#1872F4] font-semibold text-xs border border-blue-200 shadow-2xs active:scale-98 transition cursor-pointer"
+                    >
+                        <Bot className="w-4 h-4 text-[#1872F4]" />
+                        <span>Dr. Cortex AI</span>
+                    </button>
                 </div>
             </div>
 
-            {/* Main Application Container */}
-            <div
-                className={`w-full ${
-                    viewMode === 'mobile' ? 'max-w-md shadow-2xl' : 'max-w-2xl shadow-xl'
-                } min-h-screen bg-[#F7F8FA] relative flex flex-col pb-36 select-none transition-all duration-300`}
-            >
-                {/* BEGIN: TopHeaderAndStatusBar */}
-                <header
-                    style={{
-                        background: 'linear-gradient(180deg, #FEECEC 0%, #FFF8F8 55%, #F7F8FA 100%)',
-                    }}
-                    className="pt-3 pb-3 px-4 sticky top-0 z-30 transition-all border-b border-rose-100/40"
-                >
-                    {/* App Title */}
-                    <div className="flex items-center space-x-2.5 mt-2 mb-3">
-                        {/* Logo Icon */}
-                        <div className="w-7 h-7 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-[#F06560] transform -rotate-12" fill="currentColor" viewBox="0 0 24 24">
-                                <rect fill="#F87171" height="15" opacity="0.6" rx="3" width="13" x="3" y="5" />
-                                <rect fill="#EF4444" height="16" rx="3" width="14" x="7" y="3" />
-                            </svg>
-                        </div>
-                        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Flashcards</h1>
+            {/* ========================================================= */}
+            {/* 2. STATS OVERVIEW ROW (4 METRIC TILES)                    */}
+            {/* ========================================================= */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Total Cards */}
+                <div className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total Flashcards</p>
+                        <h3 className="text-2xl font-black text-neutral-900 mt-1">
+                            {totalCalculatedCards.toLocaleString()}
+                        </h3>
+                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                            {customCardsList.length} custom • {totalQBankCount > 0 ? totalQBankCount.toLocaleString() : '25k+'} Q-Bank
+                        </p>
                     </div>
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#1872F4] flex items-center justify-center text-xl font-bold">
+                        <BookOpen className="w-6 h-6" />
+                    </div>
+                </div>
 
-                    {/* Search Input */}
-                    <div className="relative w-full mb-3" data-purpose="search-box">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <circle cx="11" cy="11" r="7" />
-                                <path d="m21 21-4.35-4.35" strokeLinecap="round" />
-                            </svg>
-                        </div>
+                {/* Due for Review */}
+                <div className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Due For Review</p>
+                        <h3 className="text-2xl font-black text-rose-600 mt-1">
+                            {dueCount} <span className="text-sm font-normal text-neutral-500">cards</span>
+                        </h3>
+                        <button
+                            onClick={() => startStudySession('Daily Recall Review', { source: 'due' })}
+                            className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 mt-0.5 cursor-pointer"
+                        >
+                            <span>Review queue</span>
+                            <ArrowRight className="w-3 h-3" />
+                        </button>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
+                        <Repeat className="w-6 h-6" />
+                    </div>
+                </div>
+
+                {/* High-Yield Board Landmarks */}
+                <div className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">High-Yield Pearls</p>
+                        <h3 className="text-2xl font-black text-amber-500 mt-1">13,180+</h3>
+                        <p className="text-[11px] text-neutral-500 mt-0.5">USMLE & MECEE-PG focus</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                        <Star className="w-6 h-6 fill-amber-400 text-amber-500" />
+                    </div>
+                </div>
+
+                {/* Custom Decks */}
+                <div className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">My Custom Decks</p>
+                        <h3 className="text-2xl font-black text-emerald-600 mt-1">{customDecks.length}</h3>
+                        <button
+                            onClick={() => {
+                                setActiveTab('decks');
+                                setCreateModalOpen(true);
+                            }}
+                            className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-0.5 cursor-pointer"
+                        >
+                            <span>+ Create new deck</span>
+                        </button>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                        <GraduationCap className="w-6 h-6" />
+                    </div>
+                </div>
+            </div>
+
+            {/* ========================================================= */}
+            {/* 3. DESKTOP TAB BAR & GLOBAL SEARCH                        */}
+            {/* ========================================================= */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-2 rounded-2xl border border-neutral-200/90 shadow-2xs">
+                {/* 4 Segmented Tabs */}
+                <div className="flex items-center space-x-1 bg-neutral-100 p-1 rounded-xl">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('subject')}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            activeTab === 'subject'
+                                ? 'bg-white text-neutral-900 shadow-xs'
+                                : 'text-neutral-600 hover:text-neutral-900'
+                        }`}
+                    >
+                        By Subject
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('themes')}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            activeTab === 'themes'
+                                ? 'bg-white text-neutral-900 shadow-xs'
+                                : 'text-neutral-600 hover:text-neutral-900'
+                        }`}
+                    >
+                        Themes & Curated
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('decks')}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            activeTab === 'decks'
+                                ? 'bg-white text-neutral-900 shadow-xs'
+                                : 'text-neutral-600 hover:text-neutral-900'
+                        }`}
+                    >
+                        My Decks ({customDecks.length})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('cards')}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                            activeTab === 'cards'
+                                ? 'bg-rose-500 text-white shadow-xs'
+                                : 'text-neutral-600 hover:text-neutral-900'
+                        }`}
+                    >
+                        <span>All Flashcards</span>
+                        <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                activeTab === 'cards' ? 'bg-rose-700 text-white' : 'bg-neutral-200 text-neutral-700'
+                            }`}
+                        >
+                            {customCardsList.length}
+                        </span>
+                    </button>
+                </div>
+
+                {/* Search Bar */}
+                {activeTab !== 'cards' && (
+                    <div className="relative w-full sm:w-72">
+                        <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
+                            type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-8 py-2.5 rounded-full border border-neutral-200/80 bg-white/95 text-xs text-neutral-800 placeholder-neutral-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#F06560]/30 focus:border-[#F06560] transition-all"
-                            placeholder="Search across your Flashcards"
-                            type="text"
+                            placeholder="Filter flashcard collections..."
+                            className="w-full pl-9 pr-8 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery('')}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
+                )}
+            </div>
 
-                    {/* Top Action Buttons: Daily Review, Create Deck & Add Card */}
-                    <div className="grid grid-cols-3 gap-2 mb-3" data-purpose="quick-actions">
-                        {/* Daily Review Button */}
-                        <button
-                            onClick={() => {
-                                startStudySession('Daily Recall Review', { source: 'due' });
-                            }}
-                            className="flex items-center justify-center space-x-1.5 py-2 px-2 rounded-xl font-medium text-xs border transition-all bg-white text-neutral-800 border-neutral-200/90 shadow-xs hover:border-[#F06560] active:scale-95 cursor-pointer"
-                        >
-                            <svg className="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <rect height="16" rx="3" width="18" x="3" y="4" />
-                                <path d="M16 2v4M8 2v4M3 10h18" />
-                            </svg>
-                            <span className="tracking-tight text-[11px] font-semibold">Daily</span>
-                            {dueCount > 0 && (
-                                <span className="bg-[#EF4444] text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
-                                    {dueCount}
-                                </span>
-                            )}
-                        </button>
+            {/* ========================================================= */}
+            {/* 4. TAB CONTENT 1: BY SUBJECT                              */}
+            {/* ========================================================= */}
+            {activeTab === 'subject' && (
+                <div className="space-y-6">
+                    {/* Filter and sorting pills */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Filter:</span>
+                            <button
+                                type="button"
+                                onClick={() => setSubjectFilter('all')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                    subjectFilter === 'all'
+                                        ? 'bg-neutral-900 text-white'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                                }`}
+                            >
+                                All Subjects
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSubjectFilter('high_yield')}
+                                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                    subjectFilter === 'high_yield'
+                                        ? 'bg-amber-500 text-white'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                                }`}
+                            >
+                                <Star className="w-3.5 h-3.5 fill-current" />
+                                <span>High-Yield Only</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSubjectFilter('saved')}
+                                className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                    subjectFilter === 'saved'
+                                        ? 'bg-rose-500 text-white'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                                }`}
+                            >
+                                <Bookmark className="w-3.5 h-3.5 fill-current" />
+                                <span>Saved Bookmarks</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => startStudySession('Past Year Questions (PYQs)', { isPastYear: true })}
+                                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
+                            >
+                                <span>🏛️ Study Past Year Questions (PYQs)</span>
+                            </button>
+                        </div>
 
-                        {/* Create Deck Button */}
-                        <button
-                            onClick={() => setCreateModalOpen(true)}
-                            className="flex items-center justify-center space-x-1 py-2 px-2 rounded-xl bg-white text-neutral-800 font-medium text-xs border border-dashed border-neutral-300 shadow-xs hover:border-[#F06560] hover:text-[#F06560] active:scale-95 transition-all cursor-pointer"
-                        >
-                            <Plus className="w-3.5 h-3.5 text-[#F06560]" />
-                            <span className="tracking-tight text-[11px] font-semibold">New Deck</span>
-                        </button>
-
-                        {/* Add Card Button */}
-                        <button
-                            onClick={() => setAddCardModalOpen(true)}
-                            className="flex items-center justify-center space-x-1 py-2 px-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-500 text-white font-medium text-xs shadow-xs hover:opacity-95 active:scale-95 transition-all cursor-pointer"
-                        >
-                            <Plus className="w-3.5 h-3.5 text-white" />
-                            <span className="tracking-tight text-[11px] font-bold">New Card</span>
-                        </button>
+                        {/* Sort selector */}
+                        <div className="flex items-center space-x-2">
+                            <ArrowUpDown className="w-3.5 h-3.5 text-neutral-400" />
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as any)}
+                                className="bg-white border border-neutral-200 rounded-xl px-3 py-1.5 text-xs text-neutral-700 font-semibold focus:outline-none focus:border-rose-500"
+                            >
+                                <option value="foundations">Foundations First</option>
+                                <option value="count_desc">Highest Card Count</option>
+                                <option value="alphabetical">Alphabetical (A - Z)</option>
+                            </select>
+                        </div>
                     </div>
 
-                    {/* Segmented Main Tabs Navigation */}
-                    <div className="bg-[#ECEEF2] p-1 rounded-full flex items-center justify-between text-xs font-semibold text-neutral-600 shadow-inner" data-purpose="segment-tabs">
-                        <button
-                            onClick={() => setActiveTab('subject')}
-                            className={`flex-1 py-1.5 rounded-full text-center transition-all ${
-                                activeTab === 'subject'
-                                    ? 'bg-white text-neutral-900 shadow-xs'
-                                    : 'text-neutral-600 hover:text-neutral-900'
-                            }`}
-                        >
-                            By Subject
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('themes')}
-                            className={`flex-1 py-1.5 rounded-full text-center transition-all ${
-                                activeTab === 'themes'
-                                    ? 'bg-white text-neutral-900 shadow-xs'
-                                    : 'text-neutral-600 hover:text-neutral-900'
-                            }`}
-                        >
-                            Themes
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('decks')}
-                            className={`flex-1 py-1.5 rounded-full text-center transition-all ${
-                                activeTab === 'decks'
-                                    ? 'bg-white text-neutral-900 shadow-xs'
-                                    : 'text-neutral-600 hover:text-neutral-900'
-                            }`}
-                        >
-                            My Decks
-                        </button>
-                    </div>
-                </header>
-                {/* END: TopHeaderAndStatusBar */}
+                    {/* Subject Grid Sections */}
+                    {filteredSections.map((sec, secIdx) => {
+                        if (sec.items.length === 0) return null;
+                        return (
+                            <div key={sec.title || secIdx} className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xs font-bold tracking-wider text-neutral-400 uppercase">
+                                        {sec.title}
+                                    </h2>
+                                    <span className="text-xs text-neutral-400">{sec.items.length} Specialties</span>
+                                </div>
 
-                {/* BEGIN: MainContentArea */}
-                <main className="px-4 pt-1 flex-1">
-                    {/* ============================================== */}
-                    {/* TAB 1: BY SUBJECT VIEW                         */}
-                    {/* ============================================== */}
-                    {activeTab === 'subject' && (
-                        <section className="block animate-in fade-in duration-200" id="view-subject">
-                            {/* Sub Filter Bar */}
-                            <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-2 mb-2" data-purpose="subject-filter-chips">
-                                {/* Sort Dropdown Pill */}
-                                <button
-                                    onClick={() => {
-                                        if (sortBy === 'foundations') setSortBy('count_desc');
-                                        else if (sortBy === 'count_desc') setSortBy('alphabetical');
-                                        else setSortBy('foundations');
-                                    }}
-                                    className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#FFF0F0] border border-[#FCD8D6] rounded-full text-xs font-semibold text-[#E55353] whitespace-nowrap active:scale-95 transition-all cursor-pointer"
-                                >
-                                    <svg className="w-3.5 h-3.5 rotate-90" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                        <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <span>
-                                        {sortBy === 'foundations'
-                                            ? 'Foundations first'
-                                            : sortBy === 'count_desc'
-                                            ? 'Highest cards'
-                                            : 'A to Z'}
-                                    </span>
-                                    <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-
-                                {/* All Chip */}
-                                <button
-                                    onClick={() => setSubjectFilter('all')}
-                                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shadow-xs transition cursor-pointer ${
-                                        subjectFilter === 'all'
-                                            ? 'bg-[#EF4444] text-white'
-                                            : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
-                                    }`}
-                                >
-                                    All
-                                </button>
-
-                                {/* Saved Chip */}
-                                <button
-                                    onClick={() => setSubjectFilter('saved')}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap active:scale-95 transition cursor-pointer ${
-                                        subjectFilter === 'saved'
-                                            ? 'bg-[#EF4444] text-white border-transparent'
-                                            : 'bg-white border border-neutral-200 text-neutral-600'
-                                    }`}
-                                >
-                                    <svg className="w-3 h-3 currentColor" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
-                                    </svg>
-                                    <span>Saved</span>
-                                </button>
-
-                                {/* High Yield Chip */}
-                                <button
-                                    onClick={() => setSubjectFilter('high_yield')}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap active:scale-95 transition cursor-pointer ${
-                                        subjectFilter === 'high_yield'
-                                            ? 'bg-[#EF4444] text-white border-transparent'
-                                            : 'bg-white border border-neutral-200 text-neutral-600'
-                                    }`}
-                                >
-                                    <svg className="w-3 h-3 currentColor" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                    </svg>
-                                    <span>High Yield</span>
-                                </button>
-
-                                {/* Past Year Questions Instant Study Chip */}
-                                <button
-                                    onClick={() => startStudySession('Past Year Questions (PYQs)', { isPastYear: true })}
-                                    className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 active:scale-95 transition cursor-pointer"
-                                >
-                                    <span>🏛️ PYQs Study</span>
-                                </button>
-                            </div>
-
-                            {/* Section list */}
-                            {filteredSections.map((sec, secIdx) => {
-                                if (sec.items.length === 0) return null;
-                                return (
-                                    <div key={sec.title || secIdx} className="mb-4">
-                                        <h2 className="text-[11px] font-bold tracking-wider text-[#94A3B8] uppercase px-1 mb-2">
-                                            {sec.title}
-                                        </h2>
-                                        <div className="space-y-2.5">
-                                            {sec.items.map((item) => (
-                                                <article
-                                                    key={item.id}
-                                                    onClick={() => startStudySession(`${item.title} Review`, { subject: item.title })}
-                                                    className="bg-white rounded-2xl p-3.5 flex items-center justify-between border border-[#EEF2F6] shadow-xs hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group"
-                                                >
-                                                    <div className="flex items-center space-x-3.5">
-                                                        <div className={`w-10 h-10 rounded-xl ${item.bgClass || 'bg-red-50'} flex items-center justify-center text-xl transition-transform group-hover:scale-105`}>
-                                                            {item.emoji}
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-sm font-bold text-neutral-800 group-hover:text-neutral-900">
-                                                                {item.title}
-                                                            </h3>
-                                                            <p className="text-xs text-neutral-400 font-normal mt-0.5">
-                                                                {item.cardsCount.toLocaleString()} Cards
-                                                            </p>
-                                                        </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {sec.items.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs hover:shadow-md hover:border-neutral-300 transition flex flex-col justify-between group"
+                                        >
+                                            <div>
+                                                <div className="flex items-start justify-between">
+                                                    <div
+                                                        className={`w-12 h-12 rounded-xl ${
+                                                            item.bgClass || 'bg-rose-50'
+                                                        } flex items-center justify-center text-2xl group-hover:scale-105 transition`}
+                                                    >
+                                                        {item.emoji}
                                                     </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        {item.isSaved && (
-                                                            <span className="text-amber-500 text-xs" title="Saved">
+                                                    <div className="flex items-center space-x-1.5">
+                                                        {item.isHighYield && (
+                                                            <span
+                                                                className="text-amber-500 text-xs"
+                                                                title="High Yield Board Focus"
+                                                            >
                                                                 ★
                                                             </span>
                                                         )}
                                                         {item.isNew && (
-                                                            <span className="bg-[#FFF0F0] text-[#EB5757] text-[0.72rem] font-medium px-2.5 py-0.5 rounded-full">
-                                                                New
+                                                            <span className="bg-rose-50 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                                Updated
                                                             </span>
                                                         )}
                                                     </div>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </section>
-                    )}
+                                                </div>
 
-                    {/* ============================================== */}
-                    {/* TAB 2: THEMES VIEW                             */}
-                    {/* ============================================== */}
-                    {activeTab === 'themes' && (
-                        <section className="block animate-in fade-in duration-200" id="view-themes">
-                            {/* Filter chips for Themes */}
-                            <div className="flex items-center space-x-2 py-2 mb-3" data-purpose="themes-filters">
-                                {/* All (active) */}
-                                <button
-                                    onClick={() => setThemeFilter('all')}
-                                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-xs transition cursor-pointer ${
-                                        themeFilter === 'all'
-                                            ? 'bg-[#EF4444] text-white'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    All
-                                </button>
-                                {/* High Yield */}
-                                <button
-                                    onClick={() => setThemeFilter('high_yield')}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                                        themeFilter === 'high_yield'
-                                            ? 'bg-[#EF4444] text-white border-transparent'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    <svg className="w-3.5 h-3.5 text-neutral-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                    </svg>
-                                    <span>High Yield</span>
-                                </button>
-                                 {/* Image */}
-                                <button
-                                    onClick={() => setThemeFilter('image')}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                                        themeFilter === 'image'
-                                            ? 'bg-[#EF4444] text-white border-transparent'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <rect height="18" rx="2" width="18" x="3" y="3" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                        <path d="m21 15-5-5L5 21" />
-                                    </svg>
-                                    <span>Image</span>
-                                </button>
-                                {/* Past Year Questions (PYQs) */}
-                                <button
-                                    onClick={() => {
-                                        setThemeFilter('past_year');
-                                        startStudySession('Past Year Board Flashcards', { isPastYear: true });
-                                    }}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                                        themeFilter === 'past_year'
-                                            ? 'bg-[#EF4444] text-white border-transparent'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    <span>🏛️ Past Year (PYQ)</span>
-                                </button>
-                            </div>
-
-                            {/* Themes List */}
-                            <div className="space-y-2.5" data-purpose="themes-list">
-                                {filteredThemes.map((theme) => (
-                                    <article
-                                        key={theme.id}
-                                        onClick={() => startStudySession(`${theme.title} Theme`, { theme: theme.id })}
-                                        className="bg-white rounded-2xl p-3.5 flex items-center justify-between border border-[#EEF2F6] shadow-xs hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group"
-                                    >
-                                        <div className="flex items-center space-x-3.5">
-                                            <div className={`w-11 h-11 rounded-xl ${theme.bgClass || 'bg-neutral-100'} flex items-center justify-center text-xl transition-transform group-hover:scale-105`}>
-                                                {theme.emoji}
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-neutral-800">
-                                                    {theme.title}
+                                                <h3 className="text-sm font-bold text-neutral-800 group-hover:text-neutral-900 mt-3">
+                                                    {item.title}
                                                 </h3>
-                                                <div className="flex items-center space-x-2 mt-1">
-                                                    <span className="text-xs text-neutral-400">
-                                                        {theme.cardsCount.toLocaleString()} Cards
-                                                    </span>
-                                                    <div className="w-16 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="bg-neutral-400 h-full rounded-full transition-all"
-                                                            style={{ width: `${theme.progress}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
+                                                <p className="text-xs text-neutral-400 font-medium mt-0.5">
+                                                    {item.cardsCount.toLocaleString()} Flashcards
+                                                </p>
+                                            </div>
+
+                                            <div className="pt-4 mt-3 border-t border-neutral-100 flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        startStudySession(`${item.title} Review`, {
+                                                            subject: item.title,
+                                                        })
+                                                    }
+                                                    className="flex-1 py-1.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold text-center transition cursor-pointer"
+                                                >
+                                                    Study Now
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openAddCardForSubject(item.title)}
+                                                    className="p-1.5 rounded-xl border border-neutral-200 text-neutral-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition cursor-pointer"
+                                                    title={`Add Flashcard to ${item.title}`}
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </div>
-                                        <svg className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                            <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </article>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* ============================================== */}
-                    {/* TAB 3: MY DECKS VIEW                           */}
-                    {/* ============================================== */}
-                    {activeTab === 'decks' && (
-                        <section className="block animate-in fade-in duration-200" id="view-decks">
-                            {/* Anki Promotion Banner Card */}
-                            <article className="bg-white rounded-2xl p-4 border border-[#E2E8F0] shadow-xs relative overflow-hidden mb-4" data-purpose="anki-banner">
-                                <div className="flex justify-between items-start">
-                                    <div className="max-w-[70%]">
-                                        <h2 className="text-base font-bold text-neutral-800">Import Your Cards from Anki</h2>
-                                        <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
-                                            Enhance your flashcards with our AI, and access them on your Tablet, Mobile and Web!
-                                        </p>
-                                    </div>
-                                    {/* Decorative Anki Graphic */}
-                                    <div className="relative w-16 h-16 flex flex-col items-center justify-between">
-                                        <div className="w-7 h-7 bg-slate-800 rounded-md border-2 border-white shadow-md flex items-center justify-center text-[10px] text-amber-300">
-                                            ⭐
-                                        </div>
-                                        {/* Curved Arrow Graphic */}
-                                        <svg className="w-8 h-8 text-neutral-300 -my-1 transform rotate-12" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                                            <path d="M19 14l-7 7m0 0l-7-7m7 7V3" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                        <div className="w-7 h-7 bg-blue-500 rounded-md flex items-center justify-center text-white text-[10px] shadow-xs font-bold">
-                                            ★
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Banner Action Button */}
-                                <button
-                                    onClick={() => setAnkiModalOpen(true)}
-                                    className="w-full mt-4 py-2.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-700 tracking-wider hover:bg-neutral-50 active:scale-[0.99] transition-all uppercase cursor-pointer"
-                                >
-                                    Import My Deck
-                                </button>
-                            </article>
-
-                            {/* Sub Filter Chips for My Decks */}
-                            <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-2 mb-6" data-purpose="deck-filters">
-                                <button
-                                    onClick={() => setDeckFilter('all')}
-                                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shadow-xs transition cursor-pointer ${
-                                        deckFilter === 'all'
-                                            ? 'bg-[#EF4444] text-white'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    All
-                                </button>
-                                <button
-                                    onClick={() => setDeckFilter('custom')}
-                                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                                        deckFilter === 'custom'
-                                            ? 'bg-[#EF4444] text-white'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <span>Custom Decks</span>
-                                </button>
-                                <button
-                                    onClick={() => setDeckFilter('anki')}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                                        deckFilter === 'anki'
-                                            ? 'bg-[#EF4444] text-white'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <span>Anki</span>
-                                </button>
-                                <button
-                                    onClick={() => setDeckFilter('my_cards')}
-                                    className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer ${
-                                        deckFilter === 'my_cards'
-                                            ? 'bg-[#EF4444] text-white'
-                                            : 'bg-white border border-neutral-200 text-neutral-700'
-                                    }`}
-                                >
-                                    <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <span>My Cards</span>
-                                </button>
-                            </div>
-
-                            {/* Decks Listing or Empty State */}
-                            {filteredDecks.length > 0 ? (
-                                <div className="space-y-3">
-                                    {filteredDecks.map((deck) => (
-                                        <article
-                                            key={deck.id}
-                                            onClick={() => startStudySession(deck.title, { deckId: deck.id })}
-                                            className="bg-white rounded-2xl p-4 flex items-center justify-between border border-[#EEF2F6] shadow-xs hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group"
-                                        >
-                                            <div className="flex items-center space-x-3.5">
-                                                <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-xl">
-                                                    {deck.type === 'anki' ? '⭐' : '📝'}
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-neutral-800">
-                                                        {deck.title}
-                                                    </h3>
-                                                    <p className="text-xs text-neutral-400 mt-0.5">
-                                                        {deck.cardsCount.toLocaleString()} Cards • {deck.lastReviewed} {deck.subject ? `• ${deck.subject}` : ''}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                {deck.type === 'custom' && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => handleDeleteDeck(deck.id, deck.title, e)}
-                                                        className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
-                                                        title="Delete Deck"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600" />
-                                            </div>
-                                        </article>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center pt-10 pb-16 text-center">
-                                    <div className="w-12 h-12 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-400 mb-3 text-xl">
-                                        🗂️
-                                    </div>
-                                    <p className="text-xs font-medium text-[#94A3B8]">No decks found</p>
-                                    <button
-                                        onClick={() => setCreateModalOpen(true)}
-                                        className="mt-3 text-xs font-semibold text-[#F06560] hover:underline"
-                                    >
-                                        + Create your first custom deck
-                                    </button>
-                                </div>
-                            )}
-                        </section>
-                    )}
-                </main>
-                {/* END: MainContentArea */}
-
-                {/* BEGIN: FloatingCortexAiPill */}
-                <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-sm px-4 z-40" data-purpose="floating-ai-assistant">
-                    <button
-                        onClick={() => setCortexModalOpen(true)}
-                        className="w-full bg-white rounded-full py-2 px-3 flex items-center shadow-lg border border-neutral-200/80 hover:bg-neutral-50 active:scale-98 transition-all cursor-pointer"
-                    >
-                        {/* Cute blue robot avatar icon with live status */}
-                        <div className="w-7 h-7 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-sm shadow-2xs shrink-0 mr-3 relative">
-                            <span>🤖</span>
-                            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white" />
-                        </div>
-                        <span className="text-xs font-semibold text-slate-700 flex-1 text-left">Ask Cortex AI anything</span>
-                        <span className="text-[10px] bg-blue-50 text-[#1872F4] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-100">
-                            <Sparkles className="w-3 h-3 text-[#1872F4]" />
-                            <span>AI Tutor</span>
-                        </span>
-                    </button>
+                            </div>
+                        );
+                    })}
                 </div>
-                {/* END: FloatingCortexAiPill */}
+            )}
 
-                {/* BEGIN: BottomNavigationBar */}
-                <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-neutral-200 px-3 pt-1.5 pb-5 z-50 flex justify-around items-center" data-purpose="bottom-nav">
-                    {/* Nav Item 1: Quiz */}
-                    <Link
-                        className="flex flex-col items-center justify-center flex-1 py-1 text-neutral-500 hover:text-neutral-800 transition-colors"
-                        href="/qbank/runner"
-                    >
-                        <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01" strokeLinecap="round" />
-                        </svg>
-                        <span className="text-[10px] font-semibold">Quiz</span>
-                    </Link>
-
-                    {/* Nav Item 2: Lessons */}
-                    <Link
-                        className="flex flex-col items-center justify-center flex-1 py-1 text-neutral-500 hover:text-neutral-800 transition-colors"
-                        href="/directory"
-                    >
-                        <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                            <polygon fill="currentColor" points="10 8 14 10.5 10 13 10 8" />
-                        </svg>
-                        <span className="text-[10px] font-semibold">Lessons</span>
-                    </Link>
-
-                    {/* Nav Item 3: Home */}
-                    <Link
-                        className="flex flex-col items-center justify-center flex-1 py-1 text-neutral-500 hover:text-neutral-800 transition-colors"
-                        href="/dashboard"
-                    >
-                        <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="text-[10px] font-semibold">Home</span>
-                    </Link>
-
-                    {/* Nav Item 4: Flashcards (ACTIVE TAB) */}
-                    <div className="flex flex-col items-center justify-center flex-1 py-0.5 text-[#2563EB] cursor-pointer">
-                        <div className="bg-[#DCEBFD] px-4 py-1 rounded-full mb-0.5 transition-all">
-                            <svg className="w-5 h-5 text-[#2563EB]" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z" />
-                            </svg>
-                        </div>
-                        <span className="text-[10px] font-bold text-[#2563EB]">Flashcards</span>
+            {/* ========================================================= */}
+            {/* 5. TAB CONTENT 2: THEMES & HIGH-YIELD CURATED             */}
+            {/* ========================================================= */}
+            {activeTab === 'themes' && (
+                <div className="space-y-6">
+                    {/* Theme Filter Bar */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Category:</span>
+                        <button
+                            type="button"
+                            onClick={() => setThemeFilter('all')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                themeFilter === 'all'
+                                    ? 'bg-neutral-900 text-white'
+                                    : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                            }`}
+                        >
+                            All Themes
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setThemeFilter('high_yield')}
+                            className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                themeFilter === 'high_yield'
+                                    ? 'bg-amber-500 text-white'
+                                    : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                            }`}
+                        >
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                            <span>High-Yield Core</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setThemeFilter('image')}
+                            className={`inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                themeFilter === 'image'
+                                    ? 'bg-rose-500 text-white'
+                                    : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                            }`}
+                        >
+                            <span>Radiology & Histology (Images)</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setThemeFilter('past_year');
+                                startStudySession('Past Year Board Flashcards', { isPastYear: true });
+                            }}
+                            className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
+                        >
+                            <span>🏛️ Past Year Exam Decks (PYQ)</span>
+                        </button>
                     </div>
 
-                    {/* Nav Item 5: Play */}
-                    <Link
-                        className="flex flex-col items-center justify-center flex-1 py-1 text-neutral-500 hover:text-neutral-800 transition-colors"
-                        href="/play"
-                    >
-                        <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a2 2 0 012 2v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a2 2 0 01-2 2h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a2 2 0 01-2-2v-3a1 1 0 00-1-1H3a2 2 0 01-2-2v-3a2 2 0 012-2h1a1 1 0 001-1V7a2 2 0 012-2h3a1 1 0 001-1V4z" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="text-[10px] font-semibold">Play</span>
-                    </Link>
-                </nav>
-                {/* END: BottomNavigationBar */}
-
-                {/* BEGIN: iOSHomeIndicator */}
-                <div className="fixed bottom-1 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-neutral-900/40 rounded-full z-50 pointer-events-none" />
-                {/* END: iOSHomeIndicator */}
-            </div>
-
-            {/* ========================================================= */}
-            {/* INTERACTIVE FLASHCARD STUDY RUNNER OVERLAY               */}
-            {/* ========================================================= */}
-            {studySessionActive && (
-                <div className="fixed inset-0 z-60 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-3 animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
-                        {/* Session Top Bar */}
-                        <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/70">
-                            <div className="flex items-center space-x-2">
-                                <span className="bg-[#FFF0F0] text-[#EB5757] text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                                    {sessionTitle}
-                                </span>
-                                <span className="text-xs text-neutral-400 font-mono">
-                                    {currentCardIndex + 1} / {studyCards.length}
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setStudySessionActive(false)}
-                                className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200/60 transition"
+                    {/* Themes Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {filteredThemes.map((theme) => (
+                            <div
+                                key={theme.id}
+                                className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs hover:shadow-md hover:border-neutral-300 transition flex flex-col justify-between group"
                             >
-                                <X className="w-5 h-5" />
+                                <div>
+                                    <div className="flex items-start justify-between">
+                                        <div
+                                            className={`w-12 h-12 rounded-xl ${
+                                                theme.bgClass || 'bg-neutral-100'
+                                            } flex items-center justify-center text-2xl group-hover:scale-105 transition`}
+                                        >
+                                            {theme.emoji}
+                                        </div>
+                                        {theme.isHighYield && (
+                                            <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                                                <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                                                <span>HY</span>
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <h3 className="text-sm font-bold text-neutral-800 group-hover:text-neutral-900 mt-3 line-clamp-1">
+                                        {theme.title}
+                                    </h3>
+                                    <p className="text-xs text-neutral-400 font-medium mt-0.5">
+                                        {theme.cardsCount.toLocaleString()} Flashcards
+                                    </p>
+
+                                    {/* Progress Bar */}
+                                    <div className="mt-3">
+                                        <div className="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
+                                            <span>Mastery</span>
+                                            <span className="font-semibold text-neutral-700">{theme.progress}%</span>
+                                        </div>
+                                        <div className="w-full bg-neutral-100 h-1.5 rounded-full overflow-hidden">
+                                            <div
+                                                className="bg-rose-500 h-full rounded-full transition-all duration-300"
+                                                style={{ width: `${theme.progress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 mt-3 border-t border-neutral-100">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            startStudySession(`${theme.title} Theme`, { theme: theme.id })
+                                        }
+                                        className="w-full py-1.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold text-center transition cursor-pointer"
+                                    >
+                                        Study Theme
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 6. TAB CONTENT 3: MY DECKS (CUSTOM & ANKI)                */}
+            {/* ========================================================= */}
+            {activeTab === 'decks' && (
+                <div className="space-y-6">
+                    {/* Anki Integration Banner Card (Full Width Desktop Banner) */}
+                    <div className="bg-gradient-to-r from-slate-900 via-neutral-900 to-indigo-950 text-white rounded-3xl p-6 shadow-md border border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="max-w-2xl space-y-2">
+                            <div className="inline-flex items-center space-x-2 bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold border border-indigo-500/30">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Seamless Anki Ecosystem</span>
+                            </div>
+                            <h2 className="text-xl font-bold tracking-tight">
+                                Import Your Anki Decks (.apkg) with AI Reasoning
+                            </h2>
+                            <p className="text-xs text-neutral-300 leading-relaxed">
+                                Seamlessly synchronize your custom Anki decks. Cortex automatically detects medical specialties,
+                                tags high-yield landmarks, and integrates with the FSRS 5-stage algorithm across Web, Mobile, and Tablet.
+                            </p>
+                        </div>
+                        <div className="flex items-center space-x-3 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setAnkiModalOpen(true)}
+                                className="px-5 py-2.5 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 font-bold text-xs shadow-md active:scale-98 transition cursor-pointer"
+                            >
+                                Import Anki Deck (.apkg)
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Filter row for decks */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Type:</span>
+                            <button
+                                type="button"
+                                onClick={() => setDeckFilter('all')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                    deckFilter === 'all'
+                                        ? 'bg-neutral-900 text-white'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                                }`}
+                            >
+                                All ({customDecks.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setDeckFilter('custom')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                    deckFilter === 'custom'
+                                        ? 'bg-neutral-900 text-white'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                                }`}
+                            >
+                                Custom Decks
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setDeckFilter('anki')}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
+                                    deckFilter === 'anki'
+                                        ? 'bg-neutral-900 text-white'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:text-neutral-900'
+                                }`}
+                            >
+                                Anki Imports
                             </button>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="w-full bg-neutral-100 h-1">
+                        <button
+                            type="button"
+                            onClick={() => setCreateModalOpen(true)}
+                            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 font-semibold text-xs border border-rose-200 transition cursor-pointer"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Create Custom Deck</span>
+                        </button>
+                    </div>
+
+                    {/* Decks Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {/* Quick create tile */}
+                        <div
+                            onClick={() => setCreateModalOpen(true)}
+                            className="border-2 border-dashed border-neutral-200 hover:border-rose-400 bg-white hover:bg-rose-50/20 rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition group min-h-[160px]"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 group-hover:scale-110 flex items-center justify-center transition mb-2">
+                                <Plus className="w-5 h-5 stroke-[2.5]" />
+                            </div>
+                            <h3 className="text-xs font-bold text-neutral-800">Add New Deck</h3>
+                            <p className="text-[11px] text-neutral-400 mt-0.5">Organize cards by topic</p>
+                        </div>
+
+                        {filteredDecks.map((deck) => (
                             <div
-                                className="bg-[#F06560] h-full transition-all duration-300"
+                                key={deck.id}
+                                className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs hover:shadow-md hover:border-neutral-300 transition flex flex-col justify-between group"
+                            >
+                                <div>
+                                    <div className="flex items-start justify-between">
+                                        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-lg">
+                                            {deck.type === 'anki' ? '⭐' : '📝'}
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            {deck.type === 'custom' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleDeleteDeck(deck.id, deck.title, e)}
+                                                    className="p-1 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
+                                                    title="Delete Deck"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-sm font-bold text-neutral-800 group-hover:text-neutral-900 mt-3 line-clamp-1">
+                                        {deck.title}
+                                    </h3>
+                                    <p className="text-xs text-neutral-400 font-medium mt-0.5">
+                                        {deck.cardsCount} Cards • {deck.subject || 'General'}
+                                    </p>
+                                    <p className="text-[11px] text-neutral-400 mt-1">
+                                        Last review: {deck.lastReviewed || 'Recently'}
+                                    </p>
+                                </div>
+
+                                <div className="pt-4 mt-3 border-t border-neutral-100 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            startStudySession(deck.title, { deckId: deck.id })
+                                        }
+                                        className="flex-1 py-1.5 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold text-center transition cursor-pointer"
+                                    >
+                                        Study Deck
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => openAddCardForDeck(deck.id)}
+                                        className="p-1.5 rounded-xl border border-neutral-200 text-neutral-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition cursor-pointer"
+                                        title="Add card to this deck"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 7. TAB CONTENT 4: ALL FLASHCARDS (MANAGER & EXPLORER)     */}
+            {/* ========================================================= */}
+            {activeTab === 'cards' && (
+                <div className="space-y-4">
+                    {/* Management and Filter Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-neutral-200/90 shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="flex flex-1 flex-wrap items-center gap-2">
+                            {/* Search */}
+                            <div className="relative flex-1 min-w-[220px]">
+                                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    value={cardSearchQuery}
+                                    onChange={(e) => setCardSearchQuery(e.target.value)}
+                                    placeholder="Search card prompt, answer, or memory peg..."
+                                    className="w-full pl-9 pr-8 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-rose-500"
+                                />
+                                {cardSearchQuery && (
+                                    <button
+                                        onClick={() => setCardSearchQuery('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Subject Filter */}
+                            <select
+                                value={cardSubjectFilter}
+                                onChange={(e) => setCardSubjectFilter(e.target.value)}
+                                className="bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-700 font-medium focus:outline-none focus:border-rose-500"
+                            >
+                                <option value="all">All Subjects</option>
+                                {subjects.map((s) => (
+                                    <option key={s.id} value={s.name}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* Tag Filter */}
+                            <div className="flex items-center space-x-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setCardTagFilter('all')}
+                                    className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                                        cardTagFilter === 'all'
+                                            ? 'bg-neutral-900 text-white'
+                                            : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900'
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCardTagFilter('hyq')}
+                                    className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                                        cardTagFilter === 'hyq'
+                                            ? 'bg-amber-500 text-white'
+                                            : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900'
+                                    }`}
+                                >
+                                    ⭐ High-Yield
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCardTagFilter('pyq')}
+                                    className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                                        cardTagFilter === 'pyq'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900'
+                                    }`}
+                                >
+                                    🏛️ Past Year (PYQ)
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Top Add Flashcard Button */}
+                        <button
+                            type="button"
+                            onClick={() => setAddCardModalOpen(true)}
+                            className="inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-2xs active:scale-98 transition cursor-pointer"
+                        >
+                            <Plus className="w-4 h-4 stroke-[2.5]" />
+                            <span>Add New Flashcard</span>
+                        </button>
+                    </div>
+
+                    {/* Cards Explorer List / Grid */}
+                    {filteredCustomCards.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredCustomCards.map((card) => (
+                                <div
+                                    key={card.id}
+                                    className="bg-white rounded-2xl p-4 border border-neutral-200/90 shadow-2xs hover:shadow-md hover:border-neutral-300 transition flex flex-col justify-between"
+                                >
+                                    <div>
+                                        {/* Card Header badges */}
+                                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <span className="bg-neutral-100 text-neutral-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                    {card.subject || 'General'}
+                                                </span>
+                                                {card.deck_title && (
+                                                    <span className="bg-rose-50 text-rose-600 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                                                        📁 {card.deck_title}
+                                                    </span>
+                                                )}
+                                                {card.is_high_yield && (
+                                                    <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                                                        ⭐ HYQ
+                                                    </span>
+                                                )}
+                                                {card.is_past_year && (
+                                                    <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                                                        🏛️ {card.past_year || 'PYQ'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleDeleteCard(card.id, e)}
+                                                className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                                                title="Delete Flashcard"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Question / Front */}
+                                        <div className="mb-3">
+                                            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                                                Question / Prompt:
+                                            </span>
+                                            <p className="text-xs font-bold text-neutral-900 leading-snug line-clamp-3">
+                                                {card.front}
+                                            </p>
+                                        </div>
+
+                                        {/* Answer / Back */}
+                                        <div className="mb-3">
+                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
+                                                Answer & Explanation:
+                                            </span>
+                                            <p className="text-xs text-neutral-700 leading-relaxed line-clamp-3 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100">
+                                                {card.back}
+                                            </p>
+                                        </div>
+
+                                        {/* Memory Peg / Pearl */}
+                                        {card.pearl && (
+                                            <div className="bg-amber-50/70 border border-amber-200/70 rounded-xl p-2.5 text-[11px] text-amber-900 leading-snug mb-2">
+                                                <strong className="block font-bold mb-0.5">🧠 Memory Peg:</strong>
+                                                <span className="line-clamp-2">{card.pearl}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action footer */}
+                                    <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
+                                        <span className="text-[11px] text-neutral-400">
+                                            {card.created_at || 'Saved'}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setStudyCards([card]);
+                                                setSessionTitle('Flashcard Practice');
+                                                setCurrentCardIndex(0);
+                                                setIsFlipped(false);
+                                                setSessionCompleted(false);
+                                                setStudySessionActive(true);
+                                            }}
+                                            className="px-3 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800 transition cursor-pointer flex items-center gap-1"
+                                        >
+                                            <Eye className="w-3 h-3" />
+                                            <span>Practice</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-3xl p-12 text-center border border-neutral-200/80 flex flex-col items-center justify-center">
+                            <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl mb-3">
+                                🗂️
+                            </div>
+                            <h3 className="text-base font-bold text-neutral-800">No Custom Flashcards Yet</h3>
+                            <p className="text-xs text-neutral-400 max-w-sm mt-1 leading-relaxed">
+                                Create your first medical flashcard to begin spaced repetition recall with high-yield clinical tags.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setAddCardModalOpen(true)}
+                                className="mt-4 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1.5"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>+ Create First Flashcard</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 8. INTERACTIVE STUDY PLAYER MODAL (DESKTOP OPTIMIZED)      */}
+            {/* ========================================================= */}
+            {studySessionActive && (
+                <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+                        {/* Session Top Bar */}
+                        <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/80">
+                            <div className="flex items-center space-x-2.5">
+                                <span className="bg-rose-50 text-rose-600 text-xs font-bold px-3 py-1 rounded-full border border-rose-200">
+                                    {sessionTitle}
+                                </span>
+                                <span className="text-xs font-mono text-neutral-500">
+                                    Card {currentCardIndex + 1} of {studyCards.length}
+                                </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <span className="hidden sm:inline text-[11px] text-neutral-400">
+                                    Press <kbd className="px-1.5 py-0.5 bg-neutral-200 rounded text-[10px]">Space</kbd> to flip
+                                </span>
+                                <button
+                                    onClick={() => setStudySessionActive(false)}
+                                    className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 transition cursor-pointer"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-neutral-100 h-1.5">
+                            <div
+                                className="bg-rose-500 h-full transition-all duration-300"
                                 style={{
                                     width: `${((currentCardIndex + 1) / studyCards.length) * 100}%`,
                                 }}
                             />
                         </div>
 
-                        {/* Card Content, Loading State, or Completion Screen */}
+                        {/* Card Content or Loading State */}
                         {isLoadingCards ? (
-                            <div className="p-12 flex-1 flex flex-col items-center justify-center text-center min-h-[300px]">
-                                <Loader2 className="w-8 h-8 text-[#F06560] animate-spin mb-3" />
-                                <p className="text-sm font-semibold text-neutral-700">Loading High-Yield Flashcards...</p>
+                            <div className="p-16 flex flex-col items-center justify-center text-center">
+                                <Loader2 className="w-8 h-8 text-rose-500 animate-spin mb-3" />
+                                <p className="text-sm font-semibold text-neutral-800">Loading High-Yield Flashcards...</p>
                                 <p className="text-xs text-neutral-400 mt-1">Retrieving dynamic clinical concepts from database</p>
                             </div>
                         ) : !sessionCompleted ? (
-                            <div className="p-5 flex-1 flex flex-col justify-between overflow-y-auto">
+                            <div className="p-6 flex-1 flex flex-col justify-between overflow-y-auto">
                                 <div>
+                                    {/* Subject and tags */}
                                     <div className="flex items-center justify-between text-xs text-neutral-400 mb-3">
-                                        <span className="font-semibold text-neutral-600">
-                                            {studyCards[currentCardIndex]?.subject} • {studyCards[currentCardIndex]?.topic}
-                                        </span>
-                                        <span className="text-[11px] text-[#F06560] font-medium flex items-center space-x-1">
-                                            <Zap className="w-3 h-3" />
+                                        <div className="flex items-center space-x-2">
+                                            <span className="font-bold text-neutral-700">
+                                                {studyCards[currentCardIndex]?.subject}
+                                            </span>
+                                            <span>•</span>
+                                            <span>{studyCards[currentCardIndex]?.topic}</span>
+                                        </div>
+                                        <span className="text-[11px] text-rose-600 font-semibold flex items-center space-x-1">
+                                            <Zap className="w-3.5 h-3.5" />
                                             <span>FSRS Active</span>
                                         </span>
                                     </div>
@@ -1246,28 +1618,28 @@ export default function FlashcardsIndex({
                                     {/* 3D Flip Card Container */}
                                     <div
                                         onClick={() => setIsFlipped(!isFlipped)}
-                                        className="min-h-[220px] rounded-2xl border border-neutral-200/90 p-5 bg-[#FCFDFF] shadow-xs flex flex-col justify-between cursor-pointer hover:border-[#F06560]/40 transition group"
+                                        className="min-h-[260px] rounded-2xl border-2 border-neutral-200/80 p-6 bg-gradient-to-b from-white to-neutral-50/50 shadow-xs flex flex-col justify-between cursor-pointer hover:border-rose-400 transition group select-none"
                                     >
                                         {!isFlipped ? (
                                             <div>
                                                 <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">
-                                                    Prompt / Question
+                                                    Prompt / Clinical Scenario
                                                 </div>
-                                                <p className="text-sm font-medium leading-relaxed text-neutral-900 whitespace-pre-line">
+                                                <p className="text-base font-medium leading-relaxed text-neutral-900 whitespace-pre-line">
                                                     {studyCards[currentCardIndex]?.front}
                                                 </p>
                                             </div>
                                         ) : (
-                                            <div className="space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                                            <div className="space-y-4 animate-in fade-in zoom-in-95 duration-150">
                                                 <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center space-x-1">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                    <span>Clinical Key & Explanation</span>
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    <span>Clinical Answer & Explanation</span>
                                                 </div>
-                                                <p className="text-sm text-neutral-800 leading-relaxed whitespace-pre-line font-normal">
+                                                <p className="text-sm text-neutral-800 leading-relaxed whitespace-pre-line">
                                                     {studyCards[currentCardIndex]?.back}
                                                 </p>
                                                 {studyCards[currentCardIndex]?.pearl && (
-                                                    <div className="mt-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/60 text-xs text-amber-900 leading-relaxed">
+                                                    <div className="mt-3 p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 leading-relaxed">
                                                         <strong className="font-bold block mb-0.5">🧠 High-Yield Memory Peg:</strong>
                                                         {studyCards[currentCardIndex]?.pearl}
                                                     </div>
@@ -1275,75 +1647,95 @@ export default function FlashcardsIndex({
                                             </div>
                                         )}
 
-                                        <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-400">
-                                            <span>{isFlipped ? 'Answer Revealed' : 'Tap anywhere to flip card'}</span>
-                                            <RotateCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-300" />
+                                        <div className="mt-6 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-400">
+                                            <span>{isFlipped ? 'Answer Revealed' : 'Click anywhere or press Space to reveal answer'}</span>
+                                            <RotateCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Rating Buttons (shown when flipped or ready) */}
+                                {/* Rating Buttons (shown when flipped) */}
                                 {isFlipped ? (
-                                    <div className="mt-4 space-y-2 animate-in fade-in duration-150">
-                                        <div className="text-[11px] font-medium text-neutral-500 text-center">
-                                            How well did you recall this clinical concept?
+                                    <div className="mt-5 space-y-2 animate-in fade-in duration-150">
+                                        <div className="text-xs font-semibold text-neutral-500 text-center">
+                                            How well did you recall this concept? (Keys 1 - 4)
                                         </div>
-                                        <div className="grid grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-4 gap-2.5">
                                             <button
+                                                type="button"
                                                 onClick={() => handleCardRating('again')}
-                                                className="py-2.5 px-1 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex flex-col items-center justify-center text-xs font-semibold border border-rose-200 transition cursor-pointer"
+                                                className="py-3 px-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 flex flex-col items-center justify-center text-xs font-bold border border-rose-200 transition cursor-pointer"
                                             >
-                                                <span>Again</span>
-                                                <span className="text-[10px] opacity-75 font-normal">&lt;10m</span>
+                                                <span>Again [1]</span>
+                                                <span className="text-[10px] opacity-75 font-normal">&lt;10 mins</span>
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleCardRating('hard')}
-                                                className="py-2.5 px-1 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 flex flex-col items-center justify-center text-xs font-semibold border border-amber-200 transition cursor-pointer"
+                                                className="py-3 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 flex flex-col items-center justify-center text-xs font-bold border border-amber-200 transition cursor-pointer"
                                             >
-                                                <span>Hard</span>
-                                                <span className="text-[10px] opacity-75 font-normal">2d</span>
+                                                <span>Hard [2]</span>
+                                                <span className="text-[10px] opacity-75 font-normal">2 days</span>
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleCardRating('good')}
-                                                className="py-2.5 px-1 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 flex flex-col items-center justify-center text-xs font-semibold border border-blue-200 transition cursor-pointer"
+                                                className="py-3 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 flex flex-col items-center justify-center text-xs font-bold border border-blue-200 transition cursor-pointer"
                                             >
-                                                <span>Good</span>
-                                                <span className="text-[10px] opacity-75 font-normal">7d</span>
+                                                <span>Good [3]</span>
+                                                <span className="text-[10px] opacity-75 font-normal">7 days</span>
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleCardRating('easy')}
-                                                className="py-2.5 px-1 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex flex-col items-center justify-center text-xs font-semibold border border-emerald-200 transition cursor-pointer"
+                                                className="py-3 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 flex flex-col items-center justify-center text-xs font-bold border border-emerald-200 transition cursor-pointer"
                                             >
-                                                <span>Easy</span>
-                                                <span className="text-[10px] opacity-75 font-normal">21d</span>
+                                                <span>Easy [4]</span>
+                                                <span className="text-[10px] opacity-75 font-normal">21 days</span>
                                             </button>
                                         </div>
                                     </div>
                                 ) : (
                                     <button
+                                        type="button"
                                         onClick={() => setIsFlipped(true)}
-                                        className="mt-4 w-full py-3 rounded-xl bg-[#F06560] text-white text-xs font-bold hover:bg-[#D94843] active:scale-98 transition shadow-xs flex items-center justify-center space-x-2 cursor-pointer"
+                                        className="mt-5 w-full py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold active:scale-98 transition shadow-xs flex items-center justify-center space-x-2 cursor-pointer"
                                     >
                                         <Eye className="w-4 h-4" />
-                                        <span>Show Answer & Explanation</span>
+                                        <span>Show Answer & Explanation (Space)</span>
                                     </button>
                                 )}
                             </div>
                         ) : (
-                            <div className="p-8 text-center flex flex-col items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mb-4 shadow-xs">
+                            <div className="p-12 text-center flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mb-4">
                                     🎉
                                 </div>
-                                <h3 className="text-lg font-bold text-neutral-900">Session Complete!</h3>
-                                <p className="text-xs text-neutral-500 mt-1 max-w-xs leading-relaxed">
-                                    You reviewed {reviewedCount} flashcards. Your long-term memory stability has been updated in the FSRS spaced repetition engine.
+                                <h3 className="text-xl font-bold text-neutral-900">Session Complete!</h3>
+                                <p className="text-xs text-neutral-500 mt-2 max-w-sm leading-relaxed">
+                                    You reviewed {reviewedCount} flashcards. Memory intervals have been recalculated and saved to your personal FSRS schedule.
                                 </p>
-                                <button
-                                    onClick={() => setStudySessionActive(false)}
-                                    className="mt-6 w-full py-2.5 rounded-xl bg-[#F06560] text-white font-bold text-xs hover:bg-[#D94843] transition cursor-pointer"
-                                >
-                                    Return to Flashcards Hub
-                                </button>
+                                <div className="mt-6 flex items-center space-x-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCurrentCardIndex(0);
+                                            setIsFlipped(false);
+                                            setSessionCompleted(false);
+                                            setReviewedCount(0);
+                                        }}
+                                        className="px-4 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 font-semibold text-xs hover:bg-neutral-50 transition cursor-pointer"
+                                    >
+                                        Review Again
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStudySessionActive(false)}
+                                        className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition cursor-pointer"
+                                    >
+                                        Back to Flashcards Hub
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1351,120 +1743,42 @@ export default function FlashcardsIndex({
             )}
 
             {/* ========================================================= */}
-            {/* CREATE FLASHCARD DECK MODAL                               */}
-            {/* ========================================================= */}
-            {createModalOpen && (
-                <div className="fixed inset-0 z-60 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-white rounded-3xl p-5 shadow-2xl">
-                        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                            <h3 className="text-base font-bold text-neutral-900">Create Custom Deck</h3>
-                            <button
-                                onClick={() => setCreateModalOpen(false)}
-                                className="text-neutral-400 hover:text-neutral-700"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleCreateDeck} className="mt-4 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                    Deck Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newDeckTitle}
-                                    onChange={(e) => setNewDeckTitle(e.target.value)}
-                                    placeholder="e.g. Cardiology Heart Murmurs & ECGs"
-                                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560] focus:ring-1 focus:ring-[#F06560]"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                    Target Medical Specialty
-                                </label>
-                                <select
-                                    value={newDeckCategory}
-                                    onChange={(e) => setNewDeckCategory(e.target.value)}
-                                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-[#F06560]"
-                                >
-                                    <option value="Anatomy">Anatomy</option>
-                                    <option value="Physiology">Physiology</option>
-                                    <option value="Biochemistry">Biochemistry</option>
-                                    <option value="Pathology">Pathology</option>
-                                    <option value="Pharmacology">Pharmacology</option>
-                                    <option value="Internal Medicine">Internal Medicine</option>
-                                    <option value="Surgery">Surgery</option>
-                                    <option value="Pediatrics">Pediatrics</option>
-                                </select>
-                            </div>
-                            <div className="pt-2 flex items-center justify-end space-x-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setCreateModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={!newDeckTitle.trim() || isSavingDeck}
-                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#F06560] text-white hover:bg-[#D94843] disabled:opacity-50 transition cursor-pointer flex items-center space-x-1.5"
-                                >
-                                    {isSavingDeck && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                    <span>{isSavingDeck ? 'Saving...' : 'Save Deck'}</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* ========================================================= */}
-            {/* ADD FLASHCARD MODAL                                       */}
+            {/* 9. MODAL: ADD FLASHCARD (PROMINENT & INTUITIVE)           */}
             {/* ========================================================= */}
             {addCardModalOpen && (
-                <div className="fixed inset-0 z-60 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="w-full max-w-lg bg-white rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                            <div className="flex items-center space-x-2">
-                                <span className="text-xl">🗂️</span>
-                                <h3 className="text-base font-bold text-neutral-900">Add New Flashcard</h3>
+                <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-xl bg-white rounded-3xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+                        <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+                            <div className="flex items-center space-x-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                                    <Plus className="w-5 h-5 stroke-[2.5]" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-neutral-900">Add New Flashcard</h3>
+                                    <p className="text-xs text-neutral-400">Save clinical cards into decks or medical specialties</p>
+                                </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setAddCardModalOpen(false)}
-                                className="text-neutral-400 hover:text-neutral-700 p-1 rounded-full hover:bg-neutral-100 transition"
+                                className="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-full hover:bg-neutral-100 transition"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <form onSubmit={handleCreateCard} className="mt-4 space-y-3.5">
-                            <div className="grid grid-cols-2 gap-3">
+
+                        <form onSubmit={handleCreateCard} className="mt-5 space-y-4">
+                            {/* Specialty and Deck selectors */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                        Target Deck
-                                    </label>
-                                    <select
-                                        value={newCardDeckId}
-                                        onChange={(e) => setNewCardDeckId(e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-[#F06560]"
-                                    >
-                                        <option value="">General (No Deck)</option>
-                                        {customDecks.map((d) => (
-                                            <option key={d.id} value={d.id}>
-                                                {d.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                        Medical Subject
+                                        Medical Subject <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={newCardSubjectId}
                                         onChange={(e) => setNewCardSubjectId(e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-[#F06560]"
+                                        className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-rose-500"
+                                        required
                                     >
                                         <option value="">Select Subject...</option>
                                         {subjects.map((s) => (
@@ -1474,51 +1788,72 @@ export default function FlashcardsIndex({
                                         ))}
                                     </select>
                                 </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                        Target Custom Deck
+                                    </label>
+                                    <select
+                                        value={newCardDeckId}
+                                        onChange={(e) => setNewCardDeckId(e.target.value)}
+                                        className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-rose-500"
+                                    >
+                                        <option value="">General (No Deck)</option>
+                                        {customDecks.map((d) => (
+                                            <option key={d.id} value={d.id}>
+                                                {d.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
+                            {/* Prompt / Front */}
                             <div>
                                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                    Card Front (Question / Prompt) <span className="text-red-500">*</span>
+                                    Card Front (Question / Clinical Scenario) <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
                                     value={newCardFront}
                                     onChange={(e) => setNewCardFront(e.target.value)}
-                                    placeholder="e.g. What is the classic triad of Cardiac Tamponade?"
+                                    placeholder="e.g. What is Beck's Triad in acute cardiac tamponade?"
                                     rows={3}
                                     required
-                                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560] focus:ring-1 focus:ring-[#F06560]"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
                                 />
                             </div>
 
+                            {/* Answer / Back */}
                             <div>
                                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                    Card Back (Answer / Solution) <span className="text-red-500">*</span>
+                                    Card Back (Answer & Clinical Explanation) <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
                                     value={newCardBack}
                                     onChange={(e) => setNewCardBack(e.target.value)}
-                                    placeholder="e.g. Beck's Triad: 1. Hypotension, 2. Distended jugular veins (JVD), 3. Muffled heart sounds."
+                                    placeholder="e.g. 1. Hypotension with narrowed pulse pressure, 2. Jugular venous distension (JVD), 3. Muffled heart sounds."
                                     rows={3}
                                     required
-                                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560] focus:ring-1 focus:ring-[#F06560]"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
                                 />
                             </div>
 
+                            {/* Clinical Pearl */}
                             <div>
                                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                                    High-Yield Clinical Pearl / Mnemonic (Optional)
+                                    High-Yield Clinical Pearl / Memory Peg (Optional)
                                 </label>
                                 <textarea
                                     value={newCardPearl}
                                     onChange={(e) => setNewCardPearl(e.target.value)}
-                                    placeholder="e.g. Pulsus paradoxus (> 10 mmHg drop in SBP on inspiration) is also present. Contrast with tension pneumothorax!"
+                                    placeholder="e.g. Pulsus paradoxus (>10 mmHg drop in SBP on inspiration). Do not confuse with tension pneumothorax!"
                                     rows={2}
-                                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-[#F06560]"
+                                    className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-rose-500"
                                 />
                             </div>
 
-                            {/* Tags: High-Yield & Past Year Question */}
-                            <div className="bg-neutral-50 rounded-2xl p-3 border border-neutral-200/70 space-y-2.5">
+                            {/* Board Tags */}
+                            <div className="bg-neutral-50 rounded-2xl p-3.5 border border-neutral-200/80 space-y-2.5">
                                 <label className="flex items-center space-x-2 text-xs font-semibold text-neutral-800 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -1544,14 +1879,15 @@ export default function FlashcardsIndex({
                                             type="text"
                                             value={newCardPastYear}
                                             onChange={(e) => setNewCardPastYear(e.target.value)}
-                                            placeholder="Exam / Year (e.g. MECEE 2024, USMLE 2023)"
-                                            className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-blue-500"
+                                            placeholder="Exam & Year (e.g. MECEE 2024, USMLE Step 1 2023)"
+                                            className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-blue-500 bg-white"
                                         />
                                     )}
                                 </div>
                             </div>
 
-                            <div className="pt-2 flex items-center justify-end space-x-2 border-t border-neutral-100">
+                            {/* Submit & Cancel */}
+                            <div className="pt-3 flex items-center justify-end space-x-2 border-t border-neutral-100">
                                 <button
                                     type="button"
                                     onClick={() => setAddCardModalOpen(false)}
@@ -1562,7 +1898,7 @@ export default function FlashcardsIndex({
                                 <button
                                     type="submit"
                                     disabled={!newCardFront.trim() || !newCardBack.trim() || isSavingCard}
-                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#F06560] text-white hover:bg-[#D94843] disabled:opacity-50 transition cursor-pointer flex items-center space-x-1.5"
+                                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 transition cursor-pointer flex items-center space-x-1.5 shadow-xs"
                                 >
                                     {isSavingCard && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                     <span>{isSavingCard ? 'Saving...' : 'Save Flashcard'}</span>
@@ -1574,17 +1910,99 @@ export default function FlashcardsIndex({
             )}
 
             {/* ========================================================= */}
-            {/* ANKI IMPORT MODAL                                         */}
+            {/* 10. MODAL: CREATE CUSTOM DECK                            */}
+            {/* ========================================================= */}
+            {createModalOpen && (
+                <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl">
+                        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                            <h3 className="text-base font-bold text-neutral-900">Create Custom Deck</h3>
+                            <button
+                                type="button"
+                                onClick={() => setCreateModalOpen(false)}
+                                className="text-neutral-400 hover:text-neutral-700"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreateDeck} className="mt-4 space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                    Deck Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newDeckTitle}
+                                    onChange={(e) => setNewDeckTitle(e.target.value)}
+                                    placeholder="e.g. Cardiology Heart Murmurs & ECGs"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                    Medical Specialty
+                                </label>
+                                <select
+                                    value={newDeckCategory}
+                                    onChange={(e) => setNewDeckCategory(e.target.value)}
+                                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-800 focus:outline-none focus:border-rose-500"
+                                >
+                                    {subjects.length > 0 ? (
+                                        subjects.map((s) => (
+                                            <option key={s.id} value={s.name}>
+                                                {s.name}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <option value="Anatomy">Anatomy</option>
+                                            <option value="Physiology">Physiology</option>
+                                            <option value="Biochemistry">Biochemistry</option>
+                                            <option value="Pathology">Pathology</option>
+                                            <option value="Pharmacology">Pharmacology</option>
+                                            <option value="Internal Medicine">Internal Medicine</option>
+                                            <option value="Surgery">Surgery</option>
+                                            <option value="Pediatrics">Pediatrics</option>
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                            <div className="pt-2 flex items-center justify-end space-x-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setCreateModalOpen(false)}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!newDeckTitle.trim() || isSavingDeck}
+                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 transition cursor-pointer flex items-center space-x-1.5"
+                                >
+                                    {isSavingDeck && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    <span>{isSavingDeck ? 'Saving...' : 'Save Deck'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 11. MODAL: ANKI IMPORT                                    */}
             {/* ========================================================= */}
             {ankiModalOpen && (
-                <div className="fixed inset-0 z-60 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-white rounded-3xl p-5 shadow-2xl">
+                <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl">
                         <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
                             <div className="flex items-center space-x-2">
                                 <span className="text-xl">⭐</span>
                                 <h3 className="text-base font-bold text-neutral-900">Import Anki Package (.apkg)</h3>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setAnkiModalOpen(false)}
                                 className="text-neutral-400 hover:text-neutral-700"
                             >
@@ -1592,7 +2010,7 @@ export default function FlashcardsIndex({
                             </button>
                         </div>
                         <div className="mt-4 space-y-4">
-                            <div className="border-2 border-dashed border-neutral-200 rounded-2xl p-6 text-center hover:border-[#F06560] transition cursor-pointer">
+                            <div className="border-2 border-dashed border-neutral-200 rounded-2xl p-6 text-center hover:border-rose-400 transition cursor-pointer">
                                 <UploadCloud className="w-10 h-10 text-neutral-400 mx-auto mb-2" />
                                 <p className="text-xs font-bold text-neutral-700">Drag & drop your Anki deck file here</p>
                                 <p className="text-[11px] text-neutral-400 mt-1">Supports .apkg and .colpkg archives</p>
@@ -1601,6 +2019,7 @@ export default function FlashcardsIndex({
                                 <strong>AI Enhancement:</strong> Cortex will automatically cross-reference imported cards with our 19 medical subjects and generate mnemonic rationales.
                             </div>
                             <button
+                                type="button"
                                 onClick={handleImportAnki}
                                 className="w-full py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-xs hover:bg-blue-700 transition cursor-pointer"
                             >
@@ -1612,11 +2031,11 @@ export default function FlashcardsIndex({
             )}
 
             {/* ========================================================= */}
-            {/* CORTEX AI CLINICAL TUTOR DRAWER / MODAL                   */}
+            {/* 12. MODAL: DR. CORTEX AI TUTOR                            */}
             {/* ========================================================= */}
             {cortexModalOpen && (
-                <div className="fixed inset-0 z-60 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-3 animate-in fade-in duration-200">
-                    <div className="w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[640px] max-h-[92vh]">
+                <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-xl bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[640px] max-h-[92vh]">
                         {/* Header */}
                         <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-gradient-to-r from-blue-50/90 to-sky-50/70">
                             <div className="flex items-center space-x-3">
@@ -1631,7 +2050,7 @@ export default function FlashcardsIndex({
                                             Clinical AI Tutor
                                         </span>
                                     </div>
-                                    <p className="text-[11px] text-neutral-500">Board Landmarks • Spaced Repetition Pearls • Differential Reasoning</p>
+                                    <p className="text-[11px] text-neutral-500">Board Landmarks • Spaced Repetition Pearls • Differentials</p>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -1639,6 +2058,7 @@ export default function FlashcardsIndex({
                                     ⚡ {cortexCredits} credits
                                 </span>
                                 <button
+                                    type="button"
                                     onClick={() => setCortexModalOpen(false)}
                                     className="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-full hover:bg-neutral-100 transition cursor-pointer"
                                 >
@@ -1652,6 +2072,7 @@ export default function FlashcardsIndex({
                             {(['Board Tutor', 'Mnemonics', 'Differentials', 'Next Step'] as const).map((mode) => (
                                 <button
                                     key={mode}
+                                    type="button"
                                     onClick={() => setCortexMode(mode)}
                                     className={`text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap transition cursor-pointer ${
                                         cortexMode === mode
@@ -1680,7 +2101,6 @@ export default function FlashcardsIndex({
                                     >
                                         <p className="whitespace-pre-wrap">{msg.text}</p>
 
-                                        {/* Clinical Pearl Box */}
                                         {msg.clinicalPearl && (
                                             <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-2.5 text-amber-950">
                                                 <div className="flex items-center gap-1.5 font-bold text-[10px] text-amber-800 uppercase tracking-wider mb-0.5">
@@ -1691,7 +2111,6 @@ export default function FlashcardsIndex({
                                             </div>
                                         )}
 
-                                        {/* Emergency Step Box */}
                                         {msg.emergencyStep && (
                                             <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-2.5 text-rose-950">
                                                 <div className="flex items-center gap-1.5 font-bold text-[10px] text-rose-800 uppercase tracking-wider mb-0.5">
@@ -1702,7 +2121,6 @@ export default function FlashcardsIndex({
                                             </div>
                                         )}
 
-                                        {/* Related Topics Chips */}
                                         {msg.relatedTopics && msg.relatedTopics.length > 0 && (
                                             <div className="pt-1">
                                                 <span className="text-[10px] font-bold text-neutral-400 block mb-1">
@@ -1726,7 +2144,6 @@ export default function FlashcardsIndex({
                                 </div>
                             ))}
 
-                            {/* Typing Indicator */}
                             {cortexIsTyping && (
                                 <div className="flex justify-start">
                                     <div className="bg-white border border-neutral-200/80 rounded-2xl rounded-bl-xs px-3.5 py-2.5 shadow-xs flex items-center space-x-2">
@@ -1744,34 +2161,32 @@ export default function FlashcardsIndex({
                         {/* Quick Prompts */}
                         <div className="px-3 py-2 bg-white border-t border-neutral-100 flex items-center space-x-2 overflow-x-auto no-scrollbar">
                             <button
+                                type="button"
                                 onClick={() => handleSendCortexAi(undefined, 'Explain Beck Triad for cardiac tamponade')}
                                 className="px-2.5 py-1 rounded-full bg-neutral-100 text-[10px] font-medium text-neutral-700 whitespace-nowrap hover:bg-neutral-200 transition cursor-pointer"
                             >
                                 🫀 Beck’s Triad
                             </button>
                             <button
+                                type="button"
                                 onClick={() => handleSendCortexAi(undefined, 'Cranial nerve exit foramina and clinical lesions')}
                                 className="px-2.5 py-1 rounded-full bg-neutral-100 text-[10px] font-medium text-neutral-700 whitespace-nowrap hover:bg-neutral-200 transition cursor-pointer"
                             >
                                 🧠 Cranial Nerves
                             </button>
                             <button
+                                type="button"
                                 onClick={() => handleSendCortexAi(undefined, 'Loop vs Thiazide diuretics electrolyte differences')}
                                 className="px-2.5 py-1 rounded-full bg-neutral-100 text-[10px] font-medium text-neutral-700 whitespace-nowrap hover:bg-neutral-200 transition cursor-pointer"
                             >
                                 💊 Diuretics
                             </button>
                             <button
+                                type="button"
                                 onClick={() => handleSendCortexAi(undefined, 'Tension pneumothorax signs and needle decompression')}
                                 className="px-2.5 py-1 rounded-full bg-neutral-100 text-[10px] font-medium text-neutral-700 whitespace-nowrap hover:bg-neutral-200 transition cursor-pointer"
                             >
                                 ⚡ Tension Pneumothorax
-                            </button>
-                            <button
-                                onClick={() => handleSendCortexAi(undefined, 'SAD PUCKER retroperitoneal organs mnemonic')}
-                                className="px-2.5 py-1 rounded-full bg-neutral-100 text-[10px] font-medium text-neutral-700 whitespace-nowrap hover:bg-neutral-200 transition cursor-pointer"
-                            >
-                                🧬 SAD PUCKER
                             </button>
                         </div>
 

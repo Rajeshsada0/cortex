@@ -57,6 +57,8 @@ Route::prefix('v1')->group(function () {
     Route::delete('/flashcards/decks/{id}', [\App\Http\Controllers\Web\FlashcardWebController::class, 'deleteDeck'])->name('api.v1.flashcards.decks.destroy');
     Route::get('/flashcards/cards', [\App\Http\Controllers\Web\FlashcardWebController::class, 'getCards'])->name('api.v1.flashcards.cards');
     Route::post('/flashcards/cards', [\App\Http\Controllers\Web\FlashcardWebController::class, 'storeCard'])->name('api.v1.flashcards.cards.store');
+    Route::delete('/flashcards/cards/{id}', [\App\Http\Controllers\Web\FlashcardWebController::class, 'deleteCard'])->name('api.v1.flashcards.cards.destroy');
+    Route::post('/flashcards/review', [\App\Http\Controllers\Web\FlashcardWebController::class, 'reviewCard'])->name('api.v1.flashcards.review');
     Route::get('/spaced-repetition/due', [SpacedRepetitionController::class, 'due'])->name('api.v1.spaced-repetition.due');
     Route::post('/spaced-repetition/review', [SpacedRepetitionController::class, 'review'])->name('api.v1.spaced-repetition.review');
 

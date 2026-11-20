@@ -307,6 +307,33 @@ class FlashcardWebController extends Controller
             ->values()
             ->toArray();
 
+        // Query user's custom flashcards
+        $userCustomCards = Flashcard::with(['subject:id,name', 'deck:id,title', 'topic:id,name'])
+            ->when($user, fn ($q) => $q->where('user_id', $user->id))
+            ->latest()
+            ->get()
+            ->map(fn ($fc) => [
+                'id' => (string) $fc->id,
+                'deck_id' => (string) $fc->deck_id,
+                'deck_title' => $fc->deck?->title,
+                'subject' => $fc->subject?->name ?? 'General Medicine',
+                'subject_id' => $fc->subject_id,
+                'topic' => $fc->topic?->name ?? 'Clinical Pearl',
+                'front' => $fc->front,
+                'back' => $fc->back,
+                'pearl' => $fc->pearl ?? '',
+                'difficulty' => $fc->difficulty ?? 'MEDIUM',
+                'is_high_yield' => (bool) $fc->is_high_yield,
+                'is_past_year' => (bool) $fc->is_past_year,
+                'past_year' => $fc->past_year ?? '',
+                'created_at' => $fc->created_at?->diffForHumans() ?? 'Recently',
+            ])
+            ->values()
+            ->toArray();
+
+        $totalCustomCardsCount = Flashcard::when($user, fn ($q) => $q->where('user_id', $user->id))->count();
+        $totalQBankCount = Question::where('is_active', true)->count();
+
         $subjects = Subject::orderBy('order_index')->get(['id', 'name', 'slug']);
 
         return Inertia::render('flashcards/index', [
@@ -317,6 +344,9 @@ class FlashcardWebController extends Controller
             'initialDecks' => $customDecks,
             'subjects' => $subjects,
             'sampleCards' => $dynamicFlashcards,
+            'customCards' => $userCustomCards,
+            'totalCustomCardsCount' => $totalCustomCardsCount,
+            'totalQBankCount' => $totalQBankCount,
         ]);
     }
 
@@ -451,6 +481,26 @@ class FlashcardWebController extends Controller
     }
 
     /**
+     * Delete a custom flashcard
+     */
+    public function deleteCard(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $card = Flashcard::where('id', $id)
+            ->when($user, fn ($q) => $q->where('user_id', $user->id))
+            ->first();
+
+        if ($card) {
+            if ($card->deck_id) {
+                FlashcardDeck::where('id', $card->deck_id)->decrement('cards_count');
+            }
+            $card->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Create a custom flashcard
      */
     public function storeCard(Request $request): JsonResponse
@@ -517,16 +567,28 @@ class FlashcardWebController extends Controller
                 ->get()
                 ->map(fn ($fc) => self::formatFlashcardModelToFlashcard($fc));
 
-            if ($customCards->isNotEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'count' => $customCards->count(),
-                    'cards' => $customCards,
-                ]);
-            }
+            return response()->json([
+                'success' => true,
+                'count' => $customCards->count(),
+                'cards' => $customCards,
+            ]);
         }
 
-        // 2. Query questions table
+        // 2. Query questions and custom flashcards
+        $customCards = collect();
+        if ($subject && $subject !== 'all' && $subject !== 'due') {
+            $slug = Str::slug($subject);
+            $customCards = Flashcard::whereHas('subject', function ($q) use ($slug, $subject) {
+                $q->where('slug', 'like', "%{$slug}%")
+                    ->orWhere('name', 'like', "%{$subject}%");
+            })
+            ->with(['subject', 'topic'])
+            ->latest()
+            ->take($limit)
+            ->get()
+            ->map(fn ($fc) => self::formatFlashcardModelToFlashcard($fc));
+        }
+
         $query = Question::query()
             ->where('is_active', true)
             ->with(['subject', 'topic', 'options']);
@@ -596,7 +658,7 @@ class FlashcardWebController extends Controller
                 ->get();
         }
 
-        $cards = $questions->map(fn ($q) => self::formatQuestionToFlashcard($q))->values();
+        $cards = $customCards->concat($questions->map(fn ($q) => self::formatQuestionToFlashcard($q)))->take($limit)->values();
 
         return response()->json([
             'success' => true,

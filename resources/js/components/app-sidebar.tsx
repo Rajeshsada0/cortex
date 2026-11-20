@@ -160,6 +160,11 @@ const adminNavItems: NavItem[] = [
         icon: Award,
     },
     {
+        title: 'Flashcards Hub',
+        href: '/flashcards',
+        icon: Layers,
+    },
+    {
         title: 'Candidate Directory',
         href: '/admin/users',
         icon: Users,

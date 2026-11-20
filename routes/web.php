@@ -45,6 +45,7 @@ Route::post('/flashcards/decks', [FlashcardWebController::class, 'storeDeck'])->
 Route::delete('/flashcards/decks/{id}', [FlashcardWebController::class, 'deleteDeck'])->name('flashcards.decks.destroy');
 Route::get('/flashcards/cards', [FlashcardWebController::class, 'getCards'])->name('flashcards.cards');
 Route::post('/flashcards/cards', [FlashcardWebController::class, 'storeCard'])->name('flashcards.cards.store');
+Route::delete('/flashcards/cards/{id}', [FlashcardWebController::class, 'deleteCard'])->name('flashcards.cards.destroy');
 Route::post('/flashcards/review', [FlashcardWebController::class, 'reviewCard'])->name('flashcards.review');
 
 // Medical Gaming Hub & Clinical Recall Games (Medle, Synapses, Image Rush, Probe)

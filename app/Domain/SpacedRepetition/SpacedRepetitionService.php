@@ -59,6 +59,20 @@ final class SpacedRepetitionService
      */
     public function recordAttempt(User $user, string $questionId, bool $isCorrect, ConfidenceLevel|string $confidence): SpacedRepetitionQueue
     {
+        $transition = $this->transition($isCorrect, $confidence, 0);
+
+        if (! \App\Models\Question::where('id', $questionId)->exists()) {
+            return new SpacedRepetitionQueue([
+                'user_id' => $user->id,
+                'question_id' => $questionId,
+                'repetition_stage' => $transition->nextStage,
+                'next_review_due' => $transition->nextReviewDue,
+                'interval_days' => $transition->intervalDays,
+                'consecutive_correct' => $isCorrect ? 1 : 0,
+                'ease_factor' => 2.50,
+            ]);
+        }
+
         $currentQueue = SpacedRepetitionQueue::where('user_id', $user->id)
             ->where('question_id', $questionId)
             ->first();
