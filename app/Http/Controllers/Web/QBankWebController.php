@@ -123,16 +123,23 @@ class QBankWebController extends Controller
                     : array_map('intval', explode(',', (string) $rawTopics));
             }
 
+            $isPastYear = $request->boolean('is_past_year') || in_array(strtolower((string) $request->query('filter')), ['past_year', 'pyq']);
+            $isHighYield = $request->boolean('is_high_yield') || in_array(strtolower((string) $request->query('filter')), ['high_yield', 'hyq']);
+
             $title = match (strtoupper((string) ($quadrant ?? ''))) {
                 'HAZARDOUS' => 'Hazardous Blind Spot Remediation ('.$pathway.')',
                 'UNSTABLE', 'LUCKY_GUESS' => 'Lucky Guess & Unstable Remediation ('.$pathway.')',
                 'GAP' => 'Knowledge Gap Remediation ('.$pathway.')',
                 'MASTERED' => 'Mastered Concepts Revision ('.$pathway.')',
-                default => strtoupper((string) $status) === 'BOOKMARKED'
-                    ? 'Bookmarked Clinical Vignettes Practice ('.$pathway.')'
-                    : ($singleQuestionId
-                        ? 'Targeted Clinical Vignette Review ('.$pathway.')'
-                        : ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')'),
+                default => $isPastYear
+                    ? 'Past Year Questions (PYQs) ('.$pathway.')'
+                    : ($isHighYield
+                        ? 'High-Yield Board Questions ('.$pathway.')'
+                        : (strtoupper((string) $status) === 'BOOKMARKED'
+                            ? 'Bookmarked Clinical Vignettes Practice ('.$pathway.')'
+                            : ($singleQuestionId
+                                ? 'Targeted Clinical Vignette Review ('.$pathway.')'
+                                : ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')'))),
             };
 
             $result = $this->testSessionService->createSession(
@@ -145,7 +152,9 @@ class QBankWebController extends Controller
                 difficulty: $difficulty !== 'ALL' ? $difficulty : null,
                 limit: $limit,
                 status: $questionIds !== null ? null : $status,
-                questionIds: $questionIds
+                questionIds: $questionIds,
+                isPastYear: $isPastYear,
+                isHighYield: $isHighYield
             );
 
             $session = $result['session'];

@@ -31,6 +31,8 @@ import {
     Palette,
     Sparkles,
     LogOut,
+    Flame,
+    History,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import {
@@ -80,6 +82,18 @@ const candidateNavItems: NavItem[] = [
         title: 'Practice MCQs',
         href: '/qbank/runner',
         icon: PlaySquare,
+    },
+    {
+        title: 'Past Year Questions',
+        href: '/qbank/runner?filter=past_year',
+        icon: History,
+        badge: 'PYQ',
+    },
+    {
+        title: 'High-Yield Questions',
+        href: '/qbank/runner?filter=high_yield',
+        icon: Flame,
+        badge: 'HY',
     },
     {
         title: 'Test Builder',

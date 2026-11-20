@@ -18,6 +18,8 @@ import {
     Compass,
     RotateCcw,
     Stethoscope,
+    Flame,
+    History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,6 +99,8 @@ interface DashboardProps {
     avgScorePercent?: number | null;
     totalQuestions: number;
     totalAttempts: number;
+    pastYearQuestionsCount?: number;
+    highYieldQuestionsCount?: number;
 }
 
 export default function Dashboard({
@@ -114,6 +118,8 @@ export default function Dashboard({
     avgScorePercent = null,
     totalQuestions,
     totalAttempts,
+    pastYearQuestionsCount = 0,
+    highYieldQuestionsCount = 0,
 }: DashboardProps) {
     const settings = useSettings();
     const [phaseFilter, setPhaseFilter] = useState<
@@ -488,6 +494,99 @@ export default function Dashboard({
                             </Button>
                         </div>
                     )}
+                </div>
+
+                {/* Exam Recall & High-Yield Section */}
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-xs transition">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xs">
+                                <Award className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-foreground sm:text-base">
+                                    Exam Recall & High-Yield
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Targeted revision for board exam readiness & repeat patterns
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {/* Card 1: Past Year Questions */}
+                        <div className="flex flex-col justify-between rounded-xl border border-blue-200/80 bg-blue-50/50 p-4 transition hover:border-blue-300 dark:border-blue-900/40 dark:bg-blue-950/20">
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                        <History className="h-5 w-5" />
+                                    </div>
+                                    <span className="rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 uppercase dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                        PYQ
+                                    </span>
+                                </div>
+                                <h4 className="mt-3 text-sm font-bold text-foreground">
+                                    Past Year Questions
+                                </h4>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {(pastYearQuestionsCount ?? 0) > 0
+                                        ? `${pastYearQuestionsCount} Authentic Board PYQs`
+                                        : 'Exam recall papers & repeats'}
+                                </p>
+                            </div>
+                            <div className="mt-4 pt-3 border-t border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                                    {pastYearQuestionsCount ?? 0} Questions
+                                </span>
+                                <Link href="/qbank/runner?filter=past_year">
+                                    <Button
+                                        size="sm"
+                                        className="h-8 gap-1 rounded-lg bg-blue-600 px-3.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
+                                    >
+                                        <span>Solve PYQs</span>
+                                        <ArrowRight className="h-3 w-3" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Card 2: High-Yield Questions */}
+                        <div className="flex flex-col justify-between rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 transition hover:border-amber-300 dark:border-amber-900/40 dark:bg-amber-950/20">
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                                        <Flame className="h-5 w-5" />
+                                    </div>
+                                    <span className="rounded-full border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase dark:border-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                                        HIGH YIELD
+                                    </span>
+                                </div>
+                                <h4 className="mt-3 text-sm font-bold text-foreground">
+                                    High-Yield Questions
+                                </h4>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {(highYieldQuestionsCount ?? 0) > 0
+                                        ? `${highYieldQuestionsCount} Core Clinical MCQs`
+                                        : 'Top-tier high yield topic pearls'}
+                                </p>
+                            </div>
+                            <div className="mt-4 pt-3 border-t border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                    {highYieldQuestionsCount ?? 0} Questions
+                                </span>
+                                <Link href="/qbank/runner?filter=high_yield">
+                                    <Button
+                                        size="sm"
+                                        className="h-8 gap-1 rounded-lg bg-amber-600 px-3.5 text-xs font-bold text-white shadow-xs hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500"
+                                    >
+                                        <span>Solve High-Yield</span>
+                                        <ArrowRight className="h-3 w-3" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Minimal, High-Contrast 5-Stat KPI Grid */}

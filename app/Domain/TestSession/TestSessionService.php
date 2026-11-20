@@ -50,11 +50,16 @@ final class TestSessionService
         }
 
         if ($isPastYear && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_past_year')) {
-            $query->where('is_past_year', true);
+            $query->where(function ($q) {
+                $q->where('is_past_year', true)->orWhereNotNull('past_year');
+            });
         }
 
         if ($isHighYield && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_high_yield')) {
-            $query->where('is_high_yield', true);
+            $query->where(function ($q) {
+                $q->where('is_high_yield', true)
+                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+            });
         }
 
         if (! empty($subjectId)) {
@@ -90,15 +95,34 @@ final class TestSessionService
         /** @var Collection<int, Question> $questions */
         $questions = $query->inRandomOrder()->limit($limit)->get();
 
-        // If not enough questions found for strict filters and status is ALL, fallback within this pathway
-        // ONLY fallback if the user did NOT explicitly filter by PYQ, HYQ, or specific question IDs
-        if ($questions->isEmpty() && empty($questionIds) && ! $isPastYear && ! $isHighYield && (! $status || strtoupper($status) === 'ALL')) {
-            $questions = Question::query()
+        // If not enough questions found for strict filters, provide smart fallback:
+        if ($questions->isEmpty() && empty($questionIds)) {
+            $fallbackQuery = Question::query()
                 ->where('is_active', true)
-                ->forExam($pathway)
-                ->inRandomOrder()
-                ->limit($limit)
-                ->get();
+                ->forExam($pathway);
+
+            if ($isPastYear) {
+                $fallbackQuery->where(function ($q) {
+                    $q->where('is_past_year', true)->orWhereNotNull('past_year');
+                });
+            } elseif ($isHighYield) {
+                $fallbackQuery->where(function ($q) {
+                    $q->where('is_high_yield', true)
+                        ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+                });
+            }
+
+            $questions = $fallbackQuery->inRandomOrder()->limit($limit)->get();
+
+            // Ultimate safety net fallback within pathway
+            if ($questions->isEmpty()) {
+                $questions = Question::query()
+                    ->where('is_active', true)
+                    ->forExam($pathway)
+                    ->inRandomOrder()
+                    ->limit($limit)
+                    ->get();
+            }
         }
 
         $totalQuestions = $questions->count();
