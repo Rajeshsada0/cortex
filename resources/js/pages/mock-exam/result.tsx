@@ -19,7 +19,6 @@ import {
     FileCheck2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
 import { RankPredictionData } from '@/components/cortex/national-rank-predictor';
 
@@ -598,23 +597,6 @@ export default function MockExamResult({
                         <p className="text-foreground text-sm leading-relaxed font-medium whitespace-pre-line">
                             {activeQuestion.stem}
                         </p>
-
-                        {/* Tier Breakdown */}
-                        <TierBreakdown
-                            learningObjective={
-                                activeQuestion.learning_objective
-                            }
-                            foundationExplanation={
-                                activeQuestion.foundation_explanation
-                            }
-                            integrationExplanation={
-                                activeQuestion.integration_explanation
-                            }
-                            applicationExplanation={
-                                activeQuestion.application_explanation
-                            }
-                            memoryPeg={activeQuestion.memory_peg}
-                        />
 
                         {/* Option Rationale Table */}
                         <OptionRationaleTable

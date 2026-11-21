@@ -21,7 +21,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { toast } from 'sonner';
 
 interface DueCardItem {
@@ -250,13 +249,13 @@ export default function SpacedRepetitionIndex({
                                     </span>
                                 </div>
 
-                                <TierBreakdown
-                                    learningObjective={question.learning_objective}
-                                    foundationExplanation={question.foundation_explanation}
-                                    integrationExplanation={question.integration_explanation}
-                                    applicationExplanation={question.application_explanation}
-                                    memoryPeg={question.memory_peg}
-                                />
+                                {/* Direct Explanation if available */}
+                                {question.options?.find((o: any) => o.option_key === question.correct_option)?.rationale && (
+                                    <div className="rounded-xl border border-border bg-muted/40 p-4 text-xs leading-relaxed text-foreground">
+                                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">Explanation: </span>
+                                        {question.options.find((o: any) => o.option_key === question.correct_option).rationale}
+                                    </div>
+                                )}
 
                                 {/* Self-Rating Recall Options */}
                                 <div className="space-y-2.5 rounded-xl border border-border bg-muted/30 p-4">

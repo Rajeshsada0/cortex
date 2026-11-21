@@ -38,9 +38,6 @@ export default function Welcome() {
 
     // Interactive preview state
     const [selectedOption, setSelectedOption] = useState<string | null>('C');
-    const [activeTier, setActiveTier] = useState<
-        'foundation' | 'integration' | 'application'
-    >('foundation');
 
     return (
         <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground selection:bg-cyan-500/30">
@@ -317,12 +314,11 @@ export default function Welcome() {
                         HIGH-YIELD CLINICAL VIGNETTE ARCHITECTURE
                     </span>
                     <h2 className="text-xl font-bold tracking-tight text-foreground dark:text-white sm:text-2xl">
-                        Integrated Clinical Vignette with 3-Tier Deconstruction
+                        Integrated Clinical Vignette with Evidence-Based Rationale
                     </h2>
                     <p className="mx-auto max-w-lg text-xs leading-relaxed text-slate-600 dark:text-slate-300 sm:text-sm">
-                        Experience our split-screen runner: test your diagnostic
-                        choice below to view instant post-answer analysis across
-                        Foundation, Integration, and Application tiers.
+                        Experience our interactive runner: test your diagnostic
+                        choice below to view instant post-answer analysis and distractor rationales.
                     </p>
                 </div>
 
@@ -423,80 +419,21 @@ export default function Welcome() {
                         })}
                     </div>
 
-                    {/* 3-Tier Clinical Breakdown Reveal */}
+                    {/* Clinical Rationale & Evidence Breakdown */}
                     <div className="mt-6 rounded-xl border border-border bg-muted/30 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-950/70">
                         <div className="flex items-center justify-between border-b border-border pb-3 dark:border-slate-800">
                             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                                3-Tier Clinical Breakdown
+                                Clinical Rationale &amp; Evidence
                             </span>
-                            <div className="flex gap-1.5">
-                                {(
-                                    [
-                                        'foundation',
-                                        'integration',
-                                        'application',
-                                    ] as const
-                                ).map((t) => (
-                                    <button
-                                        key={t}
-                                        type="button"
-                                        onClick={() => setActiveTier(t)}
-                                        className={`rounded-lg px-3 py-1 text-[11px] font-bold capitalize transition-all ${
-                                            activeTier === t
-                                                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-sm dark:from-cyan-500 dark:to-sky-500 dark:text-slate-950'
-                                                : 'border border-border bg-card text-muted-foreground hover:text-foreground dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:text-white'
-                                        }`}
-                                    >
-                                        {t}
-                                    </button>
-                                ))}
-                            </div>
                         </div>
 
                         <div className="mt-3.5 text-xs leading-relaxed text-foreground/90 sm:text-sm dark:text-slate-200">
-                            {activeTier === 'foundation' && (
-                                <p>
-                                    <strong className="text-cyan-700 dark:text-cyan-400">
-                                        Tier 1 — Foundation:
-                                    </strong>{' '}
-                                    ST elevations in leads II, III, and aVF
-                                    localize an acute transmural infarction to
-                                    the inferior myocardium, most commonly
-                                    supplied by the Right Coronary Artery (RCA).
-                                    Concomitant hypotension, elevated JVP, and
-                                    clear lung fields pathognomonically diagnose
-                                    Right Ventricular Infarction (RVI).
-                                </p>
-                            )}
-                            {activeTier === 'integration' && (
-                                <p>
-                                    <strong className="text-cyan-700 dark:text-cyan-400">
-                                        Tier 2 — Integration:
-                                    </strong>{' '}
-                                    The ischemic right ventricle loses
-                                    contractile compliance and functions as a
-                                    passive conduit. Left ventricular filling
-                                    becomes entirely dependent on elevated right
-                                    ventricular end-diastolic filling pressures
-                                    (preload-dependent state). Nitrates and
-                                    diuretics precipitously reduce venous
-                                    return, precipitating profound cardiogenic
-                                    shock.
-                                </p>
-                            )}
-                            {activeTier === 'application' && (
-                                <p>
-                                    <strong className="text-cyan-700 dark:text-cyan-400">
-                                        Tier 3 — Application (Exam Key):
-                                    </strong>{' '}
-                                    First-line emergency intervention is rapid
-                                    intravenous crystalloid bolus (0.9% Normal
-                                    Saline 500–1000 mL) to elevate RV preload
-                                    and maintain cardiac output before urgent
-                                    primary PCI. Nitrates, morphine, and
-                                    beta-blockers must be strictly withheld.
-                                </p>
-                            )}
+                            <p>
+                                <strong className="text-cyan-700 dark:text-cyan-400">
+                                    Evidence-Based Key:
+                                </strong>{' '}
+                                ST elevations in leads II, III, and aVF localize an acute transmural infarction to the inferior myocardium, most commonly supplied by the Right Coronary Artery (RCA). Concomitant hypotension, elevated JVP, and clear lung fields pathognomonically diagnose Right Ventricular Infarction (RVI). First-line emergency intervention is rapid intravenous crystalloid bolus (0.9% Normal Saline) to elevate RV preload and maintain cardiac output before urgent primary PCI. Nitrates and diuretics must be strictly withheld.
+                            </p>
                         </div>
                     </div>
                 </div>

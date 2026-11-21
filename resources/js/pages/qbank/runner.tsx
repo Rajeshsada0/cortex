@@ -29,7 +29,6 @@ import {
     ConfidenceSelector,
     ConfidenceType,
 } from '@/components/cortex/confidence-selector';
-import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
 import { QuestionPalette } from '@/components/cortex/question-palette';
 import { toast } from 'sonner';
@@ -924,31 +923,13 @@ export default function MCQRunner({
                         onSelectQuestion={setCurrentIndex}
                     />
 
-                    {/* 3-Tier Clinical Breakdown & Rationale Table (Unlocked when submitted or review) */}
+                    {/* Option Rationale Table (Unlocked when submitted or review) */}
                     {showExplanation && (
-                        <>
-                            <TierBreakdown
-                                learningObjective={
-                                    currentQuestion.learning_objective
-                                }
-                                foundationExplanation={
-                                    currentQuestion.foundation_explanation
-                                }
-                                integrationExplanation={
-                                    currentQuestion.integration_explanation
-                                }
-                                applicationExplanation={
-                                    currentQuestion.application_explanation
-                                }
-                                memoryPeg={currentQuestion.memory_peg}
-                            />
-
-                            <OptionRationaleTable
-                                options={sortedOptions}
-                                correctOption={currentQuestion.correct_option}
-                                selectedOption={selectedOption}
-                            />
-                        </>
+                        <OptionRationaleTable
+                            options={sortedOptions}
+                            correctOption={currentQuestion.correct_option}
+                            selectedOption={selectedOption}
+                        />
                     )}
                 </div>
             </div>

@@ -24,7 +24,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { TierBreakdown } from '@/components/cortex/tier-breakdown';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
 import { toast } from 'sonner';
 
@@ -584,21 +583,6 @@ export default function BookmarksIndex({
                                         </p>
                                     </div>
 
-                                    {/* Learning Objective (Clean Minimal Callout) */}
-                                    {q.learning_objective && (
-                                        <div className="my-2 flex items-start gap-2.5 rounded-xl border-l-2 border-cyan-500 bg-cyan-500/5 px-3 py-2 text-xs">
-                                            <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
-                                            <div>
-                                                <span className="font-semibold text-cyan-700 dark:text-cyan-300">
-                                                    High-Yield Takeaway:{' '}
-                                                </span>
-                                                <span className="text-foreground/80">
-                                                    {q.learning_objective}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-
                                     {/* Personal Clinical Note Card */}
                                     <div className="my-2 rounded-xl border border-border bg-muted/40 p-3">
                                         <div className="flex items-center justify-between">
@@ -683,14 +667,6 @@ export default function BookmarksIndex({
 
                                         {isExpanded && (
                                             <div className="mt-4 space-y-4 border-t border-border pt-4">
-                                                <TierBreakdown
-                                                    learningObjective={q.learning_objective}
-                                                    foundationExplanation={q.foundation_explanation}
-                                                    integrationExplanation={q.integration_explanation}
-                                                    applicationExplanation={q.application_explanation}
-                                                    memoryPeg={q.memory_peg}
-                                                />
-
                                                 <OptionRationaleTable
                                                     options={[...q.options]
                                                         .sort((a, b) =>

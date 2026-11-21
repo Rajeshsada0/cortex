@@ -559,23 +559,6 @@ export default function MockExamHall({
                             watermark={currentQuestion.watermark}
                         />
                     )}
-
-                    {/* High-Yield Learning Objective Card in Study Mode */}
-                    {isStudyMode &&
-                        answers[currentQuestion.id] &&
-                        (currentQuestion.learning_objective ||
-                            currentQuestion.foundation_explanation) && (
-                            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-xs dark:bg-cyan-950/30">
-                                <div className="mb-1 flex items-center gap-1.5 font-bold text-cyan-700 dark:text-cyan-300">
-                                    <Lightbulb className="size-4 text-cyan-600 dark:text-cyan-400" />
-                                    Clinical Takeaway &amp; Learning Objective
-                                </div>
-                                <p className="leading-relaxed font-normal text-foreground opacity-90">
-                                    {currentQuestion.learning_objective ||
-                                        currentQuestion.foundation_explanation}
-                                </p>
-                            </div>
-                        )}
                 </div>
 
                 {/* Right Area: Answer Choices (Select Single Best Answer), Navigation & Question Palette */}
