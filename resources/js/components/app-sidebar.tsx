@@ -91,7 +91,7 @@ const candidateNavItems: NavItem[] = [
     },
     {
         title: 'High-Yield Questions',
-        href: '/qbank/runner?filter=high_yield',
+        href: '/high-yield',
         icon: Flame,
         badge: 'HY',
     },

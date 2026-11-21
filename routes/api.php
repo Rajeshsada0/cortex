@@ -42,6 +42,7 @@ Route::prefix('v1')->group(function () {
     // Question Bank (Q-Bank)
     Route::get('/questions', [QuestionController::class, 'index'])->name('api.v1.questions.index');
     Route::get('/questions/past-years', [QuestionController::class, 'pastYears'])->name('api.v1.questions.past-years');
+    Route::get('/questions/high-yield-topics', [QuestionController::class, 'highYieldTopics'])->name('api.v1.questions.high-yield-topics');
     Route::get('/questions/{id}', [QuestionController::class, 'show'])->name('api.v1.questions.show');
 
     // Test Sessions & MCQ Runner

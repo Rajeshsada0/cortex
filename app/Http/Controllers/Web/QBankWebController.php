@@ -245,4 +245,48 @@ class QBankWebController extends Controller
             'subjects' => $subjects,
         ]);
     }
+
+    /**
+     * High-Yield Questions Topic-Wise Selection Hub
+     */
+    public function highYield(Request $request): Response
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $pathway = $user->active_pathway ?? 'INI_CET';
+
+        $totalHyq = Question::where('is_active', true)
+            ->forExam($pathway)
+            ->where(function ($q) {
+                $q->where('is_high_yield', true)
+                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+            })
+            ->count();
+
+        $subjects = Subject::with(['topics' => function ($q) use ($pathway) {
+            $q->withCount(['questions' => function ($sq) use ($pathway) {
+                $sq->where('is_active', true)->forExam($pathway)->where(function ($ssq) {
+                    $ssq->where('is_high_yield', true)
+                        ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+                });
+            }])
+            ->having('questions_count', '>', 0)
+            ->orderBy('high_yield_priority', 'desc');
+        }])
+        ->withCount(['questions' => function ($q) use ($pathway) {
+            $q->where('is_active', true)->forExam($pathway)->where(function ($sq) {
+                $sq->where('is_high_yield', true)
+                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+            });
+        }])
+        ->having('questions_count', '>', 0)
+        ->orderBy('order_index')
+        ->get();
+
+        return Inertia::render('high-yield/index', [
+            'user' => $user,
+            'activePathway' => $pathway,
+            'totalHyqCount' => $totalHyq,
+            'subjects' => $subjects,
+        ]);
+    }
 }

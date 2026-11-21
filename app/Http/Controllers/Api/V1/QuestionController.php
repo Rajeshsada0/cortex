@@ -104,6 +104,69 @@ class QuestionController extends Controller
     }
 
     /**
+     * Get 19 medical subjects with high-yield topics and questions count
+     */
+    public function highYieldTopics(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $pathway = $request->query('exam', $user?->active_pathway ?? 'INI_CET');
+
+        $totalHyq = Question::where('is_active', true)
+            ->forExam($pathway)
+            ->where(function ($q) {
+                $q->where('is_high_yield', true)
+                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+            })
+            ->count();
+
+        $subjects = \App\Models\Subject::with(['topics' => function ($q) use ($pathway) {
+            $q->withCount(['questions' => function ($sq) use ($pathway) {
+                $sq->where('is_active', true)->forExam($pathway)->where(function ($ssq) {
+                    $ssq->where('is_high_yield', true)
+                        ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+                });
+            }])
+            ->having('questions_count', '>', 0)
+            ->orderBy('high_yield_priority', 'desc');
+        }])
+        ->withCount(['questions' => function ($q) use ($pathway) {
+            $q->where('is_active', true)->forExam($pathway)->where(function ($sq) {
+                $sq->where('is_high_yield', true)
+                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
+            });
+        }])
+        ->having('questions_count', '>', 0)
+        ->orderBy('order_index')
+        ->get()
+        ->map(function ($subject) {
+            return [
+                'id' => $subject->id,
+                'name' => $subject->name,
+                'slug' => $subject->slug,
+                'questions_count' => $subject->questions_count,
+                'topics' => $subject->topics->map(function ($topic) {
+                    return [
+                        'id' => $topic->id,
+                        'name' => $topic->name,
+                        'slug' => $topic->slug,
+                        'high_yield_priority' => $topic->high_yield_priority,
+                        'questions_count' => $topic->questions_count,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_hy_count' => $totalHyq,
+                'pathway' => $pathway,
+                'subjects' => $subjects,
+            ],
+        ]);
+    }
+
+    /**
      * Get full question details by UUID
      */
     public function show(Request $request, string $id): JsonResponse
