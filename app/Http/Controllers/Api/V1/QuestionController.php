@@ -111,58 +111,71 @@ class QuestionController extends Controller
         $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
         $pathway = $request->query('exam', $user?->active_pathway ?? 'INI_CET');
 
-        $totalHyq = Question::where('is_active', true)
-            ->forExam($pathway)
-            ->where(function ($q) {
-                $q->where('is_high_yield', true)
-                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
-            })
-            ->count();
+        $data = \Illuminate\Support\Facades\Cache::remember("high_yield_topics_{$pathway}", 3600, function () use ($pathway) {
+            $hyTopicIds = \Illuminate\Support\Facades\DB::table('topics')
+                ->where('high_yield_priority', '>=', 3)
+                ->pluck('id')
+                ->toArray();
 
-        $subjects = \App\Models\Subject::with(['topics' => function ($q) use ($pathway) {
-            $q->withCount(['questions' => function ($sq) use ($pathway) {
-                $sq->where('is_active', true)->forExam($pathway)->where(function ($ssq) {
-                    $ssq->where('is_high_yield', true)
-                        ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
-                });
-            }])
-            ->having('questions_count', '>', 0)
-            ->orderBy('high_yield_priority', 'desc');
-        }])
-        ->withCount(['questions' => function ($q) use ($pathway) {
-            $q->where('is_active', true)->forExam($pathway)->where(function ($sq) {
-                $sq->where('is_high_yield', true)
-                    ->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
-            });
-        }])
-        ->having('questions_count', '>', 0)
-        ->orderBy('order_index')
-        ->get()
-        ->map(function ($subject) {
-            return [
-                'id' => $subject->id,
-                'name' => $subject->name,
-                'slug' => $subject->slug,
-                'questions_count' => $subject->questions_count,
-                'topics' => $subject->topics->map(function ($topic) {
+            $topicCounts = \Illuminate\Support\Facades\DB::table('questions')
+                ->join('question_exam_relevance', 'questions.id', '=', 'question_exam_relevance.question_id')
+                ->where('questions.is_active', true)
+                ->where(function ($q) use ($pathway) {
+                    $q->where('question_exam_relevance.exam', $pathway)
+                      ->orWhere('question_exam_relevance.exam', 'COMBINED');
+                })
+                ->where(function ($q) use ($hyTopicIds) {
+                    $q->where('questions.is_high_yield', true);
+                    if (!empty($hyTopicIds)) {
+                        $q->orWhereIn('questions.topic_id', $hyTopicIds);
+                    }
+                })
+                ->select('questions.topic_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+                ->groupBy('questions.topic_id')
+                ->pluck('total', 'topic_id');
+
+            $totalHyq = (int) $topicCounts->sum();
+
+            $topicsBySubject = \Illuminate\Support\Facades\DB::table('topics')
+                ->whereIn('id', $topicCounts->keys())
+                ->orderBy('high_yield_priority', 'desc')
+                ->get()
+                ->groupBy('subject_id');
+
+            $subjects = \Illuminate\Support\Facades\DB::table('subjects')
+                ->whereIn('id', $topicsBySubject->keys())
+                ->orderBy('order_index')
+                ->get()
+                ->map(function ($subject) use ($topicsBySubject, $topicCounts) {
+                    $sTopics = $topicsBySubject->get($subject->id, collect())->map(function ($t) use ($topicCounts) {
+                        return [
+                            'id' => (int) $t->id,
+                            'name' => $t->name,
+                            'slug' => $t->slug,
+                            'high_yield_priority' => (int) $t->high_yield_priority,
+                            'questions_count' => (int) $topicCounts->get($t->id, 0),
+                        ];
+                    })->values()->toArray();
+
                     return [
-                        'id' => $topic->id,
-                        'name' => $topic->name,
-                        'slug' => $topic->slug,
-                        'high_yield_priority' => $topic->high_yield_priority,
-                        'questions_count' => $topic->questions_count,
+                        'id' => (int) $subject->id,
+                        'name' => $subject->name,
+                        'slug' => $subject->slug,
+                        'questions_count' => (int) array_sum(array_column($sTopics, 'questions_count')),
+                        'topics' => $sTopics,
                     ];
-                }),
+                })->values()->toArray();
+
+            return [
+                'total_hy_count' => $totalHyq,
+                'pathway' => $pathway,
+                'subjects' => $subjects,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'total_hy_count' => $totalHyq,
-                'pathway' => $pathway,
-                'subjects' => $subjects,
-            ],
+            'data' => $data,
         ]);
     }
 
