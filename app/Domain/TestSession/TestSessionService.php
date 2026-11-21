@@ -34,7 +34,8 @@ final class TestSessionService
         ?string $status = null,
         ?array $questionIds = null,
         ?bool $isPastYear = null,
-        ?bool $isHighYield = null
+        ?bool $isHighYield = null,
+        ?string $pastYear = null
     ): array {
         $pathway = $examPathway ?? $user->active_pathway ?? 'INI_CET';
 
@@ -49,7 +50,13 @@ final class TestSessionService
             $query->forExam($pathway);
         }
 
-        if ($isPastYear && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_past_year')) {
+        if (! empty($pastYear)) {
+            $cleanYear = trim((string) $pastYear);
+            $query->where(function ($q) use ($cleanYear) {
+                $q->where('past_year', 'LIKE', "%{$cleanYear}%")
+                    ->orWhere('stem', 'LIKE', "%{$cleanYear}%");
+            });
+        } elseif ($isPastYear && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_past_year')) {
             $query->where(function ($q) {
                 $q->where('is_past_year', true)->orWhereNotNull('past_year');
             });
@@ -101,7 +108,13 @@ final class TestSessionService
                 ->where('is_active', true)
                 ->forExam($pathway);
 
-            if ($isPastYear) {
+            if (! empty($pastYear)) {
+                $cleanYear = trim((string) $pastYear);
+                $fallbackQuery->where(function ($q) use ($cleanYear) {
+                    $q->where('past_year', 'LIKE', "%{$cleanYear}%")
+                        ->orWhere('stem', 'LIKE', "%{$cleanYear}%");
+                });
+            } elseif ($isPastYear) {
                 $fallbackQuery->where(function ($q) {
                     $q->where('is_past_year', true)->orWhereNotNull('past_year');
                 });

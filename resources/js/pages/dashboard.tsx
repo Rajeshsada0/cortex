@@ -101,6 +101,12 @@ interface DashboardProps {
     totalAttempts: number;
     pastYearQuestionsCount?: number;
     highYieldQuestionsCount?: number;
+    pastYears?: Array<{
+        year: string;
+        label: string;
+        count: number;
+        badge?: string;
+    }>;
 }
 
 export default function Dashboard({
@@ -120,6 +126,7 @@ export default function Dashboard({
     totalAttempts,
     pastYearQuestionsCount = 0,
     highYieldQuestionsCount = 0,
+    pastYears = [],
 }: DashboardProps) {
     const settings = useSettings();
     const [phaseFilter, setPhaseFilter] = useState<
@@ -523,28 +530,49 @@ export default function Dashboard({
                                         <History className="h-5 w-5" />
                                     </div>
                                     <span className="rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 uppercase dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                                        PYQ
+                                        PYQ Hub
                                     </span>
                                 </div>
                                 <h4 className="mt-3 text-sm font-bold text-foreground">
                                     Past Year Questions
                                 </h4>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    {(pastYearQuestionsCount ?? 0) > 0
-                                        ? `${pastYearQuestionsCount} Authentic Board PYQs`
-                                        : 'Exam recall papers & repeats'}
+                                    Select exam year (2026, 2025, 2024...) for targeted board paper recall
                                 </p>
+
+                                {/* Quick Year Selector Pills */}
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                    {(pastYears && pastYears.length > 0 ? pastYears : [
+                                        { year: '2026', count: 34, badge: 'LATEST' },
+                                        { year: '2025', count: 33, badge: 'RECENT' },
+                                        { year: '2024', count: 33, badge: 'POPULAR' },
+                                        { year: '2023', count: 33 },
+                                    ]).slice(0, 4).map((yp) => (
+                                        <Link
+                                            key={yp.year}
+                                            href={`/qbank/runner?filter=past_year&year=${yp.year}`}
+                                            className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-blue-800 transition hover:bg-blue-100 dark:border-blue-800/60 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/80"
+                                        >
+                                            <span>{yp.year}</span>
+                                            {yp.badge && (
+                                                <span className="text-[9px] text-blue-600 dark:text-blue-300 opacity-80 font-bold">
+                                                    {yp.badge}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
                             <div className="mt-4 pt-3 border-t border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between">
                                 <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
                                     {pastYearQuestionsCount ?? 0} Questions
                                 </span>
-                                <Link href="/qbank/runner?filter=past_year">
+                                <Link href="/pyq">
                                     <Button
                                         size="sm"
                                         className="h-8 gap-1 rounded-lg bg-blue-600 px-3.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
                                     >
-                                        <span>Solve PYQs</span>
+                                        <span>Select Year</span>
                                         <ArrowRight className="h-3 w-3" />
                                     </Button>
                                 </Link>

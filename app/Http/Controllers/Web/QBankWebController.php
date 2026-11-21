@@ -123,7 +123,8 @@ class QBankWebController extends Controller
                     : array_map('intval', explode(',', (string) $rawTopics));
             }
 
-            $isPastYear = $request->boolean('is_past_year') || in_array(strtolower((string) $request->query('filter')), ['past_year', 'pyq']);
+            $pastYearParam = $request->query('year', $request->query('past_year'));
+            $isPastYear = $request->boolean('is_past_year') || ! empty($pastYearParam) || in_array(strtolower((string) $request->query('filter')), ['past_year', 'pyq']);
             $isHighYield = $request->boolean('is_high_yield') || in_array(strtolower((string) $request->query('filter')), ['high_yield', 'hyq']);
 
             $title = match (strtoupper((string) ($quadrant ?? ''))) {
@@ -131,15 +132,17 @@ class QBankWebController extends Controller
                 'UNSTABLE', 'LUCKY_GUESS' => 'Lucky Guess & Unstable Remediation ('.$pathway.')',
                 'GAP' => 'Knowledge Gap Remediation ('.$pathway.')',
                 'MASTERED' => 'Mastered Concepts Revision ('.$pathway.')',
-                default => $isPastYear
-                    ? 'Past Year Questions (PYQs) ('.$pathway.')'
-                    : ($isHighYield
-                        ? 'High-Yield Board Questions ('.$pathway.')'
-                        : (strtoupper((string) $status) === 'BOOKMARKED'
-                            ? 'Bookmarked Clinical Vignettes Practice ('.$pathway.')'
-                            : ($singleQuestionId
-                                ? 'Targeted Clinical Vignette Review ('.$pathway.')'
-                                : ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')'))),
+                default => ! empty($pastYearParam)
+                    ? 'Past Year Questions ('.$pastYearParam.') ('.$pathway.')'
+                    : ($isPastYear
+                        ? 'Past Year Questions (PYQs) ('.$pathway.')'
+                        : ($isHighYield
+                            ? 'High-Yield Board Questions ('.$pathway.')'
+                            : (strtoupper((string) $status) === 'BOOKMARKED'
+                                ? 'Bookmarked Clinical Vignettes Practice ('.$pathway.')'
+                                : ($singleQuestionId
+                                    ? 'Targeted Clinical Vignette Review ('.$pathway.')'
+                                    : ($mode === 'TIMED' ? 'Timed Exam Block' : 'Interactive Tutor Session').' ('.$pathway.')')))),
             };
 
             $result = $this->testSessionService->createSession(
@@ -154,7 +157,8 @@ class QBankWebController extends Controller
                 status: $questionIds !== null ? null : $status,
                 questionIds: $questionIds,
                 isPastYear: $isPastYear,
-                isHighYield: $isHighYield
+                isHighYield: $isHighYield,
+                pastYear: $pastYearParam
             );
 
             $session = $result['session'];
@@ -184,6 +188,61 @@ class QBankWebController extends Controller
             'bookmarked_question_ids' => $bookmarkedQuestionIds,
             'notes_map' => $notesMap,
             'mode' => $session->session_type === 'TIMED_BLOCK' ? 'TIMED' : 'TUTOR',
+        ]);
+    }
+
+    /**
+     * Past Year Questions Year-Wise Hub
+     */
+    public function pyq(Request $request): Response
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $pathway = $user->active_pathway ?? 'INI_CET';
+
+        $baseQuery = Question::where('is_active', true)->forExam($pathway);
+
+        $totalPyq = (clone $baseQuery)->where(function ($q) {
+            $q->where('is_past_year', true)->orWhereNotNull('past_year');
+        })->count();
+
+        $supportedYears = ['2026', '2025', '2024', '2023', '2022', '2021', '2020'];
+        $yearsData = [];
+
+        foreach ($supportedYears as $yr) {
+            $count = (clone $baseQuery)->where(function ($q) use ($yr) {
+                $q->where('past_year', 'LIKE', "%{$yr}%")
+                    ->orWhere('stem', 'LIKE', "%{$yr}%");
+            })->count();
+
+            $badge = match ($yr) {
+                '2026' => 'LATEST 2026',
+                '2025' => 'RECENT 2025',
+                '2024' => 'HIGH-YIELD',
+                default => null,
+            };
+
+            $yearsData[] = [
+                'year' => $yr,
+                'label' => "{$yr} Exam Papers",
+                'description' => "Real exam questions & memory recalls from {$yr} board sessions",
+                'count' => $count,
+                'badge' => $badge,
+                'is_featured' => in_array($yr, ['2026', '2025', '2024']),
+            ];
+        }
+
+        $subjects = Subject::withCount(['questions' => function ($q) use ($pathway) {
+            $q->where('is_active', true)->forExam($pathway)->where(function ($sq) {
+                $sq->where('is_past_year', true)->orWhereNotNull('past_year');
+            });
+        }])->orderBy('order_index')->get();
+
+        return Inertia::render('pyq/index', [
+            'user' => $user,
+            'activePathway' => $pathway,
+            'totalPyqCount' => $totalPyq,
+            'years' => $yearsData,
+            'subjects' => $subjects,
         ]);
     }
 }

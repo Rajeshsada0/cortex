@@ -85,7 +85,7 @@ const candidateNavItems: NavItem[] = [
     },
     {
         title: 'Past Year Questions',
-        href: '/qbank/runner?filter=past_year',
+        href: '/pyq',
         icon: History,
         badge: 'PYQ',
     },

@@ -80,6 +80,7 @@ Route::middleware(['auth', 'candidate'])->group(function () {
     // Q-Bank & Interactive MCQ Runner
     Route::get('/qbank', [QBankWebController::class, 'index'])->name('qbank.index');
     Route::get('/qbank/runner', [QBankWebController::class, 'runner'])->name('qbank.runner');
+    Route::get('/pyq', [QBankWebController::class, 'pyq'])->name('pyq.index');
 
     // 19-Subject Medical Directory
     Route::get('/directory', DirectoryWebController::class)->name('directory.index');

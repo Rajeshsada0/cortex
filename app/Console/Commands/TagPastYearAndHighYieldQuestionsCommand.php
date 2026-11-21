@@ -64,14 +64,25 @@ class TagPastYearAndHighYieldQuestionsCommand extends Command
 
         $this->info("Tagged {$exactPyqCount} questions with exact exam/year timestamps as PYQs.");
 
-        // 3. Ensure balanced PYQ coverage across all 19 subjects (~25% of questions per subject)
-        $yearsPool = ['2023', '2022', '2021', '2020', '2019', '2018'];
+        // 3. Ensure balanced PYQ coverage across all 19 subjects (~25-30% of questions per subject)
+        $yearsPool = ['2026', '2025', '2024', '2023', '2022', '2021', '2020'];
         $balancedCount = 0;
+        $isForce = (bool) $this->option('force');
 
         $subjects = Subject::withCount('questions')->get();
+        $yearIndex = 0;
+
         foreach ($subjects as $subject) {
+            if ($isForce) {
+                // If force, redistribute non-regex PYQs evenly across 2026..2020
+                Question::where('subject_id', $subject->id)
+                    ->whereNotIn('id', $taggedIds)
+                    ->where('is_past_year', true)
+                    ->update(['is_past_year' => false, 'past_year' => null]);
+            }
+
             $currentPyq = Question::where('subject_id', $subject->id)->where('is_past_year', true)->count();
-            $targetPyq = max(4, (int) round($subject->questions_count * 0.25));
+            $targetPyq = max(5, (int) round($subject->questions_count * 0.28));
 
             if ($currentPyq < $targetPyq) {
                 $needed = $targetPyq - $currentPyq;
@@ -82,9 +93,10 @@ class TagPastYearAndHighYieldQuestionsCommand extends Command
                     ->get();
 
                 foreach ($candidates as $cand) {
-                    $randomYear = $yearsPool[array_rand($yearsPool)];
+                    $assignedYear = $yearsPool[$yearIndex % count($yearsPool)];
+                    $yearIndex++;
                     $cand->is_past_year = true;
-                    $cand->past_year = $randomYear;
+                    $cand->past_year = $assignedYear;
                     $cand->saveQuietly();
                     $balancedCount++;
                 }

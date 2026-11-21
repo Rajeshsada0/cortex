@@ -73,6 +73,8 @@ class TestSessionController extends Controller
             'limit' => 'nullable|integer|min:1',
             'duration_minutes' => 'nullable|integer|min:1|max:480',
             'is_past_year' => 'nullable|boolean',
+            'past_year' => 'nullable|string|max:30',
+            'year' => 'nullable|string|max:30',
             'is_high_yield' => 'nullable|boolean',
         ]);
 
@@ -83,6 +85,8 @@ class TestSessionController extends Controller
 
         $topicIds = $request->input('topic_ids') ?? $validated['topic_id'] ?? null;
         $limit = min(1000, max(1, (int) ($validated['limit'] ?? 20)));
+        $pastYear = $request->input('past_year') ?? $request->input('year') ?? null;
+        $isPastYear = $request->boolean('is_past_year') || ! empty($pastYear);
 
         $result = $this->testSessionService->createSession(
             user: $user,
@@ -94,8 +98,9 @@ class TestSessionController extends Controller
             difficulty: $validated['difficulty'] ?? null,
             limit: $limit,
             durationMinutes: $validated['duration_minutes'] ?? null,
-            isPastYear: $request->boolean('is_past_year'),
-            isHighYield: $request->boolean('is_high_yield')
+            isPastYear: $isPastYear,
+            isHighYield: $request->boolean('is_high_yield'),
+            pastYear: $pastYear
         );
 
         return response()->json([

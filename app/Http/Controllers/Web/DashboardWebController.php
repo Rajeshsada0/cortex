@@ -177,6 +177,14 @@ class DashboardWebController extends Controller
                     $q->where('is_past_year', true)->orWhereNotNull('past_year');
                 })->count()
                 : 0,
+            'pastYears' => [
+                ['year' => '2026', 'label' => '2026', 'count' => Question::where('is_active', true)->forExam($pathway)->where('past_year', 'LIKE', '%2026%')->count(), 'badge' => 'LATEST'],
+                ['year' => '2025', 'label' => '2025', 'count' => Question::where('is_active', true)->forExam($pathway)->where('past_year', 'LIKE', '%2025%')->count(), 'badge' => 'RECENT'],
+                ['year' => '2024', 'label' => '2024', 'count' => Question::where('is_active', true)->forExam($pathway)->where('past_year', 'LIKE', '%2024%')->count(), 'badge' => 'POPULAR'],
+                ['year' => '2023', 'label' => '2023', 'count' => Question::where('is_active', true)->forExam($pathway)->where('past_year', 'LIKE', '%2023%')->count()],
+                ['year' => '2022', 'label' => '2022', 'count' => Question::where('is_active', true)->forExam($pathway)->where('past_year', 'LIKE', '%2022%')->count()],
+                ['year' => '2021', 'label' => '2021', 'count' => Question::where('is_active', true)->forExam($pathway)->where('past_year', 'LIKE', '%2021%')->count()],
+            ],
             'highYieldQuestionsCount' => \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_high_yield')
                 ? Question::where('is_active', true)->forExam($pathway)->where(function ($q) {
                     $q->where('is_high_yield', true)->orWhereHas('topic', fn ($t) => $t->where('high_yield_priority', '>=', 3));
