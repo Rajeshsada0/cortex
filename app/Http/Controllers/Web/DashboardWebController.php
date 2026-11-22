@@ -118,6 +118,7 @@ class DashboardWebController extends Controller
                     'score_obtained' => (float) $s->score_obtained,
                     'is_completed' => (bool) $s->is_completed,
                     'time_spent_seconds' => (int) $s->time_spent_seconds,
+                    'attempts_count' => (int) ($s->attempts_count ?? 0),
                     'created_at' => $s->created_at?->toIso8601String(),
                 ];
             });
