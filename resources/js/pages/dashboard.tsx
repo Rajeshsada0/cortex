@@ -695,6 +695,67 @@ export default function Dashboard({
                     </div>
                 </section>
 
+                {/* Continue Learning Banner */}
+                {(() => {
+                    const activeSession = recentSessions && recentSessions.length > 0 ? recentSessions[0] : null;
+                    const fallbackSubject = subjects && subjects.length > 0 ? subjects[0] : null;
+                    const sessionTitle = activeSession ? activeSession.title : (fallbackSubject ? fallbackSubject.name : 'Clinical Practice Session');
+                    const sessionCurrentQ = activeSession
+                        ? Math.min(activeSession.total_questions || 30, Math.max(1, Math.round(activeSession.score_obtained || 1)))
+                        : (fallbackSubject ? fallbackSubject.attempted_count : 0);
+                    const sessionTotalQ = activeSession
+                        ? (activeSession.total_questions || 30)
+                        : (fallbackSubject ? fallbackSubject.questions_count : 30);
+                    const sessionPct = sessionTotalQ > 0 ? Math.round((sessionCurrentQ / sessionTotalQ) * 100) : 0;
+
+                    return (
+                        <div
+                            className="rounded-2xl border border-slate-100 bg-white p-4.5 shadow-soft dark:border-border dark:bg-card"
+                            data-purpose="in-progress-session"
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground">
+                                    Continue Learning
+                                </span>
+                                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+                                    Clinical
+                                </span>
+                            </div>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center space-x-3 min-w-0">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100/60 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+                                        <BookOpen className="h-6 w-6" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h2 className="truncate text-sm font-bold text-slate-900 dark:text-foreground">
+                                            {sessionTitle}
+                                        </h2>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">
+                                            Q {sessionCurrentQ} of {sessionTotalQ} • {sessionPct}%
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link href="/qbank/runner">
+                                    <Button
+                                        size="sm"
+                                        className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-95 dark:bg-blue-600 dark:hover:bg-blue-500"
+                                    >
+                                        Resume
+                                    </Button>
+                                </Link>
+                            </div>
+                            <div className="mt-3">
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-muted">
+                                    <div
+                                        className="h-full rounded-full bg-blue-600 transition-all"
+                                        style={{ width: `${sessionPct}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {/* Clinical Scenario Question (CSQ) Mock Exam Spotlight */}
                 <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-card to-blue-950/20 p-5 shadow-xs transition hover:border-cyan-500/50">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

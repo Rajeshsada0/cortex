@@ -127,8 +127,8 @@ final class TestSessionService
 
             $questions = $fallbackQuery->inRandomOrder()->limit($limit)->get();
 
-            // Ultimate safety net fallback within pathway
-            if ($questions->isEmpty()) {
+            // Ultimate safety net fallback within pathway (except when specific past year requested)
+            if ($questions->isEmpty() && empty($pastYear)) {
                 $questions = Question::query()
                     ->where('is_active', true)
                     ->forExam($pathway)

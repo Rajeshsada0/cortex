@@ -67,29 +67,54 @@ class QuestionController extends Controller
             $q->where('is_past_year', true)->orWhereNotNull('past_year');
         })->count();
 
-        $supportedYears = ['2026', '2025', '2024', '2023', '2022', '2021', '2020'];
-        $yearsData = [];
+        $candidateYears = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018'];
 
-        foreach ($supportedYears as $yr) {
+        // Dynamically discover all authentic 4-digit years actually present in the questions table
+        $dbYears = (clone $baseQuery)
+            ->whereNotNull('past_year')
+            ->pluck('past_year')
+            ->map(function ($val) {
+                if (preg_match('/\b(20\d\d|19\d\d)\b/', (string) $val, $matches)) {
+                    return $matches[1];
+                }
+                return null;
+            })
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $allYears = array_values(array_unique(array_merge($candidateYears, $dbYears)));
+        rsort($allYears); // Sort descending
+
+        $yearsData = [];
+        $isLatestAssigned = false;
+
+        foreach ($allYears as $yr) {
             $count = (clone $baseQuery)->where(function ($q) use ($yr) {
                 $q->where('past_year', 'LIKE', "%{$yr}%")
                     ->orWhere('stem', 'LIKE', "%{$yr}%");
             })->count();
 
-            $badge = match ($yr) {
-                '2026' => 'LATEST',
-                '2025' => 'RECENT',
-                '2024' => 'HIGH-YIELD',
-                default => null,
-            };
+            // Strictly skip any year with 0 questions (never show fake/empty years)
+            if ($count <= 0) {
+                continue;
+            }
+
+            $badge = null;
+            if (! $isLatestAssigned) {
+                $badge = 'LATEST';
+                $isLatestAssigned = true;
+            } elseif ($yr === '2025' || $yr === '2024') {
+                $badge = 'HIGH-YIELD';
+            }
 
             $yearsData[] = [
-                'year' => $yr,
+                'year' => (string) $yr,
                 'label' => "{$yr} Exam Papers",
                 'description' => "Real exam questions & memory recalls from {$yr} board sessions",
                 'count' => $count,
                 'badge' => $badge,
-                'is_featured' => in_array($yr, ['2026', '2025', '2024']),
+                'is_featured' => ! empty($badge),
             ];
         }
 
