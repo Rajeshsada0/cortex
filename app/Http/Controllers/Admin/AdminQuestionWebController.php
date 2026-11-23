@@ -85,13 +85,18 @@ class AdminQuestionWebController extends Controller
             $query->where('is_high_yield', false);
         }
 
-        if ($grandMock === 'yes') {
-            $query->where('is_grand_mock', true);
-        } elseif ($grandMock === 'no') {
-            $query->where('is_grand_mock', false);
+        $hasGrandMockCol = \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock');
+        $hasMockExamNameCol = \Illuminate\Support\Facades\Schema::hasColumn('questions', 'mock_exam_name');
+
+        if ($hasGrandMockCol) {
+            if ($grandMock === 'yes') {
+                $query->where('is_grand_mock', true);
+            } elseif ($grandMock === 'no') {
+                $query->where('is_grand_mock', false);
+            }
         }
 
-        if ($mockExamName) {
+        if ($mockExamName && $hasMockExamNameCol) {
             $query->where('mock_exam_name', $mockExamName);
         }
 
@@ -133,9 +138,9 @@ class AdminQuestionWebController extends Controller
                 'total' => $totalQuestionsCount = Question::count(),
                 'active' => $activeQuestionsCount = Question::where('is_active', true)->count(),
                 'draft' => max(0, $totalQuestionsCount - $activeQuestionsCount),
-                'past_year' => Question::where('is_past_year', true)->count(),
-                'high_yield' => Question::where('is_high_yield', true)->count(),
-                'grand_mock' => Question::where('is_grand_mock', true)->count(),
+                'past_year' => \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_past_year') ? Question::where('is_past_year', true)->count() : 0,
+                'high_yield' => \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_high_yield') ? Question::where('is_high_yield', true)->count() : 0,
+                'grand_mock' => $hasGrandMockCol ? Question::where('is_grand_mock', true)->count() : 0,
             ],
         ]);
     }
@@ -313,10 +318,12 @@ class AdminQuestionWebController extends Controller
             ->orderBy('id')
             ->get(['id', 'code', 'name', 'full_name', 'region', 'badge_color']);
 
-        $grandMockNames = Question::where('is_grand_mock', true)
-            ->whereNotNull('mock_exam_name')
-            ->distinct()
-            ->pluck('mock_exam_name');
+        $grandMockNames = \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock')
+            ? Question::where('is_grand_mock', true)
+                ->whereNotNull('mock_exam_name')
+                ->distinct()
+                ->pluck('mock_exam_name')
+            : collect();
 
         return Inertia::render('admin/questions/import', [
             'subjects' => $subjects,

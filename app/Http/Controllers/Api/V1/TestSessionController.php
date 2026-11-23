@@ -56,19 +56,24 @@ class TestSessionController extends Controller
         $sunDate = $isSunday ? $now->copy() : $now->copy()->next(\Illuminate\Support\Carbon::SUNDAY);
 
         // Check if there are imported grand mock questions for Saturday or Sunday
-        $satCustomCount = Question::where('is_grand_mock', true)
-            ->where(function ($q) {
-                $q->where('scheduled_day', 'SATURDAY')->orWhereNull('scheduled_day');
-            })
-            ->forExam($pathway)
-            ->count();
+        $hasGrandMockCol = \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock');
+        $satCustomCount = $hasGrandMockCol
+            ? Question::where('is_grand_mock', true)
+                ->where(function ($q) {
+                    $q->where('scheduled_day', 'SATURDAY')->orWhereNull('scheduled_day');
+                })
+                ->forExam($pathway)
+                ->count()
+            : 0;
 
-        $sunCustomCount = Question::where('is_grand_mock', true)
-            ->where(function ($q) {
-                $q->where('scheduled_day', 'SUNDAY')->orWhereNull('scheduled_day');
-            })
-            ->forExam($pathway)
-            ->count();
+        $sunCustomCount = $hasGrandMockCol
+            ? Question::where('is_grand_mock', true)
+                ->where(function ($q) {
+                    $q->where('scheduled_day', 'SUNDAY')->orWhereNull('scheduled_day');
+                })
+                ->forExam($pathway)
+                ->count()
+            : 0;
 
         $schedule = [
             [

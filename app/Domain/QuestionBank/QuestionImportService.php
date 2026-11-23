@@ -366,7 +366,7 @@ class QuestionImportService
             // Stage question for batch insertion
             $questionId = (string) Str::uuid();
 
-            $batchQuestions[] = [
+            $qData = [
                 'id' => $questionId,
                 'code' => $validation['code'],
                 'subject_id' => $validation['subject_id'],
@@ -386,13 +386,22 @@ class QuestionImportService
                 'is_past_year' => $validation['is_past_year'] ?? false,
                 'past_year' => $validation['past_year'] ?? null,
                 'is_high_yield' => $validation['is_high_yield'] ?? false,
-                'is_grand_mock' => $validation['is_grand_mock'] ?? false,
-                'mock_exam_name' => $validation['mock_exam_name'] ?? null,
-                'scheduled_day' => $validation['scheduled_day'] ?? null,
                 'is_active' => $validation['is_active'] ?? $publishAsActive,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock')) {
+                $qData['is_grand_mock'] = $validation['is_grand_mock'] ?? false;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('questions', 'mock_exam_name')) {
+                $qData['mock_exam_name'] = $validation['mock_exam_name'] ?? null;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('questions', 'scheduled_day')) {
+                $qData['scheduled_day'] = $validation['scheduled_day'] ?? null;
+            }
+
+            $batchQuestions[] = $qData;
 
             // Stage options
             $sortedOptions = $validation['options'];
@@ -686,7 +695,7 @@ class QuestionImportService
 
             $questionId = (string) Str::uuid();
 
-            $batchQuestions[] = [
+            $qData = [
                 'id' => $questionId,
                 'code' => $validation['code'],
                 'subject_id' => $validation['subject_id'],
@@ -706,13 +715,22 @@ class QuestionImportService
                 'is_past_year' => $validation['is_past_year'] ?? false,
                 'past_year' => $validation['past_year'] ?? null,
                 'is_high_yield' => $validation['is_high_yield'] ?? false,
-                'is_grand_mock' => $validation['is_grand_mock'] ?? false,
-                'mock_exam_name' => $validation['mock_exam_name'] ?? null,
-                'scheduled_day' => $validation['scheduled_day'] ?? null,
                 'is_active' => $validation['is_active'] ?? $publishAsActive,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock')) {
+                $qData['is_grand_mock'] = $validation['is_grand_mock'] ?? false;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('questions', 'mock_exam_name')) {
+                $qData['mock_exam_name'] = $validation['mock_exam_name'] ?? null;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('questions', 'scheduled_day')) {
+                $qData['scheduled_day'] = $validation['scheduled_day'] ?? null;
+            }
+
+            $batchQuestions[] = $qData;
 
             $sortedOptions = $validation['options'];
             usort($sortedOptions, fn ($a, $b) => strcmp($a['option_key'] ?? '', $b['option_key'] ?? ''));

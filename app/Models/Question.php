@@ -57,8 +57,12 @@ class Question extends Model
 
     public function scopeGrandMock(Builder $query, ?string $mockExamName = null): Builder
     {
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock')) {
+            return $query;
+        }
+
         $q = $query->where('is_grand_mock', true);
-        if ($mockExamName) {
+        if ($mockExamName && \Illuminate\Support\Facades\Schema::hasColumn('questions', 'mock_exam_name')) {
             $q->where('mock_exam_name', $mockExamName);
         }
         return $q;

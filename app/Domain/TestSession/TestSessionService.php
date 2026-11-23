@@ -108,9 +108,10 @@ final class TestSessionService
 
         // If Grand Mock, also prioritize questions flagged as is_grand_mock
         $isGrandMockMode = ($sessionType === 'GRAND_MOCK' || $sessionType === 'MOCK' || $limit >= 200);
+        $hasGrandMockCol = \Illuminate\Support\Facades\Schema::hasColumn('questions', 'is_grand_mock');
 
         /** @var Collection<int, Question> $questions */
-        if ($isGrandMockMode && Question::where('is_grand_mock', true)->exists()) {
+        if ($isGrandMockMode && $hasGrandMockCol && Question::where('is_grand_mock', true)->exists()) {
             $grandMockUnattempted = (clone $query)
                 ->where('is_grand_mock', true)
                 ->whereNotIn('id', $attemptedQuestionIds)
