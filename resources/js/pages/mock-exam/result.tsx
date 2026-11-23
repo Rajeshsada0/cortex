@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
+import { SingleBlockExplanation } from '@/components/cortex/single-block-explanation';
 import { RankPredictionData } from '@/components/cortex/national-rank-predictor';
 
 interface SubjectStat {
@@ -597,6 +598,15 @@ export default function MockExamResult({
                         <p className="text-foreground text-sm leading-relaxed font-medium whitespace-pre-line">
                             {activeQuestion.stem}
                         </p>
+
+                        {/* Single-Block Comprehensive Explanation */}
+                        <SingleBlockExplanation
+                            correctOption={activeQuestion.correct_option}
+                            foundationExplanation={activeQuestion.foundation_explanation}
+                            integrationExplanation={activeQuestion.integration_explanation}
+                            applicationExplanation={activeQuestion.application_explanation}
+                            learningObjective={activeQuestion.learning_objective}
+                        />
 
                         {/* Option Rationale Table */}
                         <OptionRationaleTable

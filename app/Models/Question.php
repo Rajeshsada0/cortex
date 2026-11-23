@@ -32,6 +32,9 @@ class Question extends Model
         'is_past_year',
         'past_year',
         'is_high_yield',
+        'is_grand_mock',
+        'mock_exam_name',
+        'scheduled_day',
         'is_active',
     ];
 
@@ -39,6 +42,7 @@ class Question extends Model
         'is_active' => 'boolean',
         'is_past_year' => 'boolean',
         'is_high_yield' => 'boolean',
+        'is_grand_mock' => 'boolean',
     ];
 
     public function scopePastYear(Builder $query): Builder
@@ -49,6 +53,15 @@ class Question extends Model
     public function scopeHighYield(Builder $query): Builder
     {
         return $query->where('is_high_yield', true);
+    }
+
+    public function scopeGrandMock(Builder $query, ?string $mockExamName = null): Builder
+    {
+        $q = $query->where('is_grand_mock', true);
+        if ($mockExamName) {
+            $q->where('mock_exam_name', $mockExamName);
+        }
+        return $q;
     }
 
     protected static function booted(): void

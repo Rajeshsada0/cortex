@@ -31,6 +31,9 @@ class QuestionImportService
         bool $markAsPastYear = false,
         ?string $defaultPastYear = null,
         bool $markAsHighYield = false,
+        bool $markAsGrandMock = false,
+        ?string $defaultMockExamName = null,
+        ?string $defaultScheduledDay = null,
         int $chunkSize = 500,
         ?callable $progressCallback = null
     ): array
@@ -67,6 +70,9 @@ class QuestionImportService
                 markAsPastYear: $markAsPastYear,
                 defaultPastYear: $defaultPastYear,
                 markAsHighYield: $markAsHighYield,
+                markAsGrandMock: $markAsGrandMock,
+                defaultMockExamName: $defaultMockExamName,
+                defaultScheduledDay: $defaultScheduledDay,
                 chunkSize: $chunkSize,
                 progressCallback: $progressCallback
             );
@@ -82,6 +88,9 @@ class QuestionImportService
             markAsPastYear: $markAsPastYear,
             defaultPastYear: $defaultPastYear,
             markAsHighYield: $markAsHighYield,
+            markAsGrandMock: $markAsGrandMock,
+            defaultMockExamName: $defaultMockExamName,
+            defaultScheduledDay: $defaultScheduledDay,
             chunkSize: $chunkSize,
             progressCallback: $progressCallback
         );
@@ -103,6 +112,9 @@ class QuestionImportService
         bool $markAsPastYear = false,
         ?string $defaultPastYear = null,
         bool $markAsHighYield = false,
+        bool $markAsGrandMock = false,
+        ?string $defaultMockExamName = null,
+        ?string $defaultScheduledDay = null,
         int $chunkSize = 500,
         ?callable $progressCallback = null
     ): array
@@ -333,7 +345,10 @@ class QuestionImportService
                 defaultTopicId: $defaultTopicId,
                 markAsPastYear: $markAsPastYear,
                 defaultPastYear: $defaultPastYear,
-                markAsHighYield: $markAsHighYield
+                markAsHighYield: $markAsHighYield,
+                markAsGrandMock: $markAsGrandMock,
+                defaultMockExamName: $defaultMockExamName,
+                defaultScheduledDay: $defaultScheduledDay
             );
 
             if (! empty($validation['errors'])) {
@@ -371,6 +386,9 @@ class QuestionImportService
                 'is_past_year' => $validation['is_past_year'] ?? false,
                 'past_year' => $validation['past_year'] ?? null,
                 'is_high_yield' => $validation['is_high_yield'] ?? false,
+                'is_grand_mock' => $validation['is_grand_mock'] ?? false,
+                'mock_exam_name' => $validation['mock_exam_name'] ?? null,
+                'scheduled_day' => $validation['scheduled_day'] ?? null,
                 'is_active' => $validation['is_active'] ?? $publishAsActive,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -474,6 +492,9 @@ class QuestionImportService
         bool $markAsPastYear = false,
         ?string $defaultPastYear = null,
         bool $markAsHighYield = false,
+        bool $markAsGrandMock = false,
+        ?string $defaultMockExamName = null,
+        ?string $defaultScheduledDay = null,
         int $chunkSize = 500,
         ?callable $progressCallback = null
     ): array
@@ -644,7 +665,10 @@ class QuestionImportService
                 defaultTopicId: $defaultTopicId,
                 markAsPastYear: $markAsPastYear,
                 defaultPastYear: $defaultPastYear,
-                markAsHighYield: $markAsHighYield
+                markAsHighYield: $markAsHighYield,
+                markAsGrandMock: $markAsGrandMock,
+                defaultMockExamName: $defaultMockExamName,
+                defaultScheduledDay: $defaultScheduledDay
             );
 
             if (! empty($validation['errors'])) {
@@ -682,6 +706,9 @@ class QuestionImportService
                 'is_past_year' => $validation['is_past_year'] ?? false,
                 'past_year' => $validation['past_year'] ?? null,
                 'is_high_yield' => $validation['is_high_yield'] ?? false,
+                'is_grand_mock' => $validation['is_grand_mock'] ?? false,
+                'mock_exam_name' => $validation['mock_exam_name'] ?? null,
+                'scheduled_day' => $validation['scheduled_day'] ?? null,
                 'is_active' => $validation['is_active'] ?? $publishAsActive,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -755,7 +782,10 @@ class QuestionImportService
         ?int $defaultTopicId = null,
         bool $markAsPastYear = false,
         ?string $defaultPastYear = null,
-        bool $markAsHighYield = false
+        bool $markAsHighYield = false,
+        bool $markAsGrandMock = false,
+        ?string $defaultMockExamName = null,
+        ?string $defaultScheduledDay = null
     ): array
     {
         $errors = [];
@@ -1202,6 +1232,33 @@ class QuestionImportService
             $isHighYield = true;
         }
 
+        // 14. Grand Mock Exam Flags & Series Mapping (200 MCQs per exam)
+        $isGrandMockRaw = $get(['is_grand_mock', 'grand_mock', 'is_mock', 'mock_exam', 'is_grand_test']);
+        $isGrandMock = false;
+        if ($isGrandMockRaw !== null && $isGrandMockRaw !== '') {
+            $isGrandMock = filter_var($isGrandMockRaw, FILTER_VALIDATE_BOOLEAN)
+                || in_array(strtolower(trim((string) $isGrandMockRaw)), ['1', 'true', 'yes', 'y']);
+        }
+        if ($markAsGrandMock) {
+            $isGrandMock = true;
+        }
+
+        $mockExamNameVal = $get(['mock_exam_name', 'grand_mock_title', 'mock_title', 'exam_name', 'mock_name']);
+        if (empty($mockExamNameVal) && ! empty($defaultMockExamName)) {
+            $mockExamNameVal = $defaultMockExamName;
+        }
+        if (! empty($mockExamNameVal) && ! $isGrandMock) {
+            $isGrandMock = true;
+        }
+
+        $scheduledDayVal = $get(['scheduled_day', 'day', 'day_of_week', 'planned_day']);
+        if (empty($scheduledDayVal) && ! empty($defaultScheduledDay)) {
+            $scheduledDayVal = $defaultScheduledDay;
+        }
+        if (! empty($scheduledDayVal)) {
+            $scheduledDayVal = strtoupper(trim((string) $scheduledDayVal));
+        }
+
         return [
             'errors' => $errors,
             'code' => $code,
@@ -1222,6 +1279,9 @@ class QuestionImportService
             'is_past_year' => $isPastYear,
             'past_year' => $pastYearVal ? (string) $pastYearVal : null,
             'is_high_yield' => $isHighYield,
+            'is_grand_mock' => $isGrandMock,
+            'mock_exam_name' => $mockExamNameVal ? (string) $mockExamNameVal : null,
+            'scheduled_day' => $scheduledDayVal ? (string) $scheduledDayVal : null,
             'options' => array_values($options),
             'relevant_exams' => array_unique($relevantExams),
         ];
@@ -1365,6 +1425,146 @@ class QuestionImportService
                     'application_explanation' => 'Without pharmacologic afterload reduction (ACE inhibitors, ARBs), concentric hypertrophy compromises ventricular compliance and progresses to diastolic heart failure.',
                     'memory_peg' => 'Hearts only grow bigger (Hypertrophy), never multiply (Hyperplasia)!',
                     'relevant_exams' => ['MECEE_PG', 'INI_CET', 'USMLE_STEP1'],
+                ],
+            ],
+        ];
+
+        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Generate 200-Question Grand Mock Exam CSV starter template.
+     */
+    public function getSampleGrandMockCsv(): string
+    {
+        $headers = [
+            'code',
+            'subject',
+            'topic',
+            'difficulty',
+            'stem',
+            'option_a',
+            'option_a_rationale',
+            'option_b',
+            'option_b_rationale',
+            'option_c',
+            'option_c_rationale',
+            'option_d',
+            'option_d_rationale',
+            'correct_option',
+            'learning_objective',
+            'foundation_explanation',
+            'is_grand_mock',
+            'mock_exam_name',
+            'scheduled_day',
+            'relevant_exams',
+        ];
+
+        $sampleRows = [
+            [
+                'GM-2026-0001',
+                'General Medicine',
+                'Cardiovascular System',
+                'HARD',
+                'A 58-year-old male presents with crushing substernal chest pressure radiating to the left arm for 90 minutes. ECG demonstrates ST elevations in leads V1-V4 with reciprocal depressions in leads II, III, and aVF. Which coronary artery is most likely occluded?',
+                'Right Coronary Artery (RCA)',
+                'RCA occlusion causes inferior wall STEMI (leads II, III, aVF).',
+                'Left Anterior Descending (LAD)',
+                'LAD supplies the anterior wall and septum (leads V1-V4). ST elevation in V1-V4 indicates anterior STEMI.',
+                'Left Circumflex Artery (LCx)',
+                'LCx occlusion causes lateral STEMI (leads I, aVL, V5, V6).',
+                'Left Main Coronary Artery',
+                'Left main occlusion causes widespread ST depression with elevation in lead aVR.',
+                'B',
+                'Recognize ECG vascular localization in acute coronary syndromes.',
+                'Acute anterior myocardial infarction produces ST elevation across precordial leads V1-V4, anatomically supplied by the Left Anterior Descending (LAD) branch of the left coronary artery.',
+                'true',
+                'Weekend Grand Mock Exam 1 (200 MCQs)',
+                'SATURDAY',
+                'INI_CET,USMLE_STEP1',
+            ],
+            [
+                'GM-2026-0002',
+                'Pharmacology',
+                'Autonomic Nervous System',
+                'MEDIUM',
+                'A 34-year-old farmer is brought to the ED with pinpoint pupils, excessive salivation, and severe wheezing following insecticide spraying. Heart rate is 44 bpm. Which medication should be given immediately?',
+                'Pralidoxime (2-PAM) monotherapy',
+                'Pralidoxime breaks AChE bonds slowly and does not reverse immediate muscarinic bronchorrhea.',
+                'Atropine Sulfate IV',
+                'Atropine is a competitive muscarinic blocker that rapidly reverses bronchospasm, bronchorrhea, and bradycardia.',
+                'Physostigmine',
+                'Physostigmine is an AChE inhibitor and would worsen toxicity.',
+                'Naloxone IV',
+                'Indicated for opioid toxicity.',
+                'B',
+                'Identify first-line antidote for acute organophosphate toxidrome.',
+                'Organophosphates irreversibly inhibit acetylcholinesterase, leading to acetylcholine overload. Atropine reverses life-threatening muscarinic hypersecretion immediately.',
+                'true',
+                'Weekend Grand Mock Exam 1 (200 MCQs)',
+                'SATURDAY',
+                'INI_CET,USMLE_STEP1',
+            ],
+        ];
+
+        $stream = fopen('php://memory', 'r+');
+        fputcsv($stream, $headers);
+        foreach ($sampleRows as $row) {
+            fputcsv($stream, $row);
+        }
+        rewind($stream);
+        $csv = stream_get_contents($stream);
+        fclose($stream);
+
+        return $csv;
+    }
+
+    /**
+     * Generate 200-Question Grand Mock Exam JSON starter template.
+     */
+    public function getSampleGrandMockJson(): string
+    {
+        $data = [
+            'mock_exam_name' => 'Weekend Grand Mock Exam 1 (200 MCQs)',
+            'scheduled_day' => 'SATURDAY',
+            'total_target_questions' => 200,
+            'duration_minutes' => 180,
+            'questions' => [
+                [
+                    'code' => 'GM-JSON-0001',
+                    'subject' => 'Pathology',
+                    'topic' => 'Cell Injury and Adaptation',
+                    'difficulty' => 'MEDIUM',
+                    'stem' => 'A 62-year-old woman with chronic hypertension presents with left ventricular wall thickness of 18 mm (normal: 8-11 mm). Histopathology demonstrates enlarged myocytes with "boxcar" nuclei. Which adaptation is depicted?',
+                    'correct_option' => 'A',
+                    'options' => [
+                        [
+                            'option_key' => 'A',
+                            'option_text' => 'Pathologic Hypertrophy',
+                            'rationale' => 'Cardiac myocytes are permanent cells with no division capacity; increased afterload forces cellular enlargement.',
+                        ],
+                        [
+                            'option_key' => 'B',
+                            'option_text' => 'Hyperplasia',
+                            'rationale' => 'Hyperplasia increases cell count, which adult cardiac myocytes cannot do.',
+                        ],
+                        [
+                            'option_key' => 'C',
+                            'option_text' => 'Metaplasia',
+                            'rationale' => 'Metaplasia is conversion of one adult cell type into another.',
+                        ],
+                        [
+                            'option_key' => 'D',
+                            'option_text' => 'Dysplasia',
+                            'rationale' => 'Dysplasia is disordered growth and premalignant maturation loss.',
+                        ],
+                    ],
+                    'learning_objective' => 'Differentiate hypertrophy from hyperplasia in non-dividing cardiac myocytes.',
+                    'foundation_explanation' => 'Permanent cells (neurons, cardiac myocytes, skeletal muscle cells) respond to increased hemodynamic workload exclusively through hypertrophy.',
+                    'is_grand_mock' => true,
+                    'mock_exam_name' => 'Weekend Grand Mock Exam 1 (200 MCQs)',
+                    'scheduled_day' => 'SATURDAY',
+                    'relevant_exams' => ['INI_CET', 'USMLE_STEP1'],
                 ],
             ],
         ];

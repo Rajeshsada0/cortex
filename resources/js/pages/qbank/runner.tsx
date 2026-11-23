@@ -25,11 +25,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClinicalImageViewer } from '@/components/cortex/clinical-image-viewer';
-import {
-    ConfidenceSelector,
-    ConfidenceType,
-} from '@/components/cortex/confidence-selector';
 import { OptionRationaleTable } from '@/components/cortex/option-rationale-table';
+import { SingleBlockExplanation } from '@/components/cortex/single-block-explanation';
 import { QuestionPalette } from '@/components/cortex/question-palette';
 import { toast } from 'sonner';
 
@@ -311,7 +308,7 @@ export default function MCQRunner({
         });
     }, [currentQuestion?.id]);
 
-    // Finish Block in Timed Mode
+    // Finish Block in Timed / Practice Mode & Route to Results & Analysis
     const handleFinishTimedBlock = async () => {
         setIsSubmitting(true);
         const sessId = session.id || session.data?.id;
@@ -329,13 +326,12 @@ export default function MCQRunner({
             });
             setIsBlockFinished(true);
             setIsSubmitted(true);
-            toast.success('Practice Block Submitted!', {
-                description:
-                    'Scorecard generated. Explanations unlocked for review.',
+            toast.success('Practice Session Graded!', {
+                description: 'Opening your detailed results and clinical analysis...',
             });
+            router.visit(`/mock-exam/${sessId}/result`);
         } catch (e) {
-            setIsBlockFinished(true);
-            setIsSubmitted(true);
+            router.visit(`/mock-exam/${sessId}/result`);
         } finally {
             setIsSubmitting(false);
         }
@@ -521,8 +517,13 @@ export default function MCQRunner({
                     <button
                         type="button"
                         onClick={() => {
-                            if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
-                            else router.visit('/subjects');
+                            if (currentIndex > 0) {
+                                setCurrentIndex((prev) => prev - 1);
+                            } else if (Object.keys(answers).length > 0) {
+                                handleFinishTimedBlock();
+                            } else {
+                                router.visit('/subjects');
+                            }
                         }}
                         className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
                         title="Previous Question"
@@ -744,19 +745,8 @@ export default function MCQRunner({
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: Options Palette, Confidence Rating, and 3-Tier Rationale */}
+                {/* RIGHT COLUMN: Options Palette and Rationale */}
                 <div className="flex flex-col gap-4 lg:col-span-5">
-                    {/* Pre-Submission Confidence Rating in Tutor mode */}
-                    {activeMode === 'TUTOR' && (
-                        <div className="border-border bg-card rounded-xl border p-4 shadow-sm">
-                            <ConfidenceSelector
-                                value={confidence}
-                                onChange={setConfidence}
-                                disabled={isSubmitted}
-                            />
-                        </div>
-                    )}
-
                     {/* Option Choices Selector */}
                     <div className="border-border bg-card flex flex-col gap-2.5 rounded-2xl border p-5 shadow-sm">
                         <div className="border-border flex items-center justify-between border-b pb-2">
@@ -900,14 +890,13 @@ export default function MCQRunner({
                             ) : (
                                 <Button
                                     type="button"
-                                    onClick={() =>
-                                        toast.info(
-                                            'Completed all questions in this block!',
-                                        )
-                                    }
+                                    onClick={handleFinishTimedBlock}
+                                    disabled={isSubmitting}
                                     className="w-1/2 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                                 >
-                                    Finish Practice
+                                    {isSubmitting
+                                        ? 'Grading...'
+                                        : 'Finish & View Analysis →'}
                                 </Button>
                             )}
                         </div>
@@ -922,6 +911,17 @@ export default function MCQRunner({
                         visitedQuestions={visitedQuestions}
                         onSelectQuestion={setCurrentIndex}
                     />
+
+                    {/* Single-Block Comprehensive Explanation at end of options */}
+                    {showExplanation && (
+                        <SingleBlockExplanation
+                            correctOption={currentQuestion.correct_option}
+                            foundationExplanation={currentQuestion.foundation_explanation}
+                            integrationExplanation={currentQuestion.integration_explanation}
+                            applicationExplanation={currentQuestion.application_explanation}
+                            learningObjective={currentQuestion.learning_objective}
+                        />
+                    )}
 
                     {/* Option Rationale Table (Unlocked when submitted or review) */}
                     {showExplanation && (
@@ -972,10 +972,13 @@ export default function MCQRunner({
                     ) : (
                         <Button
                             type="button"
-                            onClick={() => router.visit('/subjects')}
+                            onClick={handleFinishTimedBlock}
+                            disabled={isSubmitting}
                             className="h-12 w-full rounded-xl bg-emerald-600 text-sm font-bold uppercase tracking-wider text-white shadow-md hover:bg-emerald-700 active:scale-[0.99] transition-all"
                         >
-                            Finish Practice & Return
+                            {isSubmitting
+                                ? 'Grading...'
+                                : 'Finish Practice & View Analysis →'}
                         </Button>
                     )}
                 </div>
@@ -1004,11 +1007,21 @@ export default function MCQRunner({
                             </Button>
                             <Button
                                 type="button"
+                                onClick={handleFinishTimedBlock}
+                                disabled={isSubmitting}
+                                className="h-11 rounded-xl bg-emerald-600 text-xs font-bold uppercase tracking-wider text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/25"
+                            >
+                                {isSubmitting
+                                    ? 'Grading...'
+                                    : 'Exit & View Results / Analysis'}
+                            </Button>
+                            <Button
+                                type="button"
                                 variant="outline"
                                 onClick={() => router.visit('/subjects')}
                                 className="h-11 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                             >
-                                Exit to Subjects
+                                Exit Without Saving
                             </Button>
                         </div>
                     </div>

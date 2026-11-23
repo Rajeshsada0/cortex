@@ -99,14 +99,76 @@ final class TestSessionService
             $query->status($user, $status);
         }
 
+        // Get questions the user has already attempted to guarantee non-repeating tests
+        $attemptedQuestionIds = QuestionAttempt::where('user_id', $user->id)
+            ->pluck('question_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        // If Grand Mock, also prioritize questions flagged as is_grand_mock
+        $isGrandMockMode = ($sessionType === 'GRAND_MOCK' || $sessionType === 'MOCK' || $limit >= 200);
+
         /** @var Collection<int, Question> $questions */
-        $questions = $query->inRandomOrder()->limit($limit)->get();
+        if ($isGrandMockMode && Question::where('is_grand_mock', true)->exists()) {
+            $grandMockUnattempted = (clone $query)
+                ->where('is_grand_mock', true)
+                ->whereNotIn('id', $attemptedQuestionIds)
+                ->inRandomOrder()
+                ->limit($limit)
+                ->get();
+
+            if ($grandMockUnattempted->count() >= $limit) {
+                $questions = $grandMockUnattempted;
+            } else {
+                $questions = $grandMockUnattempted;
+            }
+        } else {
+            $questions = collect();
+        }
+
+        if ($questions->count() < $limit) {
+            $stillNeeded = $limit - $questions->count();
+            $existingSelectedIds = $questions->pluck('id')->toArray();
+
+            // Prioritize unattempted questions to avoid repetition across tests
+            $unattemptedQuery = (clone $query)
+                ->whereNotIn('id', array_merge($attemptedQuestionIds, $existingSelectedIds));
+
+            $unattemptedCount = $unattemptedQuery->count();
+
+            if ($unattemptedCount >= $stillNeeded) {
+                $freshQuestions = $unattemptedQuery->inRandomOrder()->limit($stillNeeded)->get();
+                $questions = $questions->concat($freshQuestions);
+            } else {
+                $freshQuestions = $unattemptedQuery->inRandomOrder()->get();
+                $questions = $questions->concat($freshQuestions);
+
+                $remainderNeeded = $limit - $questions->count();
+                if ($remainderNeeded > 0) {
+                    $existingSelectedIds = $questions->pluck('id')->toArray();
+                    $repeatFiller = (clone $query)
+                        ->whereNotIn('id', $existingSelectedIds)
+                        ->inRandomOrder()
+                        ->limit($remainderNeeded)
+                        ->get();
+                    $questions = $questions->concat($repeatFiller);
+                }
+            }
+        }
+
+        // Deduplicate to guarantee no question ever repeats within the test
+        $questions = $questions->unique('id')->values();
 
         // If not enough questions found for strict filters, provide smart fallback:
-        if ($questions->isEmpty() && empty($questionIds)) {
+        if ($questions->count() < $limit && empty($questionIds)) {
+            $existingSelectedIds = $questions->pluck('id')->toArray();
+            $neededFallback = $limit - $questions->count();
+
             $fallbackQuery = Question::query()
                 ->where('is_active', true)
-                ->forExam($pathway);
+                ->forExam($pathway)
+                ->whereNotIn('id', $existingSelectedIds);
 
             if (! empty($pastYear)) {
                 $cleanYear = trim((string) $pastYear);
@@ -125,28 +187,50 @@ final class TestSessionService
                 });
             }
 
-            $questions = $fallbackQuery->inRandomOrder()->limit($limit)->get();
+            // Prioritize unattempted from fallback
+            $fallbackUnattempted = (clone $fallbackQuery)
+                ->whereNotIn('id', $attemptedQuestionIds)
+                ->inRandomOrder()
+                ->limit($neededFallback)
+                ->get();
+
+            $questions = $questions->concat($fallbackUnattempted)->unique('id')->values();
+
+            if ($questions->count() < $limit) {
+                $moreNeeded = $limit - $questions->count();
+                $existingSelectedIds = $questions->pluck('id')->toArray();
+                $fallbackRemainder = $fallbackQuery
+                    ->whereNotIn('id', $existingSelectedIds)
+                    ->inRandomOrder()
+                    ->limit($moreNeeded)
+                    ->get();
+                $questions = $questions->concat($fallbackRemainder)->unique('id')->values();
+            }
 
             // Ultimate safety net fallback within pathway (except when specific past year requested)
-            if ($questions->isEmpty() && empty($pastYear)) {
-                $questions = Question::query()
+            if ($questions->count() < $limit && empty($pastYear)) {
+                $lastNeeded = $limit - $questions->count();
+                $existingSelectedIds = $questions->pluck('id')->toArray();
+                $pathwaySafety = Question::query()
                     ->where('is_active', true)
                     ->forExam($pathway)
+                    ->whereNotIn('id', $existingSelectedIds)
                     ->inRandomOrder()
-                    ->limit($limit)
+                    ->limit($lastNeeded)
                     ->get();
+                $questions = $questions->concat($pathwaySafety)->unique('id')->values();
             }
         }
 
         $totalQuestions = $questions->count();
         $calcDuration = $durationMinutes
             ? ($durationMinutes * 60)
-            : ($sessionType === 'GRAND_MOCK' ? 180 * 60 : max(60, $totalQuestions * 60));
+            : ($sessionType === 'GRAND_MOCK' || $sessionType === 'MOCK' || $limit >= 200 ? 180 * 60 : max(60, $totalQuestions * 60));
 
         $session = TestSession::create([
             'user_id' => $user->id,
             'title' => $title,
-            'session_type' => $sessionType,
+            'session_type' => ($sessionType === 'MOCK' ? 'GRAND_MOCK' : $sessionType),
             'exam_pathway' => $pathway,
             'total_questions' => $totalQuestions,
             'duration_seconds' => $calcDuration,
@@ -178,31 +262,66 @@ final class TestSessionService
 
         $selectedQuestionIds = collect();
 
-        // Sample per subject according to blueprint quota
+        // Get questions the user has already attempted to avoid repeating questions
+        $attemptedQuestionIds = QuestionAttempt::where('user_id', $user->id)
+            ->pluck('question_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        // Sample per subject according to blueprint quota, prioritizing unattempted questions
         foreach ($quota as $slug => $count) {
             $subject = $subjects->get($slug);
             if (! $subject) {
                 continue;
             }
 
-            $subjectQuestions = Question::where('is_active', true)
+            $currentSelected = $selectedQuestionIds->toArray();
+
+            $subjectUnattempted = Question::where('is_active', true)
                 ->where('subject_id', $subject->id)
                 ->forExam($pathway->value)
+                ->whereNotIn('id', array_merge($attemptedQuestionIds, $currentSelected))
                 ->inRandomOrder()
                 ->limit($count)
                 ->pluck('id');
 
-            $selectedQuestionIds = $selectedQuestionIds->merge($subjectQuestions);
+            $selectedQuestionIds = $selectedQuestionIds->merge($subjectUnattempted);
+
+            if ($subjectUnattempted->count() < $count) {
+                $rem = $count - $subjectUnattempted->count();
+                $subjectFiller = Question::where('is_active', true)
+                    ->where('subject_id', $subject->id)
+                    ->forExam($pathway->value)
+                    ->whereNotIn('id', $selectedQuestionIds->toArray())
+                    ->inRandomOrder()
+                    ->limit($rem)
+                    ->pluck('id');
+
+                $selectedQuestionIds = $selectedQuestionIds->merge($subjectFiller);
+            }
         }
 
-        // Fill up remainder from active pathway questions if quota is not met
+        // Fill up remainder from active pathway questions if quota is not met (prioritize unattempted)
         $needed = $targetQuestions - $selectedQuestionIds->count();
         if ($needed > 0) {
-            $filler = Question::where('is_active', true)
-                ->whereNotIn('id', $selectedQuestionIds)
+            $fillerUnattempted = Question::where('is_active', true)
+                ->whereNotIn('id', array_merge($attemptedQuestionIds, $selectedQuestionIds->toArray()))
                 ->forExam($pathway->value)
                 ->inRandomOrder()
                 ->limit($needed)
+                ->pluck('id');
+
+            $selectedQuestionIds = $selectedQuestionIds->merge($fillerUnattempted);
+        }
+
+        $stillNeeded = $targetQuestions - $selectedQuestionIds->count();
+        if ($stillNeeded > 0) {
+            $filler = Question::where('is_active', true)
+                ->whereNotIn('id', $selectedQuestionIds->toArray())
+                ->forExam($pathway->value)
+                ->inRandomOrder()
+                ->limit($stillNeeded)
                 ->pluck('id');
 
             $selectedQuestionIds = $selectedQuestionIds->merge($filler);

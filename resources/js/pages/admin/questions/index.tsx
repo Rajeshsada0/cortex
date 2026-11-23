@@ -16,6 +16,7 @@ import {
     Activity,
     FileText,
     Upload,
+    Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,9 @@ interface QuestionItem {
     is_past_year?: boolean;
     past_year?: string | null;
     is_high_yield?: boolean;
+    is_grand_mock?: boolean;
+    mock_exam_name?: string | null;
+    scheduled_day?: string | null;
     is_active: boolean;
     created_at: string;
     subject: { id: number; name: string };
@@ -75,6 +79,8 @@ interface QuestionsIndexProps {
         status: string;
         past_year?: string;
         high_yield?: string;
+        grand_mock?: string;
+        mock_exam_name?: string;
     };
     stats: {
         total: number;
@@ -82,6 +88,7 @@ interface QuestionsIndexProps {
         draft: number;
         past_year?: number;
         high_yield?: number;
+        grand_mock?: number;
     };
 }
 
@@ -100,6 +107,8 @@ export default function QuestionsIndex({
     const [status, setStatus] = useState(filters.status || 'all');
     const [pastYear, setPastYear] = useState(filters.past_year || 'all');
     const [highYield, setHighYield] = useState(filters.high_yield || 'all');
+    const [grandMock, setGrandMock] = useState(filters.grand_mock || 'all');
+    const [mockExamName, setMockExamName] = useState(filters.mock_exam_name || '');
 
     // Quick Preview Modal
     const [previewQuestion, setPreviewQuestion] = useState<QuestionItem | null>(
@@ -119,6 +128,8 @@ export default function QuestionsIndex({
         if (status !== 'all') query.status = status;
         if (pastYear !== 'all') query.past_year = pastYear;
         if (highYield !== 'all') query.high_yield = highYield;
+        if (grandMock !== 'all') query.grand_mock = grandMock;
+        if (mockExamName) query.mock_exam_name = mockExamName;
 
         router.get('/admin/questions', query, { preserveState: true });
     };
@@ -132,6 +143,8 @@ export default function QuestionsIndex({
         setStatus('all');
         setPastYear('all');
         setHighYield('all');
+        setGrandMock('all');
+        setMockExamName('');
         router.get('/admin/questions');
     };
 
@@ -276,10 +289,46 @@ export default function QuestionsIndex({
                                 {stats.high_yield ?? 0}
                             </Badge>
                         </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const nextVal = grandMock === 'yes' ? 'all' : 'yes';
+                                setGrandMock(nextVal);
+                                router.get('/admin/questions', {
+                                    ...filters,
+                                    grand_mock: nextVal,
+                                });
+                            }}
+                            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                grandMock === 'yes'
+                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200'
+                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                            }`}
+                        >
+                            <Trophy className="size-3.5 text-indigo-600" />
+                            <span>Grand Mock (200 MCQs)</span>
+                            <Badge
+                                variant="secondary"
+                                className="h-5 px-1.5 font-mono text-[10px]"
+                            >
+                                {stats.grand_mock ?? 0}
+                            </Badge>
+                        </button>
                     </div>
 
                     {/* Action Toolbar */}
                     <div className="flex shrink-0 items-center gap-2">
+                        <Link href="/admin/questions/import">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 border-indigo-300 bg-indigo-50/50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 gap-1.5 text-xs font-semibold dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
+                            >
+                                <Trophy className="size-3.5 text-indigo-600" />
+                                Import Grand Mock (200 MCQs)
+                            </Button>
+                        </Link>
                         <Link href="/admin/questions/import">
                             <Button
                                 variant="outline"
@@ -521,6 +570,14 @@ export default function QuestionsIndex({
                                                     {q.is_high_yield && (
                                                         <span className="inline-flex items-center rounded-md bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50">
                                                             ★ HY
+                                                        </span>
+                                                    )}
+                                                    {q.is_grand_mock && (
+                                                        <span
+                                                            className="inline-flex items-center gap-0.5 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/50"
+                                                            title={q.mock_exam_name || 'Grand Mock Exam'}
+                                                        >
+                                                            <Trophy className="size-2.5" /> Mock
                                                         </span>
                                                     )}
                                                 </div>

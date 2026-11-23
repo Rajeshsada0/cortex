@@ -22,6 +22,18 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+interface WeekendTest {
+    id: string;
+    day: string;
+    title: string;
+    date: string;
+    isLive: boolean;
+    questions: number;
+    duration: number;
+    badge: string;
+    description: string;
+}
+
 interface MockIndexProps {
     user: any;
     activePathway: string;
@@ -30,6 +42,7 @@ interface MockIndexProps {
     durationMinutes: number;
     markingRules: string | { correct?: number; negative?: number; penalty_label?: string };
     history: any[];
+    weekendSchedule?: WeekendTest[];
 }
 
 interface ExamPreset {
@@ -98,6 +111,7 @@ export default function MockExamIndex({
     durationMinutes: defaultDuration,
     markingRules,
     history = [],
+    weekendSchedule = [],
 }: MockIndexProps) {
     const [selectedPreset, setSelectedPreset] = useState<ExamPreset>(
         EXAM_PRESETS[0],
@@ -108,6 +122,14 @@ export default function MockExamIndex({
             pathway: activePathway,
             target_questions: selectedPreset.questions,
             duration_minutes: selectedPreset.duration,
+        });
+    };
+
+    const handleLaunchWeekendMock = (examTitle: string) => {
+        router.post('/mock-exam/launch', {
+            pathway: activePathway,
+            target_questions: 200,
+            duration_minutes: 180,
         });
     };
 
@@ -136,6 +158,110 @@ export default function MockExamIndex({
                         </div>
 
                         <PathwaySelector currentPathway={activePathway} />
+                    </div>
+                </div>
+
+                {/* Planned Weekend Grand Mock Tests (Every Saturday & Sunday) */}
+                <div className="rounded-2xl border border-primary/20 bg-linear-to-r from-primary/5 via-primary/[0.02] to-transparent p-5 shadow-xs">
+                    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-primary" />
+                                <h2 className="text-sm font-bold tracking-wide text-foreground uppercase">
+                                    Planned Weekend Grand Mocks (Saturday & Sunday)
+                                </h2>
+                            </div>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                Scheduled 200-question timed national benchmarks with zero repeated questions and official blueprint weighting.
+                            </p>
+                        </div>
+                        <span className="inline-flex w-fit items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
+                            Every Sat &amp; Sun &bull; 200 MCQs &bull; 180 Mins
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {/* Saturday Card */}
+                        <div className="relative flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition-all hover:border-border/80 hover:shadow-xs">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                                        SATURDAY MARATHON
+                                    </span>
+                                    {weekendSchedule.find((s) => s.day === 'SATURDAY')?.isLive ? (
+                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                                            <span className="h-2 w-2 animate-pulse rounded-full bg-rose-500" />
+                                            NOW LIVE
+                                        </span>
+                                    ) : (
+                                        <span className="text-[11px] font-medium text-muted-foreground">
+                                            {weekendSchedule.find((s) => s.day === 'SATURDAY')?.date || 'Every Saturday'}
+                                        </span>
+                                    )}
+                                </div>
+                                <h3 className="text-base font-bold text-foreground">
+                                    Saturday Grand Mock Marathon
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    200 non-repeating questions covering Pre-clinical, Para-clinical &amp; Clinical modules in a strict 180-minute hall.
+                                </p>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                                <div className="text-xs font-medium text-muted-foreground">
+                                    <span className="font-mono font-bold text-foreground">200</span> Questions &bull; <span className="font-mono font-bold text-foreground">180</span> Mins
+                                </div>
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleLaunchWeekendMock('Saturday Grand Mock Marathon')}
+                                    className="gap-1.5 bg-amber-600 text-xs font-semibold text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+                                >
+                                    Enter Saturday Mock
+                                    <ArrowUpRight className="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Sunday Card */}
+                        <div className="relative flex flex-col justify-between rounded-xl border border-border bg-card p-4 transition-all hover:border-border/80 hover:shadow-xs">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-bold text-cyan-700 dark:text-cyan-400">
+                                        SUNDAY SIMULATION
+                                    </span>
+                                    {weekendSchedule.find((s) => s.day === 'SUNDAY')?.isLive ? (
+                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                                            <span className="h-2 w-2 animate-pulse rounded-full bg-rose-500" />
+                                            NOW LIVE
+                                        </span>
+                                    ) : (
+                                        <span className="text-[11px] font-medium text-muted-foreground">
+                                            {weekendSchedule.find((s) => s.day === 'SUNDAY')?.date || 'Every Sunday'}
+                                        </span>
+                                    )}
+                                </div>
+                                <h3 className="text-base font-bold text-foreground">
+                                    Sunday All-India Grand Mock Simulation
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    National rank prediction simulation: 200 random, non-repeating MCQs with live percentile scoring and stamina calibration.
+                                </p>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                                <div className="text-xs font-medium text-muted-foreground">
+                                    <span className="font-mono font-bold text-foreground">200</span> Questions &bull; <span className="font-mono font-bold text-foreground">180</span> Mins
+                                </div>
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleLaunchWeekendMock('Sunday All-India Grand Mock Simulation')}
+                                    className="gap-1.5 bg-cyan-600 text-xs font-semibold text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
+                                >
+                                    Enter Sunday Mock
+                                    <ArrowUpRight className="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

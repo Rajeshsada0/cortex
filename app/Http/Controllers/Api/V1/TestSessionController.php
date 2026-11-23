@@ -40,6 +40,80 @@ class TestSessionController extends Controller
     }
 
     /**
+     * Get the planned Grand Mock weekend schedule (Saturday & Sunday, 200 questions each)
+     */
+    public function grandMockSchedule(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('email', 'dr.cortex@example.com')->first() ?? User::first();
+        $pathway = $request->input('pathway', $user?->active_pathway ?? 'INI_CET');
+        $dbPathway = \App\Models\ExamPathway::where('code', $pathway)->first();
+
+        $now = \Illuminate\Support\Carbon::now();
+        $isSaturday = $now->isSaturday();
+        $isSunday = $now->isSunday();
+
+        $satDate = $isSaturday ? $now->copy() : $now->copy()->next(\Illuminate\Support\Carbon::SATURDAY);
+        $sunDate = $isSunday ? $now->copy() : $now->copy()->next(\Illuminate\Support\Carbon::SUNDAY);
+
+        // Check if there are imported grand mock questions for Saturday or Sunday
+        $satCustomCount = Question::where('is_grand_mock', true)
+            ->where(function ($q) {
+                $q->where('scheduled_day', 'SATURDAY')->orWhereNull('scheduled_day');
+            })
+            ->forExam($pathway)
+            ->count();
+
+        $sunCustomCount = Question::where('is_grand_mock', true)
+            ->where(function ($q) {
+                $q->where('scheduled_day', 'SUNDAY')->orWhereNull('scheduled_day');
+            })
+            ->forExam($pathway)
+            ->count();
+
+        $schedule = [
+            [
+                'id' => 'grand-mock-saturday',
+                'day' => 'SATURDAY',
+                'title' => 'Saturday Grand Mock Marathon',
+                'subtitle' => 'All-India 200 MCQ Live Benchmark Simulation',
+                'scheduled_date' => $satDate->format('Y-m-d'),
+                'display_date' => $satDate->format('D, d M'),
+                'questions_count' => 200,
+                'duration_minutes' => 180,
+                'status' => $isSaturday ? 'LIVE' : 'UPCOMING',
+                'badge' => $isSaturday ? 'NOW LIVE' : 'PLANNED EVERY SATURDAY',
+                'exam_pathway' => $pathway,
+                'pathway_name' => $dbPathway?->name ?? $pathway,
+                'custom_questions_available' => $satCustomCount,
+                'description' => 'Standardized 200-question timed marathon covering pre-clinical, para-clinical, and clinical disciplines with zero duplicate questions.',
+            ],
+            [
+                'id' => 'grand-mock-sunday',
+                'day' => 'SUNDAY',
+                'title' => 'Sunday National Grand Mock Simulation',
+                'subtitle' => 'Full Test-Day National Rank & Percentile Predictor',
+                'scheduled_date' => $sunDate->format('Y-m-d'),
+                'display_date' => $sunDate->format('D, d M'),
+                'questions_count' => 200,
+                'duration_minutes' => 180,
+                'status' => $isSunday ? 'LIVE' : 'UPCOMING',
+                'badge' => $isSunday ? 'NOW LIVE' : 'PLANNED EVERY SUNDAY',
+                'exam_pathway' => $pathway,
+                'pathway_name' => $dbPathway?->name ?? $pathway,
+                'custom_questions_available' => $sunCustomCount,
+                'description' => '200 high-yield clinical MCQs calibrated to test stamina, negative marking discipline, and speed (54s per question).',
+            ],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'pathway' => $pathway,
+            'is_weekend' => ($isSaturday || $isSunday),
+            'schedule' => $schedule,
+        ]);
+    }
+
+    /**
      * Start a new test session (Practice, Timed Block, or Grand Mock)
      */
     public function store(Request $request): JsonResponse
@@ -146,7 +220,7 @@ class TestSessionController extends Controller
         $validated = $request->validate([
             'question_id' => 'required|string',
             'selected_option' => 'required|string|size:1',
-            'confidence' => 'required|string|in:LOW,MEDIUM,HIGH',
+            'confidence' => 'nullable|string|in:LOW,MEDIUM,HIGH',
             'time_taken_seconds' => 'nullable|integer|min:0',
             'was_switched' => 'nullable|boolean',
             'initial_option' => 'nullable|string|size:1',
@@ -154,6 +228,7 @@ class TestSessionController extends Controller
 
         $question = Question::findOrFail($validated['question_id']);
         $isCorrect = (strtoupper($validated['selected_option']) === strtoupper($question->correct_option));
+        $confidenceLevel = strtoupper($validated['confidence'] ?? 'HIGH');
 
         $attempt = QuestionAttempt::updateOrCreate(
             [
@@ -164,7 +239,7 @@ class TestSessionController extends Controller
             [
                 'selected_option' => strtoupper($validated['selected_option']),
                 'is_correct' => $isCorrect,
-                'confidence' => strtoupper($validated['confidence']),
+                'confidence' => $confidenceLevel,
                 'time_taken_seconds' => $validated['time_taken_seconds'] ?? 45,
                 'was_switched' => $validated['was_switched'] ?? false,
                 'initial_option' => ! empty($validated['initial_option']) ? strtoupper($validated['initial_option']) : null,
@@ -176,7 +251,7 @@ class TestSessionController extends Controller
             $user,
             $question->id,
             $isCorrect,
-            $validated['confidence']
+            $confidenceLevel
         );
 
         return response()->json([

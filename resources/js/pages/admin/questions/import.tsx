@@ -16,8 +16,10 @@ import {
     Compass,
     Check,
     Sparkles,
+    Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -55,12 +57,14 @@ interface ImportResults {
 interface ImportProps {
     subjects: SubjectItem[];
     pathways?: ExamPathwayItem[];
+    grandMockNames?: string[];
     importResults?: ImportResults | null;
 }
 
 export default function QuestionsImport({
     subjects,
     pathways = [],
+    grandMockNames = [],
     importResults,
 }: ImportProps) {
     const [dragOver, setDragOver] = useState(false);
@@ -87,6 +91,9 @@ export default function QuestionsImport({
         is_past_year: boolean;
         past_year: string;
         is_high_yield: boolean;
+        is_grand_mock: boolean;
+        mock_exam_name: string;
+        scheduled_day: string;
         pathways: string[];
         pathway_mode: 'fallback' | 'override';
     }>({
@@ -97,6 +104,9 @@ export default function QuestionsImport({
         is_past_year: false,
         past_year: '',
         is_high_yield: false,
+        is_grand_mock: false,
+        mock_exam_name: '',
+        scheduled_day: 'SATURDAY',
         pathways: initialExams,
         pathway_mode: 'fallback',
     });
@@ -208,6 +218,20 @@ export default function QuestionsImport({
                             >
                                 <FileCode className="size-3.5 text-sky-600" />
                                 <span>Sample JSON</span>
+                                <Download className="text-muted-foreground size-3" />
+                            </Button>
+                        </a>
+                        <a
+                            href="/admin/questions/import/template/csv?type=grand_mock"
+                            download
+                        >
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-border gap-1.5 text-xs font-bold hover:border-indigo-500 hover:text-indigo-600 border-indigo-200/80 bg-indigo-50/40 dark:bg-indigo-950/20"
+                            >
+                                <Trophy className="size-3.5 text-indigo-600" />
+                                <span>Grand Mock Template (200 MCQs)</span>
                                 <Download className="text-muted-foreground size-3" />
                             </Button>
                         </a>
@@ -759,6 +783,82 @@ export default function QuestionsImport({
                                         <Badge className="bg-rose-100 text-rose-800 text-[10px] dark:bg-rose-900/60 dark:text-rose-200">
                                             High-Yield Pearls
                                         </Badge>
+                                    </div>
+
+                                    {/* Grand Mock Exam Configuration (200 Questions / Exam) */}
+                                    <div className="flex flex-col gap-3 rounded-xl border border-indigo-200/60 bg-indigo-50/40 p-3.5 dark:border-indigo-900/40 dark:bg-indigo-950/20">
+                                        <div className="flex items-center justify-between">
+                                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.is_grand_mock}
+                                                    onChange={(e) => setData('is_grand_mock', e.target.checked)}
+                                                    className="size-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                                                    <Trophy className="size-3.5 text-indigo-600" />
+                                                    Import as Grand Mock Exam (200 Questions / Exam)
+                                                </span>
+                                            </label>
+                                            <Badge className="bg-indigo-100 text-indigo-800 text-[10px] font-mono dark:bg-indigo-900/60 dark:text-indigo-200">
+                                                200 MCQs Blueprint
+                                            </Badge>
+                                        </div>
+
+                                        {data.is_grand_mock && (
+                                            <div className="space-y-3 pt-2">
+                                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                    <div>
+                                                        <Label className="text-foreground text-[11px] font-bold">
+                                                            Grand Mock Exam Title / Series
+                                                        </Label>
+                                                        <Input
+                                                            value={data.mock_exam_name}
+                                                            onChange={(e) => setData('mock_exam_name', e.target.value)}
+                                                            placeholder="e.g. National Grand Mock #1 (200 MCQs)"
+                                                            className="text-xs mt-1 bg-card"
+                                                        />
+                                                        {grandMockNames && grandMockNames.length > 0 && (
+                                                            <div className="mt-1.5 flex flex-wrap gap-1">
+                                                                <span className="text-[10px] text-muted-foreground mr-1">Existing:</span>
+                                                                {grandMockNames.slice(0, 3).map((name) => (
+                                                                    <button
+                                                                        key={name}
+                                                                        type="button"
+                                                                        onClick={() => setData('mock_exam_name', name)}
+                                                                        className="text-[10px] text-indigo-600 underline hover:text-indigo-800 font-medium"
+                                                                    >
+                                                                        {name}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <Label className="text-foreground text-[11px] font-bold">
+                                                            Scheduled Weekend Slot
+                                                        </Label>
+                                                        <select
+                                                            value={data.scheduled_day}
+                                                            onChange={(e) => setData('scheduled_day', e.target.value)}
+                                                            className="border-input bg-card text-foreground w-full rounded-xl border px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 mt-1"
+                                                        >
+                                                            <option value="SATURDAY">Saturday Live Mock</option>
+                                                            <option value="SUNDAY">Sunday National Simulation</option>
+                                                            <option value="WEEKEND">Both Saturday & Sunday</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 rounded-lg bg-indigo-100/60 p-2.5 text-[11px] text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200">
+                                                    <Info className="size-3.5 shrink-0 text-indigo-600" />
+                                                    <span>
+                                                        Questions tagged in this series are grouped into a standardized <strong>200-question marathon (180 mins)</strong>, instantly populated into both the Mobile App and Web Grand Mock Hall every weekend!
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

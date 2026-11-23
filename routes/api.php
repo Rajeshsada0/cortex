@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/questions/{id}', [QuestionController::class, 'show'])->name('api.v1.questions.show');
 
     // Test Sessions & MCQ Runner
+    Route::get('/grand-mocks/schedule', [TestSessionController::class, 'grandMockSchedule'])->name('api.v1.grand-mocks.schedule');
     Route::get('/test-sessions', [TestSessionController::class, 'index'])->name('api.v1.test-sessions.index');
     Route::post('/test-sessions', [TestSessionController::class, 'store'])->name('api.v1.test-sessions.store');
     Route::get('/test-sessions/{id}', [TestSessionController::class, 'show'])->name('api.v1.test-sessions.show');

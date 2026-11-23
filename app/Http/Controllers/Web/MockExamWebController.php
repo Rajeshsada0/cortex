@@ -36,6 +36,37 @@ class MockExamWebController extends Controller
         $dbPathway = \App\Models\ExamPathway::where('code', $user->active_pathway)->first();
         $pathway = ExamPathway::tryFrom($user->active_pathway) ?? ExamPathway::INI_CET;
 
+        $now = \Illuminate\Support\Carbon::now();
+        $isSaturday = $now->isSaturday();
+        $isSunday = $now->isSunday();
+        $satDate = $isSaturday ? $now->copy() : $now->copy()->next(\Illuminate\Support\Carbon::SATURDAY);
+        $sunDate = $isSunday ? $now->copy() : $now->copy()->next(\Illuminate\Support\Carbon::SUNDAY);
+
+        $weekendSchedule = [
+            [
+                'id' => 'grand-mock-saturday',
+                'day' => 'SATURDAY',
+                'title' => 'Saturday Grand Mock Marathon',
+                'date' => $satDate->format('D, d M Y'),
+                'isLive' => $isSaturday,
+                'questions' => 200,
+                'duration' => 180,
+                'badge' => $isSaturday ? 'NOW LIVE' : 'PLANNED EVERY SATURDAY',
+                'description' => 'Comprehensive 200-question timed marathon covering pre-clinical, para-clinical, and clinical disciplines with zero duplicate questions.',
+            ],
+            [
+                'id' => 'grand-mock-sunday',
+                'day' => 'SUNDAY',
+                'title' => 'Sunday National Grand Mock Simulation',
+                'date' => $sunDate->format('D, d M Y'),
+                'isLive' => $isSunday,
+                'questions' => 200,
+                'duration' => 180,
+                'badge' => $isSunday ? 'NOW LIVE' : 'PLANNED EVERY SUNDAY',
+                'description' => '200 high-yield clinical MCQs calibrated to test stamina, negative marking discipline, and test-day speed.',
+            ],
+        ];
+
         return Inertia::render('mock-exam/index', [
             'user' => $user,
             'activePathway' => $user->active_pathway,
@@ -52,6 +83,7 @@ class MockExamWebController extends Controller
                     : ($dbPathway->scoring_type ?? 'Pass / Fail (No negative marking)'))
                 : $pathway->markingRules(),
             'history' => $history,
+            'weekendSchedule' => $weekendSchedule,
         ]);
     }
 

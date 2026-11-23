@@ -31,6 +31,8 @@ class AdminQuestionWebController extends Controller
         $status = $request->query('status'); // 'all', 'active', 'draft'
         $pastYear = $request->query('past_year'); // 'all', 'yes', 'no'
         $highYield = $request->query('high_yield'); // 'all', 'yes', 'no'
+        $grandMock = $request->query('grand_mock'); // 'all', 'yes', 'no'
+        $mockExamName = $request->query('mock_exam_name');
 
         $query = Question::with([
             'subject:id,name',
@@ -83,6 +85,16 @@ class AdminQuestionWebController extends Controller
             $query->where('is_high_yield', false);
         }
 
+        if ($grandMock === 'yes') {
+            $query->where('is_grand_mock', true);
+        } elseif ($grandMock === 'no') {
+            $query->where('is_grand_mock', false);
+        }
+
+        if ($mockExamName) {
+            $query->where('mock_exam_name', $mockExamName);
+        }
+
         $questions = $query->latest()
             ->paginate(15)
             ->withQueryString();
@@ -114,6 +126,8 @@ class AdminQuestionWebController extends Controller
                 'status' => $status ?? 'all',
                 'past_year' => $pastYear ?? 'all',
                 'high_yield' => $highYield ?? 'all',
+                'grand_mock' => $grandMock ?? 'all',
+                'mock_exam_name' => $mockExamName ?? '',
             ],
             'stats' => [
                 'total' => $totalQuestionsCount = Question::count(),
@@ -121,6 +135,7 @@ class AdminQuestionWebController extends Controller
                 'draft' => max(0, $totalQuestionsCount - $activeQuestionsCount),
                 'past_year' => Question::where('is_past_year', true)->count(),
                 'high_yield' => Question::where('is_high_yield', true)->count(),
+                'grand_mock' => Question::where('is_grand_mock', true)->count(),
             ],
         ]);
     }
@@ -298,9 +313,15 @@ class AdminQuestionWebController extends Controller
             ->orderBy('id')
             ->get(['id', 'code', 'name', 'full_name', 'region', 'badge_color']);
 
+        $grandMockNames = Question::where('is_grand_mock', true)
+            ->whereNotNull('mock_exam_name')
+            ->distinct()
+            ->pluck('mock_exam_name');
+
         return Inertia::render('admin/questions/import', [
             'subjects' => $subjects,
             'pathways' => $pathways,
+            'grandMockNames' => $grandMockNames,
             'importResults' => session('import_results'),
         ]);
     }
@@ -326,6 +347,9 @@ class AdminQuestionWebController extends Controller
             'is_past_year' => 'nullable|boolean',
             'past_year' => 'nullable|string|max:30',
             'is_high_yield' => 'nullable|boolean',
+            'is_grand_mock' => 'nullable|boolean',
+            'mock_exam_name' => 'nullable|string|max:150',
+            'scheduled_day' => 'nullable|string|max:30',
             'pathways' => 'nullable|array',
             'pathways.*' => 'string',
             'pathway_mode' => 'nullable|in:fallback,override',
@@ -341,6 +365,9 @@ class AdminQuestionWebController extends Controller
         $markAsPastYear = ! empty($validated['is_past_year']);
         $defaultPastYear = $validated['past_year'] ?? null;
         $markAsHighYield = ! empty($validated['is_high_yield']);
+        $markAsGrandMock = ! empty($validated['is_grand_mock']);
+        $defaultMockExamName = $validated['mock_exam_name'] ?? null;
+        $defaultScheduledDay = $validated['scheduled_day'] ?? null;
         $defaultPathways = $validated['pathways'] ?? [];
         $pathwayMode = $validated['pathway_mode'] ?? 'fallback';
 
@@ -353,7 +380,10 @@ class AdminQuestionWebController extends Controller
             pathwayMode: $pathwayMode,
             markAsPastYear: $markAsPastYear,
             defaultPastYear: $defaultPastYear,
-            markAsHighYield: $markAsHighYield
+            markAsHighYield: $markAsHighYield,
+            markAsGrandMock: $markAsGrandMock,
+            defaultMockExamName: $defaultMockExamName,
+            defaultScheduledDay: $defaultScheduledDay
         );
 
         $msg = "Bulk import completed: {$results['imported']} questions imported successfully.";
@@ -376,17 +406,31 @@ class AdminQuestionWebController extends Controller
             ->with('import_results', $sessionResults);
     }
 
-    public function downloadTemplate(string $format, QuestionImportService $importService): StreamedResponse
+    public function downloadTemplate(Request $request, string $format, QuestionImportService $importService): StreamedResponse
     {
         $format = strtolower($format);
-        if ($format === 'json') {
-            $content = $importService->getSampleJson();
-            $filename = 'cortex_mcqs_template.json';
-            $contentType = 'application/json';
+        $type = strtolower((string) $request->query('type', 'standard'));
+
+        if ($type === 'grand_mock') {
+            if ($format === 'json') {
+                $content = $importService->getSampleGrandMockJson();
+                $filename = 'cortex_grand_mock_200q_template.json';
+                $contentType = 'application/json';
+            } else {
+                $content = $importService->getSampleGrandMockCsv();
+                $filename = 'cortex_grand_mock_200q_template.csv';
+                $contentType = 'text/csv';
+            }
         } else {
-            $content = $importService->getSampleCsv();
-            $filename = 'cortex_mcqs_template.csv';
-            $contentType = 'text/csv';
+            if ($format === 'json') {
+                $content = $importService->getSampleJson();
+                $filename = 'cortex_mcqs_template.json';
+                $contentType = 'application/json';
+            } else {
+                $content = $importService->getSampleCsv();
+                $filename = 'cortex_mcqs_template.csv';
+                $contentType = 'text/csv';
+            }
         }
 
         return response()->streamDownload(function () use ($content) {
