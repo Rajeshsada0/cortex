@@ -241,9 +241,12 @@ final class TestSessionService
             'started_at' => Carbon::now(),
         ]);
 
+        $eloquentQuestions = new Collection($questions->all());
+        $eloquentQuestions->load(['subject', 'topic', 'subtopic', 'options']);
+
         return [
             'session' => $session,
-            'questions' => $questions->load(['subject', 'topic', 'subtopic', 'options']),
+            'questions' => $eloquentQuestions,
         ];
     }
 
