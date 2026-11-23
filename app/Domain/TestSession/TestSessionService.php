@@ -241,12 +241,21 @@ final class TestSessionService
             'started_at' => Carbon::now(),
         ]);
 
-        $eloquentQuestions = new Collection($questions->all());
-        $eloquentQuestions->load(['subject', 'topic', 'subtopic', 'options']);
+        $finalQuestionIds = $questions->pluck('id')->filter()->all();
+
+        /** @var Collection<int, Question> $loadedQuestions */
+        $loadedQuestions = Question::whereIn('id', $finalQuestionIds)
+            ->with(['subject', 'topic', 'subtopic', 'options'])
+            ->get();
+
+        // Preserve selected randomized sequence
+        $order = array_flip($finalQuestionIds);
+        $sortedQuestions = $loadedQuestions->sortBy(fn ($q) => $order[$q->id] ?? 0)->values();
+        $finalCollection = new Collection($sortedQuestions->all());
 
         return [
             'session' => $session,
-            'questions' => $eloquentQuestions,
+            'questions' => $finalCollection,
         ];
     }
 
