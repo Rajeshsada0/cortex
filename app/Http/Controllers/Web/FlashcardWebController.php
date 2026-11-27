@@ -351,6 +351,39 @@ class FlashcardWebController extends Controller
     }
 
     /**
+     * Sanitize known OCR medical typos (e.g. dropped 'rt' sequence: veebra -> vertebra, cailage -> cartilage)
+     */
+    public static function sanitizeMedicalTypoText(?string $text): string
+    {
+        if (! $text) {
+            return '';
+        }
+
+        $typoMap = [
+            '/\bveebra\b/i' => 'vertebra',
+            '/\bveebrae\b/i' => 'vertebrae',
+            '/\bveebral\b/i' => 'vertebral',
+            '/\binterveebral\b/i' => 'intervertebral',
+            '/\bcailage\b/i' => 'cartilage',
+            '/\bcailages\b/i' => 'cartilages',
+            '/\bcailaginous\b/i' => 'cartilaginous',
+            '/\bfibrocailage\b/i' => 'fibrocartilage',
+            '/\baicular\b/i' => 'articular',
+            '/\baiculary\b/i' => 'articulary',
+            '/\baiculation\b/i' => 'articulation',
+            '/\bpaially\b/i' => 'partially',
+            '/\bfouh\b/i' => 'fourth',
+            '/\bneveheless\b/i' => 'nevertheless',
+            '/\bis form\b/i' => 'is from',
+            '/\bdiscloates\b/i' => 'dislocates',
+            '/\bsynol\b/i' => 'synovial',
+            '/\bTemporomadibular\b/i' => 'Temporomandibular',
+        ];
+
+        return preg_replace(array_keys($typoMap), array_values($typoMap), $text);
+    }
+
+    /**
      * Clean answer text for flashcard display (strip leading option keys like "D. ", "A) ", "(B) ", "Key: D")
      */
     public static function cleanAnswerText(?string $text): string
@@ -361,6 +394,7 @@ class FlashcardWebController extends Controller
         $text = trim($text);
         // Strip leading option letters like "A. ", "B) ", "(C) ", "D - ", "Key: D", "Key: A. "
         $text = preg_replace('/^(Key:\s*)?(\([A-Ea-e]\)|[A-Ea-e][\.\)\:\-]\s*)/i', '', $text);
+        $text = self::sanitizeMedicalTypoText($text);
 
         return trim($text);
     }
@@ -387,6 +421,7 @@ class FlashcardWebController extends Controller
         }
 
         $text = trim($text);
+        $text = self::sanitizeMedicalTypoText($text);
 
         // If explanation starts by duplicating the answer title, avoid stuttering
         if ($answerTitle && str_starts_with(strtolower($text), strtolower($answerTitle))) {
@@ -431,9 +466,9 @@ class FlashcardWebController extends Controller
             'id' => (string) $q->id,
             'subject' => $q->subject?->name ?? 'General Medicine',
             'topic' => $q->topic?->name ?? 'High Yield Pearls',
-            'front' => $q->stem,
+            'front' => self::sanitizeMedicalTypoText($q->stem),
             'back' => implode("\n\n", array_filter($explanationParts)),
-            'pearl' => $q->memory_peg ?? $q->learning_objective ?? '',
+            'pearl' => self::sanitizeMedicalTypoText($q->memory_peg ?? $q->learning_objective ?? ''),
             'difficulty' => $q->difficulty ?? 'MEDIUM',
             'is_high_yield' => (bool) $q->is_high_yield,
             'is_past_year' => (bool) $q->is_past_year,

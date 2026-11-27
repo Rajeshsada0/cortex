@@ -107,9 +107,33 @@ interface FlashcardsPageProps {
     totalQBankCount?: number;
 }
 
+export function sanitizeMedicalTypoText(text: string): string {
+    if (!text) return '';
+    return text
+        .replace(/\bveebra\b/gi, 'vertebra')
+        .replace(/\bveebrae\b/gi, 'vertebrae')
+        .replace(/\bveebral\b/gi, 'vertebral')
+        .replace(/\binterveebral\b/gi, 'intervertebral')
+        .replace(/\bcailage\b/gi, 'cartilage')
+        .replace(/\bcailages\b/gi, 'cartilages')
+        .replace(/\bcailaginous\b/gi, 'cartilaginous')
+        .replace(/\bfibrocailage\b/gi, 'fibrocartilage')
+        .replace(/\baicular\b/gi, 'articular')
+        .replace(/\baiculary\b/gi, 'articulary')
+        .replace(/\baiculation\b/gi, 'articulation')
+        .replace(/\bpaially\b/gi, 'partially')
+        .replace(/\bfouh\b/gi, 'fourth')
+        .replace(/\bneveheless\b/gi, 'nevertheless')
+        .replace(/\bis form\b/gi, 'is from')
+        .replace(/\bdiscloates\b/gi, 'dislocates')
+        .replace(/\bsynol\b/gi, 'synovial')
+        .replace(/\bTemporomadibular\b/gi, 'Temporomandibular');
+}
+
 export function cleanFlashcardAnswerText(raw?: string): string {
     if (!raw) return '';
-    const lines = raw.split('\n');
+    const sanitized = sanitizeMedicalTypoText(raw);
+    const lines = sanitized.split('\n');
     const cleanedParts: string[] = [];
     let firstLineAnswer: string | null = null;
 

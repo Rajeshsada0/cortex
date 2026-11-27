@@ -40,11 +40,19 @@ class SubjectController extends Controller
     }
 
     /**
-     * List all 19 medical subjects with topics and question counts
+     * List all valid medical subjects with topics and question counts (excludes unmapped/empty disciplines)
      */
     public function index(): JsonResponse
     {
-        $subjects = Subject::with('topics')->withCount(['topics', 'questions'])->orderBy('order_index')->get();
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('name', 'not like', '%unknown%')
+            ->where('is_active', true)
+            ->with('topics')
+            ->withCount(['topics', 'questions'])
+            ->orderBy('order_index')
+            ->get()
+            ->filter(fn ($s) => $s->questions_count > 0)
+            ->values();
 
         return response()->json([
             'success' => true,
@@ -68,7 +76,14 @@ class SubjectController extends Controller
             ->get()
             ->keyBy('subject_id');
 
-        $subjects = Subject::withCount(['questions', 'topics'])->orderBy('order_index')->get();
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('name', 'not like', '%unknown%')
+            ->where('is_active', true)
+            ->withCount(['questions', 'topics'])
+            ->orderBy('order_index')
+            ->get()
+            ->filter(fn ($s) => $s->questions_count > 0)
+            ->values();
 
         $progressData = $subjects->map(function ($subject) use ($attemptsBySubject) {
             $totalQuestions = (int) $subject->questions_count;
@@ -124,7 +139,10 @@ class SubjectController extends Controller
             ->get()
             ->keyBy('subject_id');
 
-        $subjects = Subject::with([
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('name', 'not like', '%unknown%')
+            ->where('is_active', true)
+            ->with([
                 'topics' => function ($q) use ($pathway) {
                     $q->withCount([
                         'questions' => fn ($qq) => $qq->where('is_active', true)->forExam($pathway)
@@ -137,6 +155,8 @@ class SubjectController extends Controller
             ])
             ->orderBy('order_index')
             ->get()
+            ->filter(fn ($s) => $s->questions_count > 0)
+            ->values()
             ->map(function ($subject) use ($attemptsBySubject) {
                 $stat = $attemptsBySubject->get($subject->id);
                 $attemptedCount = (int) ($stat?->attempted_count ?? 0);

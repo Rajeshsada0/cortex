@@ -46,14 +46,19 @@ class DirectoryWebController extends Controller
             ->selectRaw('topic_id, COUNT(*) as count')
             ->pluck('count', 'topic_id');
 
-        // 3. Eager load subjects with topics and subtopics
-        $subjects = Subject::with(['topics.subtopics'])
+        // 3. Eager load subjects with topics and subtopics (excluding Unknown or empty pools)
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('name', 'not like', '%unknown%')
+            ->where('is_active', true)
+            ->with(['topics.subtopics'])
             ->withCount([
                 'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),
                 'topics',
             ])
             ->orderBy('order_index')
             ->get()
+            ->filter(fn ($s) => $s->questions_count > 0)
+            ->values()
             ->map(function ($subject) use ($userAttemptsBySubject, $topicQuestionCounts) {
                 $stat = $userAttemptsBySubject->get($subject->id);
                 $attemptedCount = (int) ($stat?->attempted ?? 0);

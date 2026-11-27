@@ -70,9 +70,14 @@ class DashboardWebController extends Controller
             ])->pluck('questions_count', 'id')->toArray();
         });
 
-        $subjects = Subject::withCount('topics')
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('name', 'not like', '%unknown%')
+            ->where('is_active', true)
+            ->withCount('topics')
             ->orderBy('order_index')
             ->get()
+            ->filter(fn ($s) => (int) ($subjectTotals[$s->id] ?? 0) > 0)
+            ->values()
             ->map(function ($s) use ($userAttemptsBySubject, $subjectTotals) {
                 $stat = $userAttemptsBySubject->get($s->id);
                 $attempted = (int) ($stat?->attempted ?? 0);

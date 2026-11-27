@@ -209,10 +209,12 @@ class QBankWebController extends Controller
         $yearsData = [];
 
         foreach ($supportedYears as $yr) {
-            $count = (clone $baseQuery)->where(function ($q) use ($yr) {
-                $q->where('past_year', 'LIKE', "%{$yr}%")
-                    ->orWhere('stem', 'LIKE', "%{$yr}%");
-            })->count();
+            $count = (clone $baseQuery)->where('past_year', 'LIKE', "%{$yr}%")->count();
+
+            // Skip empty years
+            if ($count <= 0) {
+                continue;
+            }
 
             $badge = match ($yr) {
                 '2026' => 'LATEST 2026',
@@ -231,16 +233,26 @@ class QBankWebController extends Controller
             ];
         }
 
-        $subjects = Subject::withCount(['questions' => function ($q) use ($pathway) {
-            $q->where('is_active', true)->forExam($pathway)->where(function ($sq) {
-                $sq->where('is_past_year', true)->orWhereNotNull('past_year');
-            });
-        }])->orderBy('order_index')->get();
+        // Mathematical alignment: Total PYQ strictly matches sum of verified year sets
+        $exactTotalPyq = array_sum(array_column($yearsData, 'count'));
+        if ($exactTotalPyq === 0 && $totalPyq > 0) {
+            $exactTotalPyq = $totalPyq;
+        }
+
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('is_active', true)
+            ->withCount(['questions' => function ($q) use ($pathway) {
+                $q->where('is_active', true)->forExam($pathway)->where(function ($sq) {
+                    $sq->where('is_past_year', true)->orWhereNotNull('past_year');
+                });
+            }])
+            ->orderBy('order_index')
+            ->get();
 
         return Inertia::render('pyq/index', [
             'user' => $user,
             'activePathway' => $pathway,
-            'totalPyqCount' => $totalPyq,
+            'totalPyqCount' => $exactTotalPyq,
             'years' => $yearsData,
             'subjects' => $subjects,
         ]);

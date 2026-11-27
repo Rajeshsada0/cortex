@@ -35,9 +35,16 @@ class GuestPracticeWebController extends Controller
     {
         $user = $request->user();
 
-        $subjects = Subject::withCount(['questions' => function ($q) {
-            $q->where('is_active', true);
-        }, 'topics'])->orderBy('name')->get();
+        $subjects = Subject::where('name', '!=', 'Unknown')
+            ->where('name', 'not like', '%unknown%')
+            ->where('is_active', true)
+            ->withCount(['questions' => function ($q) {
+                $q->where('is_active', true);
+            }, 'topics'])
+            ->orderBy('name')
+            ->get()
+            ->filter(fn ($s) => $s->questions_count > 0)
+            ->values();
 
         return Inertia::render('subjects/index', [
             'subjects' => $subjects,

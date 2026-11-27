@@ -90,10 +90,7 @@ class QuestionController extends Controller
         $isLatestAssigned = false;
 
         foreach ($allYears as $yr) {
-            $count = (clone $baseQuery)->where(function ($q) use ($yr) {
-                $q->where('past_year', 'LIKE', "%{$yr}%")
-                    ->orWhere('stem', 'LIKE', "%{$yr}%");
-            })->count();
+            $count = (clone $baseQuery)->where('past_year', 'LIKE', "%{$yr}%")->count();
 
             // Strictly skip any year with 0 questions (never show fake/empty years)
             if ($count <= 0) {
@@ -118,10 +115,16 @@ class QuestionController extends Controller
             ];
         }
 
+        // Single-source-of-truth: Total PYQs must strictly equal the exact sum of authentic years
+        $exactTotalPyq = array_sum(array_column($yearsData, 'count'));
+        if ($exactTotalPyq === 0 && $totalPyq > 0) {
+            $exactTotalPyq = $totalPyq;
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'total_pyq_count' => $totalPyq,
+                'total_pyq_count' => $exactTotalPyq,
                 'pathway' => $pathway,
                 'years' => $yearsData,
             ],
