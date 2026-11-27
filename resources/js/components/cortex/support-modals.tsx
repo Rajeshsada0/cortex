@@ -30,6 +30,7 @@ import {
     ExternalLink,
     CheckCircle2,
     Radio,
+    MessageCircle,
 } from 'lucide-react';
 import type { PathwayOption } from './pathway-selector';
 
@@ -153,6 +154,8 @@ export function ContactUsModal({ open, onOpenChange, user }: ContactUsModalProps
 
     const supportEmail = settings.support_desk_email || 'support@cortexmedical.app';
     const supportPhone = settings.support_desk_phone || '+1 (800) 267-8391';
+    const supportWhatsApp = settings.support_desk_whatsapp || '+977 9800000000';
+    const supportHours = settings.support_desk_hours || '24/7 Clinical Advisory & Examination Platform Helpdesk';
 
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -213,37 +216,75 @@ export function ContactUsModal({ open, onOpenChange, user }: ContactUsModalProps
                                 Contact Cortex Support
                             </DialogTitle>
                             <DialogDescription className="text-xs text-muted-foreground">
-                                24/7 Clinical Advisory & Examination Platform Helpdesk
+                                {supportHours}
                             </DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
 
-                {/* Quick Channels */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                {/* Quick Channels: Email, Call, WhatsApp */}
+                <div className="grid grid-cols-1 gap-2.5 pt-2 sm:grid-cols-3">
+                    {/* Channel 1: Email */}
                     <div
-                        onClick={() => copyToClipboard(supportEmail, 'Support email')}
-                        className="group flex cursor-pointer flex-col rounded-xl border border-teal-200/60 bg-teal-50/50 p-3 transition-colors hover:bg-teal-50 dark:border-teal-900/60 dark:bg-teal-950/30 dark:hover:bg-teal-950/50"
+                        onClick={() => {
+                            copyToClipboard(supportEmail, 'Support email');
+                            window.open(`mailto:${supportEmail}`, '_self');
+                        }}
+                        className="group flex cursor-pointer flex-col justify-between rounded-xl border border-teal-200/60 bg-teal-50/50 p-3 transition-all hover:bg-teal-50 hover:shadow-xs dark:border-teal-900/60 dark:bg-teal-950/30 dark:hover:bg-teal-950/50"
                     >
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800 dark:text-teal-300">
-                            <Mail className="h-3.5 w-3.5" />
-                            Email Us
+                        <div className="flex items-center justify-between text-xs font-bold text-teal-800 dark:text-teal-300">
+                            <span className="flex items-center gap-1.5">
+                                <Mail className="h-3.5 w-3.5" />
+                                Email Us
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
                         </div>
                         <span className="mt-1 truncate text-xs font-medium text-muted-foreground group-hover:text-foreground">
                             {supportEmail}
                         </span>
                     </div>
 
+                    {/* Channel 2: Call */}
                     <div
-                        onClick={() => copyToClipboard(supportPhone, 'Helpdesk number')}
-                        className="group flex cursor-pointer flex-col rounded-xl border border-teal-200/60 bg-teal-50/50 p-3 transition-colors hover:bg-teal-50 dark:border-teal-900/60 dark:bg-teal-950/30 dark:hover:bg-teal-950/50"
+                        onClick={() => {
+                            copyToClipboard(supportPhone, 'Live desk phone');
+                            window.open(`tel:${supportPhone.replace(/[^+\d]/g, '')}`, '_self');
+                        }}
+                        className="group flex cursor-pointer flex-col justify-between rounded-xl border border-teal-200/60 bg-teal-50/50 p-3 transition-all hover:bg-teal-50 hover:shadow-xs dark:border-teal-900/60 dark:bg-teal-950/30 dark:hover:bg-teal-950/50"
                     >
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800 dark:text-teal-300">
-                            <PhoneCall className="h-3.5 w-3.5" />
-                            Live Desk
+                        <div className="flex items-center justify-between text-xs font-bold text-teal-800 dark:text-teal-300">
+                            <span className="flex items-center gap-1.5">
+                                <PhoneCall className="h-3.5 w-3.5" />
+                                Direct Call
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
                         </div>
                         <span className="mt-1 truncate text-xs font-medium text-muted-foreground group-hover:text-foreground">
                             {supportPhone}
+                        </span>
+                    </div>
+
+                    {/* Channel 3: WhatsApp Support */}
+                    <div
+                        onClick={() => {
+                            const cleanPhone = supportWhatsApp.replace(/[^+\d]/g, '').replace('+', '');
+                            const waUrl = supportWhatsApp.startsWith('http')
+                                ? supportWhatsApp
+                                : `https://wa.me/${cleanPhone}`;
+                            copyToClipboard(supportWhatsApp, 'WhatsApp number');
+                            window.open(waUrl, '_blank', 'noopener,noreferrer');
+                        }}
+                        className="group flex cursor-pointer flex-col justify-between rounded-xl border border-emerald-200/60 bg-emerald-50/50 p-3 transition-all hover:bg-emerald-50 hover:shadow-xs dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
+                    >
+                        <div className="flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                            <span className="flex items-center gap-1.5">
+                                <MessageCircle className="h-3.5 w-3.5" />
+                                WhatsApp
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                        </div>
+                        <span className="mt-1 truncate text-xs font-medium text-muted-foreground group-hover:text-foreground">
+                            {supportWhatsApp}
                         </span>
                     </div>
                 </div>

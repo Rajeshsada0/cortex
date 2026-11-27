@@ -36,6 +36,8 @@ interface SystemSettingsData {
     contact_email: string;
     support_desk_email?: string;
     support_desk_phone?: string;
+    support_desk_whatsapp?: string;
+    support_desk_hours?: string;
     referral_promo_code?: string;
     referral_bonus_text?: string;
     medical_disclaimer?: string;
@@ -78,6 +80,8 @@ export default function SettingsIndex({ settings }: SettingsIndexProps) {
         contact_email: settings.contact_email || 'support@cortexmed.com',
         support_desk_email: settings.support_desk_email || 'support@cortexmedical.app',
         support_desk_phone: settings.support_desk_phone || '+1 (800) 267-8391',
+        support_desk_whatsapp: settings.support_desk_whatsapp || '+977 9800000000',
+        support_desk_hours: settings.support_desk_hours || '24/7 Clinical Advisory & Examination Platform Helpdesk',
         referral_promo_code: settings.referral_promo_code || 'DR_CORTEX',
         referral_bonus_text: settings.referral_bonus_text || 'Refer a Fellow Med Student. Both get 1 month of Cortex AI Quick Calibration free when they join.',
         medical_disclaimer: settings.medical_disclaimer || 'MEDICAL DISCLAIMER: Cortex Medical is an academic prep tool engineered strictly for exam preparation (USMLE, INI-CET, MECEE). Rationales, case vignettes, and mock items do NOT constitute diagnostic or treatment guidelines for real patient care.',
@@ -1031,13 +1035,39 @@ export default function SettingsIndex({ settings }: SettingsIndexProps) {
 
                                         <div className="space-y-1.5">
                                             <Label htmlFor="support_desk_phone" className="text-xs font-bold">
-                                                Live Desk Phone / Toll-Free
+                                                Live Desk Phone / Direct Call
                                             </Label>
                                             <Input
                                                 id="support_desk_phone"
                                                 value={data.support_desk_phone}
                                                 onChange={(e) => setData('support_desk_phone', e.target.value)}
                                                 placeholder="+1 (800) 267-8391"
+                                                className="h-9 rounded-xl text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="support_desk_whatsapp" className="text-xs font-bold">
+                                                WhatsApp Support (Number or wa.me)
+                                            </Label>
+                                            <Input
+                                                id="support_desk_whatsapp"
+                                                value={data.support_desk_whatsapp}
+                                                onChange={(e) => setData('support_desk_whatsapp', e.target.value)}
+                                                placeholder="+977 9800000000 or https://wa.me/9779800000000"
+                                                className="h-9 rounded-xl text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="support_desk_hours" className="text-xs font-bold">
+                                                Support Hours / Helpdesk Tagline
+                                            </Label>
+                                            <Input
+                                                id="support_desk_hours"
+                                                value={data.support_desk_hours}
+                                                onChange={(e) => setData('support_desk_hours', e.target.value)}
+                                                placeholder="24/7 Clinical Advisory & Examination Platform Helpdesk"
                                                 className="h-9 rounded-xl text-xs"
                                             />
                                         </div>

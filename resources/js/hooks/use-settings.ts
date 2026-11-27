@@ -10,6 +10,8 @@ export interface SystemSettings {
     contact_email?: string;
     support_desk_phone?: string;
     support_desk_email?: string;
+    support_desk_whatsapp?: string;
+    support_desk_hours?: string;
     referral_bonus_text?: string;
     referral_promo_code?: string;
     medical_disclaimer?: string;
@@ -36,6 +38,8 @@ export const DEFAULT_SETTINGS: SystemSettings = {
     contact_email: 'support@cortexmed.com',
     support_desk_phone: '+1 (800) 267-8391',
     support_desk_email: 'support@cortexmedical.app',
+    support_desk_whatsapp: '+977 9800000000',
+    support_desk_hours: '24/7 Clinical Advisory & Examination Platform Helpdesk',
     referral_bonus_text: 'Refer a Fellow Med Student. Both get 1 month of Cortex AI Quick Calibration free when they join.',
     referral_promo_code: 'DR_CORTEX',
     medical_disclaimer: 'MEDICAL DISCLAIMER: Cortex Medical is an academic prep tool engineered strictly for exam preparation (USMLE, INI-CET, MECEE). Rationales, case vignettes, and mock items do NOT constitute diagnostic or treatment guidelines for real patient care.',

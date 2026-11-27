@@ -88,6 +88,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/ai/credits/refill', [\App\Http\Controllers\Api\V1\CortexAiController::class, 'refillCredits'])->name('api.v1.ai.credits.refill');
 
     // Support Inquiries & Community Ratings
+    Route::get('/support/config', [\App\Http\Controllers\Api\V1\SupportInquiryController::class, 'config'])->name('api.v1.support.config');
     Route::post('/support/inquiries', [\App\Http\Controllers\Api\V1\SupportInquiryController::class, 'store'])->name('api.v1.support.inquiries.store');
     Route::post('/app-ratings', [\App\Http\Controllers\Api\V1\AppRatingController::class, 'store'])->name('api.v1.app-ratings.store');
     Route::get('/app-ratings/summary', [\App\Http\Controllers\Api\V1\AppRatingController::class, 'summary'])->name('api.v1.app-ratings.summary');
