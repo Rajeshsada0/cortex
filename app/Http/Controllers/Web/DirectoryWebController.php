@@ -49,7 +49,6 @@ class DirectoryWebController extends Controller
         // 3. Eager load subjects with topics and subtopics (excluding Unknown or empty pools)
         $subjects = Subject::where('name', '!=', 'Unknown')
             ->where('name', 'not like', '%unknown%')
-            ->where('is_active', true)
             ->with(['topics.subtopics'])
             ->withCount([
                 'questions' => fn ($q) => $q->where('is_active', true)->forExam($pathway),

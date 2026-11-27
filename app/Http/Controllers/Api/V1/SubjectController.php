@@ -46,7 +46,6 @@ class SubjectController extends Controller
     {
         $subjects = Subject::where('name', '!=', 'Unknown')
             ->where('name', 'not like', '%unknown%')
-            ->where('is_active', true)
             ->with('topics')
             ->withCount(['topics', 'questions'])
             ->orderBy('order_index')
@@ -78,7 +77,6 @@ class SubjectController extends Controller
 
         $subjects = Subject::where('name', '!=', 'Unknown')
             ->where('name', 'not like', '%unknown%')
-            ->where('is_active', true)
             ->withCount(['questions', 'topics'])
             ->orderBy('order_index')
             ->get()
@@ -141,7 +139,6 @@ class SubjectController extends Controller
 
         $subjects = Subject::where('name', '!=', 'Unknown')
             ->where('name', 'not like', '%unknown%')
-            ->where('is_active', true)
             ->with([
                 'topics' => function ($q) use ($pathway) {
                     $q->withCount([

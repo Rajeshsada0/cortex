@@ -37,7 +37,6 @@ class GuestPracticeWebController extends Controller
 
         $subjects = Subject::where('name', '!=', 'Unknown')
             ->where('name', 'not like', '%unknown%')
-            ->where('is_active', true)
             ->withCount(['questions' => function ($q) {
                 $q->where('is_active', true);
             }, 'topics'])

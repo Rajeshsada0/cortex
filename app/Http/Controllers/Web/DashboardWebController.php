@@ -72,7 +72,6 @@ class DashboardWebController extends Controller
 
         $subjects = Subject::where('name', '!=', 'Unknown')
             ->where('name', 'not like', '%unknown%')
-            ->where('is_active', true)
             ->withCount('topics')
             ->orderBy('order_index')
             ->get()
